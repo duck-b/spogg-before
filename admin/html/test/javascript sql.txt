@@ -1,0 +1,75 @@
+//https://jiwondh.github.io/2017/01/14/mysql/
+//SELECT
+var sql = 'SELECT * FROM table';
+conn.query(sql, function(err, rows, fields){
+	if(err){
+		console.log(err);
+	} else {
+		for(var i=0; i<rows.length; i++){
+			console.log(rows[i].name);
+		}
+	}
+});
+
+//INSERT
+var sql = 'INSERT INTO table (name, email, age) VALUES(?, ?, ?)';
+var params = ['Jiwon', 'jiwon@mail.com', '23'];
+conn.query(sql, params, function(err, rows, fields){
+	if(err){
+		console.log(err);
+	} else {
+		console.log(rows.insertId);
+	}
+});
+
+//UPDATE
+var sql = 'UPDATE table SET name=?, age=? WHERE id=?';
+var params = ['Eunji', '25', 1];
+conn.query(sql, params, function(err, rows, fields){
+	if(err){
+		console.log(err);
+	} else {
+		console.log(rows);
+	}
+});
+
+//DELETE
+var sql = 'DELETE FROM topic WHERE id=?';
+var params = [1];
+conn.query(sql, params, function(err, rows, fields){
+	if(err){
+		console.log(err);
+	} else {
+		console.log(rows);
+	}
+});
+
+//https://jiwondh.github.io/2017/01/17/routes-seperate/
+//라우터 분리하기
+
+//https://jiwondh.github.io/2017/01/15/sql-syntax/
+//sql 기본 문법
+
+// 모듈을 추출합니다.
+var mysql = require('mysql');
+
+// 데이터베이스와 연결합니다.
+var connection = mysql.createConnection({
+    host:'192.168.0.12',
+    user: 'tester',
+    password: 'tester1234'
+});
+
+connection.connect();
+
+// 데이터베이스 쿼리를 사용합니다.
+connection.query('USE Company');
+connection.query('SELECT * FROM products', function (error, result, fields) {
+    if (error) {
+        console.log('쿼리 문장에 오류가 있습니다.');
+    } else {
+        console.log(result);
+    }
+});
+
+connection.end();

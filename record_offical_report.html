@@ -1,0 +1,1968 @@
+<? include("header/header.html");?>
+<? include("header/menu.html"); ?>
+<?
+$isMobile = 0;
+
+$mobileos = ["iPhone","iPod","Android","BlackBerry","Windows CE","Nokia","Webos","Opera Mini","SonyEricsson","Opera Mobi","IEMobile"];
+
+for($i=0 ; $i<sizeof($mobileos); $i++) {
+	if(strpos($_SERVER['HTTP_USER_AGENT'],$mobileos[$i]) !== false) {
+		$isMobile = 1;
+		break;
+	}
+}
+if($isMobile){
+	//모바일
+	$years_5_height = "100%";
+	$now_league = "100%";
+	$model_bar = "60%";
+	$model_pie = "60%";
+	$model_radar = "60%";
+}else{
+	//PC
+	$years_5_height = "25%";
+	$now_league = "50%";
+	$model_bar = "49%";
+	$model_pie = "100%";
+	$model_radar = "100%";
+}
+?>
+<?
+if(!$user_no){
+	echo "<script>alert('로그인이 필요한 기능입니다.');";
+	echo "window.location.replace('login.html');</script>";
+}else{
+	include "dbconn.php";
+	$player_result = mysqli_query($conn,"SELECT * FROM user_player WHERE user='$user_no'");
+	$player_row = mysqli_fetch_array($player_result);
+	if($player_row['playercheck'] == 1){
+		$playercheck = "선출";
+	}else if($player_row['playercheck'] == 2){
+		$playercheck = "비선출";
+	}else{
+		$playercheck = "-";
+	}
+	if($player_row['playerclass'] == 1){
+		$playerclass = "사회인 1부";
+	}else if($player_row['playerclass'] == 2){
+		$playerclass = "사회인 2부";
+	}else if($player_row['playerclass'] == 3){
+		$playerclass = "사회인 3부";
+	}else if($player_row['playerclass'] == 4){
+		$playerclass = "사회인 4부";
+	}else{
+		$playerclass = "-";
+	}
+	if($player_row['position'] == 1){
+		$position = "내야수";
+	}else if($player_row['position'] == 2){
+		$position = "외야수";
+	}else if($player_row['position'] == 3){
+		$position = "투수";
+	}else{
+		$position = "-";
+	}
+	if($player_row['hitpitch'] == 1){
+		$hitpitch = "우투우타";
+	}else if($player_row['hitpitch'] == 2){
+		$hitpitch = "우투좌타";
+	}else if($player_row['hitpitch'] == 3){
+		$hitpitch = "좌투우타";
+	}else if($player_row['hitpitch'] == 4){
+		$hitpitch = "좌투좌타";
+	}else{
+		$hitpitch = "-";
+	}
+	if($user_row['birth'] == '0000-00-00'){
+		$birth = "-";
+	}else{
+		$birth = $user_row['birth'];
+	}
+	if($player_row['playertall'] == 0){
+		$playertall = "-";
+	}else{
+		$playertall = $player_row['playertall']."cm";
+	}
+	if($player_row['playerweight'] == 0){
+		$playerweight = "-";
+	}else{
+		$playerweight = $player_row['playerweight']."kg";
+	}
+	if($player_row['address']){
+		$address = $player_row['address'];
+	}else{
+		$address = "-";
+	}
+	//타자
+	$hit_record_query = "SELECT league.name AS league_name, 
+		league_info.years AS league_years, 
+		league_record_hit.*,
+		user_player_record.no AS user_player_record_no 	
+	FROM user_player_record JOIN league_record_hit JOIN league_info JOIN league 
+	WHERE user_player_record.player='$player_no' AND position='1' AND league_record_hit.no = user_player_record.record AND league_record_hit.league_info = league_info.no AND league_info.league = league.no 
+	ORDER BY league_info.years DESC, league.created_at";
+	$hit_record_result = mysqli_query($conn,$hit_record_query);
+	$hit_table_basic = "";
+	$i = 0;	
+	$game_count = 0;
+	$obp_count = 0;
+	$slg_count = 0;
+	$ops_count = 0;
+	$rs_count = 0;
+	$sb_count = 0;
+	$sf_count = 0;
+	$hit_all = 0;
+	$at_game_all = 0;
+	$at_bat_all = 0;
+	$bb_all = 0;
+	$hbp_all = 0;
+	$rs_all = 0;
+	$rbi_all = 0;
+	$sb_all = 0;
+	$hit1_all = 0;
+	$hit2_all = 0;
+	$hit3_all = 0;
+	$hr_all = 0;
+	$sf_all = 0;
+	$slg_up = 0;
+	$slg_down = 0;
+	$obp_up = 0;
+	$obp_down = 0;
+	$ops_slg_up = 0;
+	$ops_slg_down = 0;
+	$ops_obp_up = 0;
+	$ops_obp_down = 0;
+	while($hit_record_row = mysqli_fetch_array($hit_record_result)){
+		$i++;
+		$hit_no = $hit_record_row['user_player_record_no'];
+		// sb
+		if($hit_record_row['sb'] == '9999'){
+			$sb = "-";
+		}else{
+			$sb = $hit_record_row['sb'];
+			$sb_all += $hit_record_row['sb'];
+			$sb_count++;
+		}
+		// avg
+		if($hit_record_row['at_bat'] == '0'){
+			$avg = "-";
+		}else{
+			$avg = number_format(round($hit_record_row['hit']/$hit_record_row['at_bat'],3),3);
+		}
+		// obp
+		if($hit_record_row['at_bat'] + $hit_record_row['bb'] + $hit_record_row['sf'] != 0 || $hit_record_row['sf']){
+			if($hit_record_row['sf'] == '9999'){
+				if($hit_record_row['hbp'] == '9999'){
+					$sf = "-";
+					$hbp = "-";
+					$bb_all += $hit_record_row['bb'];
+					$obp = "-";
+				}else{
+					$sf = "-";
+					$hbp = $hit_record_row['hbp'];
+					$bb_all += $hit_record_row['bb'];
+					$bb_all += $hit_record_row['hbp'];
+					$obp = "-";
+				}
+			}else{
+				if($hit_record_row['hbp'] == '9999'){
+					$sf = $hit_record_row['sf'];
+					$sf_all += $hit_record_row['sf'];
+					$hbp = "-";
+					$bb_all += $hit_record_row['bb'];
+					$this_bb = $hit_record_row['bb'];
+					$obp = number_format(round(($hit_record_row['hit'] + $hit_record_row['bb'])/($hit_record_row['at_bat'] + $hit_record_row['bb'] + $hit_record_row['sf']),3),3);
+					$obp_count++;
+					$obp_up += $hit_record_row['hit'] + $this_bb;
+					$obp_down += $hit_record_row['at_bat'] + $this_bb + $hit_record_row['sf'];
+				}else{
+					$sf = $hit_record_row['sf'];
+					$sf_all += $hit_record_row['sf'];
+					$hbp = $hit_record_row['hbp'];
+					$bb_all += $hit_record_row['bb'];
+					$bb_all += $hit_record_row['hbp'];
+					$this_bb = $hit_record_row['bb']+$hit_record_row['hbp'];
+					$obp = number_format(round(($hit_record_row['hit'] + $hit_record_row['bb'] + $hit_record_row['hbp'])/($hit_record_row['at_bat'] + $hit_record_row['bb'] + $hit_record_row['hbp'] + $hit_record_row['sf']),3),3);
+					$obp_count++;
+					$obp_up += $hit_record_row['hit'] + $this_bb;
+					$obp_down += $hit_record_row['at_bat'] + $this_bb + $hit_record_row['sf'];
+				}
+			}
+		}else{
+			if($hit_record_row['sf'] == '9999'){
+				if($hit_record_row['hbp'] == '9999'){
+					$sf = "-";
+					$obp = "-";
+					$hbp = "-";
+				}else{
+					$sf = "-";
+					$obp = "-";
+					$hbp = $hit_record_row['hbp'];
+				}
+			}
+		}
+		// slg, tb, xbh
+		if($hit_record_row['hit2'] == '9999' || $hit_record_row['hit3'] == '9999'){
+			$hit2 = "-";
+			$hit3 = "-";
+			$slg = "-";
+			$tb = "-";
+			$xbh = "-";
+		}else{
+			$hit2 = $hit_record_row['hit2'];
+			$hit3 = $hit_record_row['hit3'];
+			$slg = number_format(round(($hit_record_row['hit1'] + $hit2*2 + $hit3*3 +$hit_record_row['hr']*4)/$hit_record_row['at_bat'],3),3);
+			$tb = $hit_record_row['hit1'] + $hit2*2 + $hit3*3 + $hit_record_row['hr']*4;
+			$xbh = $hit2 + $hit3 + $hit_record_row['hr'];
+			$hit1_all += $hit_record_row['hit1'];
+			$hit2_all += $hit_record_row['hit2'];
+			$hit3_all += $hit_record_row['hit3'];
+			$slg_count++;
+			$slg_up += $hit_record_row['hit1'] + $hit_record_row['hit2']*2 + $hit_record_row['hit3']*3 + $hit_record_row['hr']*4;
+			$slg_down += $hit_record_row['at_bat'];
+		}
+		// ops
+		if($slg == "-" || $obp == "-"){
+			$ops = "-";
+		}else{
+			$ops = number_format($obp + $slg,3);
+			$ops_count++;
+			$ops_obp_up += $hit_record_row['hit'] + $this_bb;
+			$ops_slg_up += $hit_record_row['hit1'] + $hit_record_row['hit2']*2 + $hit_record_row['hit3']*3 + $hit_record_row['hr']*4;
+			$ops_obp_down += $hit_record_row['at_bat'] + $this_bb + $hit_record_row['sf'];
+			$ops_slg_down += $hit_record_row['at_bat'];
+		}
+		if($hit_record_row['at_game'] == '9999'){
+			$at_game = "-";
+		}else{
+			$at_game = $hit_record_row['at_game'];
+			$at_game_all += $hit_record_row['at_game'];
+			$game_count++;
+		}
+		if($hit_record_row['rs'] == '9999'){
+			$rs = "-";
+		}else{
+			$rs = $hit_record_row['rs'];
+			$rs_all += $hit_record_row['rs'];
+			$rs_count++;
+		}
+		if(mb_strlen($hit_record_row['league_name'], 'UTF-8') <= 11){
+			$league_name = "<td>".$hit_record_row['league_name']."</td>";
+		}else{
+			$league_name = "<td title='".$hit_record_row['league_name']."'>".mb_substr($hit_record_row['league_name'], 0, 10, 'UTF-8')."‥</td>";
+		}
+		$hit_table_basic = $hit_table_basic."<tr>
+			<td>".$i."</td><td>".$hit_record_row['league_years']."</td>".$league_name."<td>".$hit_record_row['team_name']."</td><td>".$avg."</td><td>".$at_game."</td><td>".$hit_record_row['at_play']."</td><td>".$hit_record_row['at_bat']."</td><td>".$hit_record_row['hit']."</td><td>".$hit2."</td><td>".$hit3."</td><td>".$hit_record_row['hr']."</td><td>".$hit_record_row['rbi']."</td><td>".$rs."</td><td>".$sb."</td><td>".$hit_record_row['bb']."</td><td>".$hbp."</td><td>".$hit_record_row['so']."</td><td>".$sf."</td><td>".$tb."</td><td>".$xbh."</td><td>".$obp."</td><td>".$slg."</td><td>".$ops."</td><td><a href='javascript:;' onclick='delete_event($hit_no)'><i class='fa fa-trash' style='color:red'></i></a></td>
+		</tr>";
+		$at_bat_all += $hit_record_row['at_bat'];
+		$rbi_all += $hit_record_row['rbi'];
+		$hit_all += $hit_record_row['hit'];
+		$hr_all += $hit_record_row['hr'];
+	}
+	if($i > 0){
+		if($i != $game_count){
+			$back_count_game = " (".$game_count.")";
+		}else{
+			$back_count_game = "";
+		}
+		if($i != $obp_count){
+			$back_count_obp = " (".$obp_count.")";
+		}else{
+			$back_count_obp = "";
+		}
+		if($i != $slg_count){
+			$back_count_slg = " (".$slg_count.")";
+		}else{
+			$back_count_slg = "";
+		}
+		if($i != $ops_count){
+			$back_count_ops = " (".$ops_count.")";
+		}else{
+			$back_count_ops = "";
+		}
+		if($i != $rs_count){
+			$back_count_rs = " (".$rs_count.")";
+		}else{
+			$back_count_rs = "";
+		}
+		if($i != $sb_count){
+			$back_count_sb = " (".$sb_count.")";
+		}else{
+			$back_count_sb = "";
+		}
+		if($at_bat_all == 0){
+			$avg_all = "-";
+		}else{
+			$avg_all = number_format(round($hit_all/$at_bat_all,3),3);
+		}
+		if($obp_down == 0){
+			$obp_all = "-";
+		}else{
+			$obp_all = number_format(round($obp_up/$obp_down,3),3);
+		}
+		if($slg_down == 0){
+			$slg_all = "-";
+		}else{
+			$slg_all = number_format(round($slg_up/$slg_down,3),3);
+		}
+		if($ops_obp_down == 0 || $ops_slg_down == 0){
+			$ops_all = "-";
+		}else{
+			$ops_all = number_format(round(($ops_obp_up/$ops_obp_down)+($ops_slg_up/$ops_slg_down),3),3);
+		}
+		$hit_table_summary = "<td>".$i."</td><td>".$avg_all."</td><td>".$at_game_all.$back_count_game."</td><td>".$at_bat_all."</td><td>".$hit_all."</td><td>".$hr_all."</td><td>".$bb_all."</td><td>".$rs_all.$back_count_rs."</td><td>".$rbi_all."</td><td>".$sb_all.$back_count_sb."</td><td>".$obp_all.$back_count_obp."</td><td>".$slg_all.$back_count_slg."</td><td>".$ops_all.$back_count_ops."</td>";
+	}
+	//투수
+	$pit_record_query = "SELECT league.name AS league_name, 
+		league_info.years AS league_years, 
+		league_record_pit.*, 
+		user_player_record.no AS user_player_record_no,
+		ROUND((er * 7)/(inning/3),2) as era, 
+		ROUND((rs * 7)/(inning/3),2) as rsa, 
+		ROUND((win_games)/(win_games + lose_games),3) as pct 
+	FROM user_player_record JOIN league_record_pit JOIN league_info JOIN league 
+	WHERE user_player_record.player='$player_no' AND position='2' AND league_record_pit.no = user_player_record.record AND league_record_pit.league_info = league_info.no AND league_info.league = league.no 
+	ORDER BY league_info.years DESC, league.created_at";
+	$pit_record_result = mysqli_query($conn,$pit_record_query);
+	$pit_table_basic = "";
+	$i = 0;
+	$game_count = 0;
+	$hit_count = 0;
+	$rs_count = 0;
+	$er_count = 0;
+	$whip_count = 0;
+	$bb_count = 0;
+	$hit_all = 0;
+	$inning_all = 0;
+	$at_game_all = 0;
+	$win_games_all = 0;
+	$lose_games_all = 0;
+	$er_all = 0;
+	$rs_all = 0;
+	$so_all = 0;
+	$bb_all = 0;
+	$rsa_down = 0;
+	$era_down = 0;
+	$whip_up = 0;
+	$whip_down = 0;
+	while($pit_record_row = mysqli_fetch_array($pit_record_result)){
+		$i++;
+		if($pit_record_row['pitcher_count'] == '9999'){
+			$pitcher_count = "-";
+		}else{
+			$pitcher_count = $pit_record_row['pitcher_count'];
+		}
+		if($pit_record_row['rs'] == '9999'){
+			$rs = "-";
+			$rsa = "-";
+		}else{
+			$rs = $pit_record_row['rs'];
+			$rs_count++;
+			$rs_all += $pit_record_row['rs'];
+			if($pit_record_row['inning'] == 0){
+				$rsa = "-";
+			}else{
+				$rsa = $pit_record_row['rsa'];
+				$rs_down += $pit_record_row['inning'];
+			}
+		}
+		if($pit_record_row['er'] == '9999'){
+			$er = "-";
+			$era = "-";
+		}else{		
+			$er = $pit_record_row['er'];
+			$er_count++;
+			$er_all += $pit_record_row['er'];
+			if($pit_record_row['inning'] == 0){
+				$era = "-";
+			}else{
+				$era = $pit_record_row['era'];
+				$era_down += $pit_record_row['inning'];
+			}
+		}
+		if($pit_record_row['pct']){
+			$pct = $pit_record_row['pct'];
+		}else{
+			$pct = "-";
+		}
+		$h_inning = ($pit_record_row['inning'] - ($pit_record_row['inning'] % 3)) / 3;
+		if($pit_record_row['inning'] % 3 == 0){
+			$f_inning = "";
+		}else if($pit_record_row['inning'] % 3 == 1){
+			$f_inning = "⅓";
+		}else if($pit_record_row['inning'] % 3 == 2){
+			$f_inning = "⅔";
+		}
+		if($pit_record_row['hit'] == '9999' || $pit_record_row['bb'] == '9999'){
+			if($pit_record_row['inning'] == '0'){
+				if($pit_record_row['hit'] == '9999'){
+					$hit = "-";
+				}else{
+					$hit = $pit_record_row['hit'];
+					$hit_all += $pit_record_row['hit'];
+					$hit_count++;
+				}
+				if($pit_record_row['bb'] == '9999'){
+					$bb = "-";
+				}else{
+					$bb = $pit_record_row['bb'];
+					$bb_all += $pit_record_row['bb'];
+					$bb_count++;
+				}
+				if($hit == "-" || $bb = "-"){
+					if($pit_record_row['hbp'] == '9999'){
+						$hbp = "-";
+						$whip_up += $pit_record_row['hit'] + $pit_record_row['bb'];
+						$whip_count++;
+					}else{
+						$hbp = $pit_record_row['hbp'];
+						$bb_all += $pit_record_row['hbp'];
+						$whip_up += $pit_record_row['hit'] + $pit_record_row['bb'] + $pit_record_row['hbp'];
+						$whip_count++;
+					}
+				}
+				$whip = "-";
+			}else{
+				if($pit_record_row['hit'] == '9999'){
+					$hit = "-";
+				}else{
+					$hit = $pit_record_row['hit'];
+					$hit_all += $pit_record_row['hit'];
+					$hit_count++;
+				}
+				if($pit_record_row['bb'] == '9999'){
+					$bb = "-";
+				}else{
+					$bb = $pit_record_row['bb'];
+					$bb_all += $pit_record_row['bb'];
+					$bb_count++;
+				}
+				if($pit_record_row['hbp'] == '9999'){
+					$hbp = "-";
+				}else{
+					$hbp = $pit_record_row['hbp'];
+					$bb_all += $pit_record_row['hbp'];
+				}
+				$whip = "-";
+			}
+		}else{
+			$hit = $pit_record_row['hit'];
+			$bb = $pit_record_row['bb'];
+			$hit_all += $pit_record_row['hit'];
+			$bb_all += $pit_record_row['bb'];
+			$hit_count++;
+			$bb_count++;
+			if($pit_record_row['hbp'] == '9999'){
+				$hbp = "-";
+				$whip = number_format(round(($pit_record_row['hit'] + $pit_record_row['bb'])/($pit_record_row['inning']/3),2),2);
+				$whip_up += $pit_record_row['hit'] + $pit_record_row['bb'];
+				$whip_down += $pit_record_row['inning'];
+				$whip_count++;
+			}else{
+				$hbp = $pit_record_row['hbp'];
+				$bb_all += $pit_record_row['hbp'];
+				$whip = number_format(round(($pit_record_row['hit'] + $pit_record_row['bb'] + $pit_record_row['hbp'])/($pit_record_row['inning']/3),2),2);
+				$whip_up += $pit_record_row['hit'] + $pit_record_row['bb'] + $pit_record_row['hbp'];
+				$whip_down += $pit_record_row['inning'];
+				$whip_count++;
+			}
+		}
+		if($pit_record_row['at_game'] == '9999'){
+			$at_game = "-";
+		}else{
+			$at_game = $pit_record_row['at_game'];
+			$at_game_all += $pit_record_row['at_game'];
+			$game_count++;
+		}
+		if($pit_record_row['hold_games'] == '9999'){
+			$hold_games = "-";
+		}else{
+			$hold_games = $pit_record_row['hold_games'];
+		}
+		$win_games_all += $pit_record_row['win_games'];
+		$lose_games_all += $pit_record_row['lose_games'];
+		$so_all += $pit_record_row['so'];
+		$inning_all += $pit_record_row['inning'];
+		$pit_no = $pit_record_row['user_player_record_no'];
+		if(mb_strlen($pit_record_row['league_name'], 'UTF-8') <= 11){
+			$league_name = "<td>".$pit_record_row['league_name']."</td>";
+		}else{
+			$league_name = "<td title='".$pit_record_row['league_name']."'>".mb_substr($pit_record_row['league_name'], 0, 10, 'UTF-8')."‥</td>";
+		}
+		$pit_table_basic = $pit_table_basic."<tr>
+			<td>".$i."</td><td>".$pit_record_row['league_years']."</td>".$league_name."<td>".$pit_record_row['team_name']."</td><td>".$era."</td><td>".$rsa."</td><td>".$at_game."</td><td>".$pit_record_row['win_games']."</td><td>".$pit_record_row['lose_games']."</td><td>".$hold_games."</td><td>".$pit_record_row['save_games']."</td><td>".$pitcher_count."</td><td>".$h_inning.$f_inning."</td><td>".$er."</td><td>".$rs."</td><td>".$hit."</td><td>".$pit_record_row['hr']."</td><td>".$bb."</td><td>".$hbp."</td><td>".$pit_record_row['so']."</td><td>".$pct."</td><td>".$whip."</td><td><a href='javascript:;' onclick='delete_event($pit_no)'><i class='fa fa-trash' style='color:red'></i></a></td>
+		</tr>";
+	}
+	if($i > 0){
+		if($rsa_down == 0){
+			$rsa_all = "-";
+		}else{
+			$rsa_all = number_format(round(($rs_all*7)/($rsa_down/3),2),2);
+		}
+		if($era_down == 0){
+			$era_all = "-";
+		}else{
+			$era_all = number_format(round(($er_all*7)/($era_down/3),2),2);
+		}
+		if($win_games_all+$lose_games_all == 0){
+			$pct_all = "-";
+		}else{
+			$pct_all = number_format(round(($win_games_all)/($win_games_all+$lose_games_all),3),3);
+		}
+		if($whip_down == 0){
+			$whip_all = "-";
+		}else{
+			$whip_all = number_format(round($whip_up/($whip_down/3),2),2);
+		}
+		$h_inning = ($inning_all - ($inning_all % 3)) / 3;
+		if($inning_all % 3 == 0){
+			$f_inning = "";
+		}else if($inning_all % 3 == 1){
+			$f_inning = "⅓";
+		}else if($inning_all % 3 == 2){
+			$f_inning = "⅔";
+		}
+		if($i != $game_count){
+			$back_count_game = " (".$game_count.")";
+		}else{
+			$back_count_game = "";
+		}
+		if($i != $hit_count){
+			$back_count_hit = " (".$hit_count.")";
+		}else{
+			$back_count_hit = "";
+		}
+		if($i != $bb_count){
+			$back_count_bb = " (".$bb_count.")";
+		}else{
+			$back_count_bb = "";
+		}
+		if($i != $rs_count){
+			$back_count_rs = " (".$rs_count.")";
+		}else{
+			$back_count_rs = "";
+		}
+		if($i != $er_count){
+			$back_count_er = " (".$er_count.")";
+		}else{
+			$back_count_er = "";
+		}
+		if($i != $whip_count){
+			$back_count_whip = " (".$whip_count.")";
+		}else{
+			$back_count_whip = "";
+		}
+		$pit_table_summary = "<td>".$i."</td><td>".$era_all.$back_count_er."</td><td>".$rsa.$back_count_rs."</td><td>".$at_game_all.$back_count_game."</td><td>".$win_games_all."</td><td>".$lose_games_all."</td><td>".$pct_all."</td><td>".$er_all.$back_count_er."</td><td>".$rs_all.$back_count_rs."</td><td>".$h_inning.$f_inning."</td><td>".$hit_all.$back_count_hit."</td><td>".$so_all."</td><td>".$whip_all.$back_count_whip."</td>";
+	}
+	mysqli_close($conn);
+}
+?>
+
+<!-- IE8 에서 HTML5 요소와 미디어 쿼리를 위한 HTML5 shim 와 Respond.js -->
+<!-- WARNING: Respond.js 는 당신이 file:// 을 통해 페이지를 볼 때는 동작하지 않습니다. -->
+<!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+<link href="css/dataTables.bootstrap.min.css" rel="stylesheet">
+
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
+<script src="https://cdn.datatables.net/fixedcolumns/3.3.0/js/dataTables.fixedColumns.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+    $('#recode_hitplay1').DataTable({
+    	// 표시 건수기능 숨기기
+        lengthChange: false,
+        // 검색 기능 숨기기
+        searching: false,
+        // 페이징 기능 숨기기
+        paging: false,
+
+    });
+    $('#recode_pitchplay').DataTable({
+        // 표시 건수기능 숨기기
+        lengthChange: false,
+        // 검색 기능 숨기기
+        searching: false,
+        // 페이징 기능 숨기기
+        paging: false,
+    });
+} );
+</script>
+
+<div class="ro_subpage ">
+	<div class="container-fluid ro_subpage_title_img ro_posi_r">
+		<img src="img/subpage_title/2019league_titleimg.jpg">
+		<div class="ro_subpage_nav">
+			<p>공식기록</p>
+			<ul>
+				<li>Home</li>
+				<li>User</li>
+				<li>공식기록</li>
+			</ul>
+		</div>
+	</div>
+	
+	<div class="container ro_subpage_content ro_subpage_recode">
+		<div class="ro_subpage_recode_tab">
+			<ul id="myTab" class="nav nav-tabs" role="tablist">
+				<li role="presentation" class="active"><a href="#official" id="official-tab" role="tab" data-toggle="tab" aria-controls="official" aria-expanded="false">공식기록</a></li>
+				<li role="presentation" class=""><a href="record_none.html">비공식기록</a></li>
+				<li role="presentation" class=""><a href="record_test.html">연습·용병기록</a></li>
+			</ul>
+			<div id="myTabContent" class="tab-content ">
+				<div role="tabpanel" class="tab-pane fade active in ro_color_b" id="official" aria-labelledby="official-tab">
+					<div class="to_titlebar">
+						선수정보
+					</div>
+					<hr>
+					<div class="to_page_content2 to_mb_30 table-responsive">
+						<table class="table recode_player_table">
+							<tr>
+								<th><img src="<?=$user_img?>"></th>
+								<td>
+									<div class="recode_player"><span><?=$player_row['back_num']?></span><?=$user_row['name']?></div>
+									<div class="recode_player_info_table table-responsive">
+										<table class="table">
+											<tr>
+												<th>주활동지역</th><td><?=$address?></td>
+												<th>주활동리그</th><td><?=$playerclass?></td>
+												<th>주포지션</th><td><?=$position?></td>
+											</tr>
+											<tr>
+												<th>생년월일</th><td><?=$birth?></td>
+												<th>신장/체중</th><td><?=$playertall?> / <?=$playerweight?></td>
+											</tr>
+											<tr>
+												<th>선출여부</th><td><?=$playercheck?></td>
+												<th>투/타</th><td><?=$hitpitch?></td>
+											</tr>
+										</table>
+									</div>
+								</td>
+							</tr>
+						</table>
+					</div><!-- 선수 정보 끝 -->
+					
+					<?if($hit_table_basic){ ?>
+					<div class="to_titlebar">
+						타자 - 평점모형
+					</div>
+					<hr>
+					<div class="to_page_content2 table-responsive to_mb_30">
+						<table class="table table_h_b">
+							<tr>
+								<th>RECORD</th><th>AVG</th><th>G</th><th>AB</th><th>H</th><th>HR</th><th>BB</th><th>R</th><th>RBI</th><th>SB</th><th>OBP</th><th>SLG</th><th>OPS</th>
+							</tr>
+							<tr>
+								<?=$hit_table_summary;?>
+							</tr>
+							<tr>
+								<th>XBH</th><th>BB/K</th><th>ISO</th><th>OPS+</th><th>GPA</th><th>XR</th><th>XR/21</th><th>RC</th><th>RC/21</th><th>wOBA</th><th>wRAA</th><th>RAA</th><th>WAR</th>
+							</tr>
+							<tr>
+								<?=$hit_table_summary;?>
+							</tr>
+						</table>
+					</div>
+					<div class="row to_mb_30">
+						<div class="col-md-12 col-xs-12">
+							<div class="to_border" style="padding:20px">
+								 000님은 xxx형 타자 상위 00%
+							</div>
+						</div>
+						<div class="col-md-3 col-xs-12">
+							<div class="to_border">
+								<canvas id="myChart3" width="100%" height="<?=$model_pie?>"></canvas>
+							</div>
+						</div>
+						<div class="col-md-3 col-xs-12">
+							<div class="to_border">
+								<canvas id="myChart" width="100%" height="<?=$model_radar?>"></canvas>
+							</div>
+						</div>
+						<div class="col-md-6 col-xs-12">
+							<div class="to_border">
+								<canvas id="myChart2" width="100%" height="<?=$model_bar?>"></canvas>
+							</div>
+						</div>
+						<div class="col-md-12 col-xs-12">
+							<div class="to_border heatmap_chart">
+								<table>
+									<thead>
+										<tr>
+											<th>파워</th><th>정확성</th><th>선구안</th><th>주루</th><th>스타성</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr><td style="background-color:#ff0000;">2루타<br><br><br>SSS</td><td style="background-color:#0000ff;">안타<br><br><br>A</td><td style="background-color:#00ff00;">볼넷<br><br><br>D</td><td style="background-color:#ffff00;">도루<br><br><br>S</td><td style="background-color:#00ffff;">경기<br><br><br>B</td></tr>
+										<tr><td style="background-color:#ff0000;">장타<br><br><br>SS</td><td style="background-color:#0000ff;">타율<br><br><br>B+</td><td style="background-color:#00ff00;">삼진<br><br><br>F</td><td style="background-color:#ffff00;">3루타<br><br><br>A+</td><td style="background-color:#00ffff;">타점<br><br><br>C</td></tr>
+										<tr><td style="background-color:#ff0000;">장타율<br><br><br>S</td><td style="background-color:#0000ff;">희생타<br><br><br>B</td><td style="background-color:#00ff00;">볼넷/삼진<br><br><br>SSS</td><td style="background-color:#ffff00;">득점<br><br><br>A</td><td style="background-color:#00ffff;">홈런<br><br><br>D</td></tr>
+										<tr><td style="background-color:#ff0000;">순장타율<br><br><br>A+</td><td style="background-color:#0000ff;">컨택성공율<br><br><br>C</td><td style="background-color:#00ff00;">삼진율<br><br><br>SS</td><td style="background-color:#ffff00;">출루율<br><br><br>B+</td><td style="background-color:#00ffff;">OPS<br><br><br>F</td></tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+					<div class="to_titlebar">
+						현재 리그 요약
+					</div>
+					<hr>
+					<div class="to_page_content2 table-responsive to_mb_30">
+						<table class="table table_h_b">
+							<tr>
+								<th>리그명</th><th>AVG</th><th>G</th><th>AB</th><th>H</th><th>HR</th><th>BB</th><th>R</th><th>RBI</th><th>SB</th><th>OBP</th><th>SLG</th><th>OPS</th>
+							</tr>
+							<tr>
+								<td>A</td><td>0.000</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td>
+							</tr>
+							<tr>
+								<td>B</td><td>0.000</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td>
+							</tr>
+							<tr>
+								<td>C</td><td>0.000</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td>
+							</tr>
+						</table>
+					</div>
+					<div class="row to_mb_30">
+						<div class="col-md-12 col-xs-12">
+							<div class="to_titlebar">
+								A
+							</div>
+							<hr>
+						</div>
+						<div class="col-md-3 col-xs-6">
+							<div class="to_border">
+								<canvas id="myChart3_3" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+						<div class="col-md-3 col-xs-6">
+							<div class="to_border">
+								<canvas id="myChart3_4" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+						<div class="col-md-3 col-xs-6">
+							<div class="to_border">
+								<canvas id="myChart3_5" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+						<div class="col-md-3 col-xs-6">
+							<div class="to_border">
+								<canvas id="myChart3_6" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+					</div>
+					<div class="row to_mb_30">
+						<div class="col-md-12 col-xs-12">
+							<div class="to_titlebar">
+								B
+							</div>
+							<hr>
+						</div>
+						<div class="col-md-3 col-xs-6">
+							<div class="to_border">
+								<canvas id="myChart3_7" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+						<div class="col-md-3 col-xs-6">
+							<div class="to_border">
+								<canvas id="myChart3_8" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+						<div class="col-md-3 col-xs-6">
+							<div class="to_border">
+								<canvas id="myChart3_9" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+						<div class="col-md-3 col-xs-6">
+							<div class="to_border">
+								<canvas id="myChart3_10" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+					</div>
+					<div class="row to_mb_30">
+						<div class="col-md-12 col-xs-12">
+							<div class="to_titlebar">
+								C
+							</div>
+							<hr>						
+						</div>
+						<div class="col-md-3 col-xs-6">
+							<div class="to_border">
+								<canvas id="myChart3_11" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+						<div class="col-md-3 col-xs-6">
+							<div class="to_border">
+								<canvas id="myChart3_12" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+						<div class="col-md-3 col-xs-6">
+							<div class="to_border">
+								<canvas id="myChart3_13" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+						<div class="col-md-3 col-xs-6">
+							<div class="to_border">
+								<canvas id="myChart3_14" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+					</div>
+					<div class="row to_mb_30">
+						<div class="col-md-12 col-xs-12">
+							<div class="to_titlebar">
+								ALL
+							</div>
+							<hr>					
+						</div>
+						<div class="col-md-6 col-xs-12">
+							<div class="to_border">
+								<canvas id="myChart4" width="100%" height="<?=$now_league?>"></canvas>
+							</div>
+						</div>
+						<div class="col-md-6 col-xs-12">
+							<div class="to_border">
+								<canvas id="myChart5" width="100%" height="<?=$now_league?>"></canvas>
+							</div>
+						</div>
+					</div>			
+					<div class="to_titlebar">
+						최근 5년 기록 요약
+					</div>
+					<hr>
+					<div class="to_page_content2 table-responsive to_mb_30">
+						<table class="table table_h_b">
+							<tr>
+								<th>년도</th><th>AVG</th><th>G</th><th>AB</th><th>H</th><th>HR</th><th>BB</th><th>R</th><th>RBI</th><th>SB</th><th>OBP</th><th>SLG</th><th>OPS</th>
+							</tr>
+							<tr>
+								<td>2020</td><td>0.000</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td>
+							</tr>
+							<tr>
+								<td>2019</td><td>0.000</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td>
+							</tr>
+							<tr>
+								<td>2018</td><td>0.000</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td>
+							</tr>
+							<tr>
+								<td>2017</td><td>0.000</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td>
+							</tr>
+							<tr>
+								<td>2016</td><td>0.000</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td>
+							</tr>
+						</table>
+					</div>
+					<div class="row to_mb_30">
+						<div class="col-md-12 col-xs-12">
+							<div class="to_border">
+								<canvas id="myChart6" width="100%" height="<?=$years_5_height;?>"></canvas>
+							</div>
+						</div>
+						<div class="col-md-12 col-xs-12">
+							<div class="to_border">
+								<canvas id="myChart7" width="100%" height="<?=$years_5_height;?>"></canvas>
+							</div>
+						</div>
+					</div>
+
+					<?}?>
+					<?if($hit_table_basic){ ?>
+					<div class="to_titlebar">
+						누적 기록
+					</div>
+					<hr>
+					<div class="table-box-wrap">
+						<div class="to_page_content2 table-responsive to_mb_30 table-box">
+							<table class="table table_h_b recode_hitplay ro_table_12" id="recode_hitplay1">
+								<thead>
+									<tr>
+										<th>No</th><th>년도</th><th>리그명</th><th>팀명</th><th>AVG</th><th>G</th><th>PA</th><th>AB</th><th>HIT</th><th>2B</th><th>3B</th><th>HR</th><th>RBI</th><th>R</th><th>SB</th><th>BB</th><th>HBP</th><th>SO</th><th>SF</th><th>TB</th><th>XBH</th><th>OBP</th><th>SLG</th><th>OPS</th><th>삭제</th>
+									</tr>
+								</thead>
+								<tbody>
+									<?=$hit_table_basic;?>
+								</tbody>				
+							</table>
+						</div>
+					</div>
+					<div class="row to_mb_30">
+						<div class="col-md-6 col-xs-12">
+							<div class="to_border">
+								<canvas id="myChart8" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+						<div class="col-md-6 col-xs-12">
+							<div class="to_border">
+								<canvas id="myChart9" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+						<!--
+						<div class="col-md-6 col-xs-12" style="margin-bottom:30px;">
+							<div class="to_border">
+								<canvas id="myChart10" width="100%" height="50%"></canvas>
+							</div>
+						</div>
+						<div class="col-md-6 col-xs-12" style="margin-bottom:30px;">
+							<div class="to_border">
+								<canvas id="myChart11" width="100%" height="50%"></canvas>
+							</div>
+						</div>-->
+					</div>	
+					<?}?>
+					<?if($pit_table_basic){ ?>
+					<div class="to_titlebar">
+						기록요약 - 투수
+					</div>
+					<hr>
+					<div class="to_page_content2 table-responsive to_mb_30 ">
+						<table class="table table_h_b">
+							<thead>
+								<tr>
+									<th>RECORD</th><th>ERA</th><th>RA</th><th>G</th><th>WIN</th><th>LOSE</th><th>PCT</th><th>ER</th><th>R</th><th>IP</th><th>HIT</th><th>SO</th><th>WHIP</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<?=$pit_table_summary;?>
+								</tr>							
+							</tbody>
+						</table>
+					</div>
+					<? } ?>
+					<?if($pit_table_basic){ ?>
+					<div class="to_titlebar">
+						기본기록 - 투수
+					</div>
+					<hr>
+					<div class="table-box-wrap">
+						<div class="to_page_content2 table-responsive to_mb_30 table-box">
+							<table class="table table_h_b recode_pitcherplay ro_table_12" id="recode_pitchplay">
+								<thead>
+									<tr>
+										<th>No</th><th>년도</th><th>리그명</th><th>팀명</th><th>ERA</th><th>RA</th><th>G</th><th>WIN</th><th>LOSE</th><th>HOLD</th><th>SAVE</th><th>NP</th><th>IP</th><th>ER</th><th>R</th><th>HIT</th><th>HR</th><th>BB</th><th>HBP</th><th>SO</th><th>PCT</th><th>WHIP</th><th>삭제</th>
+									</tr>
+								</thead>
+								<tbody>
+									<?=$pit_table_basic;?>
+								</tbody>				
+							</table>
+						</div>
+					</div>
+					<? } ?>
+					
+					<!--
+					<div class="to_titlebar">
+						저장콘텐츠
+					</div>
+					<hr>
+					<div class="row to_mb_30">
+						<div class="col-xs-6 col-sm-6 col-md-3 recode_save_contents_list" onclick="location.href='#'">
+							<img src="../img/sampleimg/TRYOUT_DESIGN1-18.png">
+							<div class="recode_save_contents_list_info">
+								<p>퓨처스리그</p>
+								<span>2019</span>
+							</div>
+						</div>
+						
+						<div class="col-xs-6 col-sm-6 col-md-3 recode_save_contents_list" onclick="location.href='#'">
+							<img src="../img/sampleimg/TRYOUT_DESIGN1-20.png">
+							<div class="recode_save_contents_list_info">
+								<p>퓨처스리그</p>
+								<span>2019</span>
+							</div>
+						</div>
+						
+						<div class="col-xs-6 col-sm-6 col-md-3 recode_save_contents_list" onclick="location.href='#'">
+							<img src="../img/sampleimg/TRYOUT_DESIGN1-18.png">
+							<div class="recode_save_contents_list_info">
+								<p>퓨처스리그</p>
+								<span>2019</span>
+							</div>
+						</div>
+						
+						<div class="col-xs-6 col-sm-6 col-md-3 recode_save_contents_list" onclick="location.href='#'">
+							<img src="../img/sampleimg/TRYOUT_DESIGN1-30.png">
+							<div class="recode_save_contents_list_info">
+								<p>퓨처스리그</p>
+								<span>2019</span>
+							</div>
+						</div>
+					</div>-->
+					
+				</div>
+				
+				<!-- ---------------------------------------------------------------------------------------------------- -->
+				<!-- 비공식기록 TAB -->
+					
+				<div role="tabpanel" class="tab-pane fade ro_color_g" id="noneofficial" aria-labelledby="noneofficial-tab">
+					
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script>
+function delete_event(no){
+	if (confirm("정말 삭제하시겠습니까?") == true){
+		location.href="LeagueRecordDeleteProc.php?no="+no;
+	}else{ 
+		return;
+	}
+}
+Chart.pluginService.register({
+	beforeDraw: function (chart) {
+		if (chart.config.options.elements.center) {
+			//Get ctx from string
+			var ctx = chart.chart.ctx;
+
+			//Get options from the center object in options
+			var centerConfig = chart.config.options.elements.center;
+			var fontStyle = centerConfig.fontStyle || 'Arial';
+			var txt = centerConfig.text;
+			var color = centerConfig.color || '#000';
+			var sidePadding = centerConfig.sidePadding || 20;
+			var sidePaddingCalculated = (sidePadding/100) * (chart.innerRadius * 2)
+			//Start with a base font of 30px
+			ctx.font = "30px " + fontStyle;
+
+			//Get the width of the string and also the width of the element minus 10 to give it 5px side padding
+			var stringWidth = ctx.measureText(txt).width;
+			var elementWidth = (chart.innerRadius * 2) - sidePaddingCalculated;
+
+			// Find out how much the font can grow in width.
+			var widthRatio = elementWidth / stringWidth;
+			var newFontSize = Math.floor(30 * widthRatio);
+			var elementHeight = (chart.innerRadius * 2);
+
+			// Pick a new font size so it will not be larger than the height of label.
+			var fontSizeToUse = Math.min(newFontSize, elementHeight);
+
+			//Set font settings to draw it correctly.
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			var centerX = ((chart.chartArea.left + chart.chartArea.right) / 2);
+			var centerY = ((chart.chartArea.top + chart.chartArea.bottom) / 2);
+			ctx.font = fontSizeToUse+"px " + fontStyle;
+			ctx.fillStyle = color;
+
+			//Draw text in center
+			ctx.fillText(txt, centerX, centerY);
+		}
+	}
+});
+var ctx2 = document.getElementById('myChart');
+var myRadarChart = new Chart(ctx2, {
+    type: 'radar',
+    data: {
+		labels: ['파워', '정확성', '선구안', '주루', '스타성'],
+		datasets: [{
+			label: 'My Record',
+			data: [99, 80, 90, 77, 69],
+			backgroundColor : 'rgba(0, 0, 255, 0.3)',
+			borderColor: 'rgba(0, 0, 255, 0.7)',
+			pointBackgroundColor: 'rgba(0, 0, 255, 0.7)',
+			pointBorderColor: '#fff'
+		},{
+			label: 'League Record',
+			data: [70, 60, 70, 39, 80],
+			backgroundColor: 'rgba(179, 181, 198, 0.2)',
+            borderColor: 'rgba(179, 181, 198, 0.7)',
+            pointBackgroundColor: 'rgba(179, 181, 198, 0.7)',
+            pointBorderColor: '#fff'
+		}]
+	},
+    options : {
+		scale: {
+			ticks: {
+				suggestedMin: 0,
+				suggestedMax: 100
+			}
+		},
+		title: {
+            display: true,
+            text: '그래프1',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		elements: {
+			line: {
+				tension:0,
+				borderWidth:3
+			}
+		},
+		tooltips: {
+			enabled: false
+		}
+	}
+});
+var ctx2 = document.getElementById('myChart2');
+var myBarChart = new Chart(ctx2, {
+    type: 'horizontalBar',
+    data: {
+		labels: ['WAR', 'WPA', '볼넷/삼진', '삼진율', '컨택성공율'],
+		datasets: [{
+			data: [100, 80, 90, 77, 69],
+			label: 'My Record',
+			backgroundColor : 'rgba(0, 0, 255, 0.7)'
+		},{
+			data: [90, 67, 76, 80, 40],
+			label: 'League Record',
+			backgroundColor: 'rgba(179, 181, 198, 0.7)'
+		}]
+	},
+	options: {
+		scales: {
+		   xAxes: [{
+				ticks: {
+					min: 0,
+					max: 100
+				}
+		   }]
+	   },
+		title: {
+            display: true,
+            text: '그래프2',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        }
+	}
+});
+var ctx = document.getElementById('myChart3');
+var myDoughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+		datasets: [{
+			data: [80, 20],
+			backgroundColor: [
+                'rgba(0, 0, 255, 0.6)'
+            ],
+		}]
+	},
+	options: {
+        legend: {
+            display: false
+		},
+		responsive: true,
+		display : "inline-block",
+		tooltips: {
+			enabled: false
+		},
+		elements: {
+			center: {
+			text: '20%',
+			color: 'rgba(0, 0, 255, 0.6)', //Default black
+			fontStyle: 'Do Hyeon', //Default Arial
+			sidePadding: 15 //Default 20 (as a percentage)
+			}
+		},
+		title: {
+            display: true,
+            text: '그래프3',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        }
+	}
+});
+var ctx = document.getElementById('myChart3_3');
+var myDoughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+		datasets: [{
+			data: [90, 10],
+			backgroundColor: [
+                'rgba(0, 0, 255, 0.6)'
+            ],
+		}]
+	},
+	options: {
+        legend: {
+            display: false
+		},
+		responsive: true,
+		display : "inline-block",
+		tooltips: {
+			enabled: false
+		},
+		elements: {
+			center: {
+			text: '90점',
+			color: 'rgba(0, 0, 255, 0.6)', //Default black
+			fontStyle: 'Do Hyeon', //Default Arial
+			sidePadding: 15 //Default 20 (as a percentage)
+			}
+		},
+		title: {
+            display: true,
+            text: '그래프3_2',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        }
+	}
+});
+var ctx = document.getElementById('myChart3_4');
+var myDoughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+		datasets: [{
+			data: [90, 10],
+			backgroundColor: [
+                'rgba(0, 0, 255, 0.6)'
+            ],
+		}]
+	},
+	options: {
+        legend: {
+            display: false
+		},
+		responsive: true,
+		display : "inline-block",
+		tooltips: {
+			enabled: false
+		},
+		elements: {
+			center: {
+			text: '90점',
+			color: 'rgba(0, 0, 255, 0.6)', //Default black
+			fontStyle: 'Do Hyeon', //Default Arial
+			sidePadding: 15 //Default 20 (as a percentage)
+			}
+		},
+		title: {
+            display: true,
+            text: '그래프3_2',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        }
+	}
+});
+var ctx = document.getElementById('myChart3_5');
+var myDoughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+		datasets: [{
+			data: [90, 10],
+			backgroundColor: [
+                'rgba(0, 0, 255, 0.6)'
+            ],
+		}]
+	},
+	options: {
+        legend: {
+            display: false
+		},
+		responsive: true,
+		display : "inline-block",
+		tooltips: {
+			enabled: false
+		},
+		elements: {
+			center: {
+			text: '90점',
+			color: 'rgba(0, 0, 255, 0.6)', //Default black
+			fontStyle: 'Do Hyeon', //Default Arial
+			sidePadding: 15 //Default 20 (as a percentage)
+			}
+		},
+		title: {
+            display: true,
+            text: '그래프3_2',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        }
+	}
+});
+var ctx = document.getElementById('myChart3_6');
+var myDoughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+		datasets: [{
+			data: [90, 10],
+			backgroundColor: [
+                'rgba(0, 0, 255, 0.6)'
+            ],
+		}]
+	},
+	options: {
+        legend: {
+            display: false
+		},
+		responsive: true,
+		display : "inline-block",
+		tooltips: {
+			enabled: false
+		},
+		elements: {
+			center: {
+			text: '90점',
+			color: 'rgba(0, 0, 255, 0.6)', //Default black
+			fontStyle: 'Do Hyeon', //Default Arial
+			sidePadding: 15 //Default 20 (as a percentage)
+			}
+		},
+		title: {
+            display: true,
+            text: '그래프3_2',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        }
+	}
+});
+var ctx = document.getElementById('myChart3_7');
+var myDoughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+		datasets: [{
+			data: [90, 10],
+			backgroundColor: [
+                'rgba(0, 0, 255, 0.6)'
+            ],
+		}]
+	},
+	options: {
+        legend: {
+            display: false
+		},
+		responsive: true,
+		display : "inline-block",
+		tooltips: {
+			enabled: false
+		},
+		elements: {
+			center: {
+			text: '90점',
+			color: 'rgba(0, 0, 255, 0.6)', //Default black
+			fontStyle: 'Do Hyeon', //Default Arial
+			sidePadding: 15 //Default 20 (as a percentage)
+			}
+		},
+		title: {
+            display: true,
+            text: '그래프3_2',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        }
+	}
+});
+var ctx = document.getElementById('myChart3_8');
+var myDoughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+		datasets: [{
+			data: [90, 10],
+			backgroundColor: [
+                'rgba(0, 0, 255, 0.6)'
+            ],
+		}]
+	},
+	options: {
+        legend: {
+            display: false
+		},
+		responsive: true,
+		display : "inline-block",
+		tooltips: {
+			enabled: false
+		},
+		elements: {
+			center: {
+			text: '90점',
+			color: 'rgba(0, 0, 255, 0.6)', //Default black
+			fontStyle: 'Do Hyeon', //Default Arial
+			sidePadding: 15 //Default 20 (as a percentage)
+			}
+		},
+		title: {
+            display: true,
+            text: '그래프3_2',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        }
+	}
+});
+var ctx = document.getElementById('myChart3_9');
+var myDoughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+		datasets: [{
+			data: [90, 10],
+			backgroundColor: [
+                'rgba(0, 0, 255, 0.6)'
+            ],
+		}]
+	},
+	options: {
+        legend: {
+            display: false
+		},
+		responsive: true,
+		display : "inline-block",
+		tooltips: {
+			enabled: false
+		},
+		elements: {
+			center: {
+			text: '90점',
+			color: 'rgba(0, 0, 255, 0.6)', //Default black
+			fontStyle: 'Do Hyeon', //Default Arial
+			sidePadding: 15 //Default 20 (as a percentage)
+			}
+		},
+		title: {
+            display: true,
+            text: '그래프3_2',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        }
+	}
+});
+var ctx = document.getElementById('myChart3_10');
+var myDoughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+		datasets: [{
+			data: [90, 10],
+			backgroundColor: [
+                'rgba(0, 0, 255, 0.6)'
+            ],
+		}]
+	},
+	options: {
+        legend: {
+            display: false
+		},
+		responsive: true,
+		display : "inline-block",
+		tooltips: {
+			enabled: false
+		},
+		elements: {
+			center: {
+			text: '90점',
+			color: 'rgba(0, 0, 255, 0.6)', //Default black
+			fontStyle: 'Do Hyeon', //Default Arial
+			sidePadding: 15 //Default 20 (as a percentage)
+			}
+		},
+		title: {
+            display: true,
+            text: '그래프3_2',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        }
+	}
+});
+var ctx = document.getElementById('myChart3_11');
+var myDoughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+		datasets: [{
+			data: [90, 10],
+			backgroundColor: [
+                'rgba(0, 0, 255, 0.6)'
+            ],
+		}]
+	},
+	options: {
+        legend: {
+            display: false
+		},
+		responsive: true,
+		display : "inline-block",
+		tooltips: {
+			enabled: false
+		},
+		elements: {
+			center: {
+			text: '90점',
+			color: 'rgba(0, 0, 255, 0.6)', //Default black
+			fontStyle: 'Do Hyeon', //Default Arial
+			sidePadding: 15 //Default 20 (as a percentage)
+			}
+		},
+		title: {
+            display: true,
+            text: '그래프3_2',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        }
+	}
+});
+var ctx = document.getElementById('myChart3_12');
+var myDoughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+		datasets: [{
+			data: [90, 10],
+			backgroundColor: [
+                'rgba(0, 0, 255, 0.6)'
+            ],
+		}]
+	},
+	options: {
+        legend: {
+            display: false
+		},
+		responsive: true,
+		display : "inline-block",
+		tooltips: {
+			enabled: false
+		},
+		elements: {
+			center: {
+			text: '90점',
+			color: 'rgba(0, 0, 255, 0.6)', //Default black
+			fontStyle: 'Do Hyeon', //Default Arial
+			sidePadding: 15 //Default 20 (as a percentage)
+			}
+		},
+		title: {
+            display: true,
+            text: '그래프3_2',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        }
+	}
+});
+var ctx = document.getElementById('myChart3_13');
+var myDoughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+		datasets: [{
+			data: [90, 10],
+			backgroundColor: [
+                'rgba(0, 0, 255, 0.6)'
+            ],
+		}]
+	},
+	options: {
+        legend: {
+            display: false
+		},
+		responsive: true,
+		display : "inline-block",
+		tooltips: {
+			enabled: false
+		},
+		elements: {
+			center: {
+			text: '90점',
+			color: 'rgba(0, 0, 255, 0.6)', //Default black
+			fontStyle: 'Do Hyeon', //Default Arial
+			sidePadding: 15 //Default 20 (as a percentage)
+			}
+		},
+		title: {
+            display: true,
+            text: '그래프3_2',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        }
+	}
+});
+var ctx = document.getElementById('myChart3_14');
+var myDoughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+		datasets: [{
+			data: [90, 10],
+			backgroundColor: [
+                'rgba(0, 0, 255, 0.6)'
+            ],
+		}]
+	},
+	options: {
+        legend: {
+            display: false
+		},
+		responsive: true,
+		display : "inline-block",
+		tooltips: {
+			enabled: false
+		},
+		elements: {
+			center: {
+			text: '90점',
+			color: 'rgba(0, 0, 255, 0.6)', //Default black
+			fontStyle: 'Do Hyeon', //Default Arial
+			sidePadding: 15 //Default 20 (as a percentage)
+			}
+		},
+		title: {
+            display: true,
+            text: '그래프3_2',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        }
+	}
+});
+var ctx2 = document.getElementById('myChart4');
+var myLineChart = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+		labels : ['A', 'B', 'C'],
+		datasets : [{
+			data : [0.345, 0.456, 0.754],
+			label: 'AVG',
+			backgroundColor : 'rgba(0, 0, 255, 0.6)'
+		},{
+			data : [0.445, 0.406, 0.454],
+			label: 'LEAGUE AVG',
+			backgroundColor: 'rgba(179, 181, 198, 0.6)'
+		}]
+	},
+	options: {
+		scales:{
+		   yAxes:[{
+				ticks: {
+					min: 0
+				}
+		   }]
+		},
+		title: {
+            display: true,
+            text: '그래프6',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: false
+		}
+	}
+});
+var ctx2 = document.getElementById('myChart5');
+var myBarChart = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+		labels : ['A', 'B', 'C'],
+		datasets: [{
+			data: [1.383, 0.870, 1.184],
+			stack: 'Stack 1',
+			label: 'OPS',
+			type: 'line',
+			fill: false,
+			backgroundColor : 'rgba(255, 99, 132, 1)',
+			showLine: false,
+			pointStyle: 'line',
+			pointBorderWidth: 3,
+			pointRadius: 15,
+			pointBorderColor: 'rgba(255, 99, 132, 1)',
+			pointHoverBorderWidth: 3,
+			pointHoverRadius: 15
+		},{
+			data: [0.762, 0.500, 0.655],
+			stack: 'Stack 0',
+			label: 'SLG',
+			backgroundColor : 'rgba(54, 162, 235, 1)'
+		},{
+			data: [0.621, 0.370, 0.529],
+			stack: 'Stack 0',
+			label: 'OBP',
+			backgroundColor : 'rgba(75, 192, 192, 1)'
+		}]
+	},
+	options: {
+		scales: {
+		   xAxes: [{
+				stacked: true
+		   }]
+		},
+		title: {
+            display: true,
+            text: '그래프7',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: false
+		}
+	}
+});
+var ctx2 = document.getElementById('myChart6');
+var myLineChart = new Chart(ctx2, {
+    type: 'line',
+    data: {
+		labels : ['2016년', '2017년', '2018년', '2019년', '2020년'],
+		datasets : [{
+			data : [0.456, 0.754, 0.432, 0.775, 0.647],
+			label: 'AVG',
+			backgroundColor : 'rgba(0, 0, 255, 0.8)',
+			borderColor: 'rgba(0, 0, 255, 0.6)',
+			fill : false
+		},{
+			data : [0.406, 0.454, 0.492, 0.475, 0.347],
+			label: 'LEAGUE AVG',
+			backgroundColor: 'rgba(179, 181, 198, 0.8)',
+			borderColor: 'rgba(179, 181, 198, 0.6)',
+			fill : false
+		}]
+	},
+	options: {
+		title: {
+            display: true,
+            text: '그래프4',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: false
+		}
+	}
+});
+var ctx2 = document.getElementById('myChart7');
+var myBarChart = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+		labels : ['2016년', '2017년', '2018년', '2019년', '2020년'],
+		datasets: [{
+			data: [0.870, 1.184, 1.521, 1.323, 0.621 + 0.529],
+			stack: 'Stack 1',
+			label: 'OPS',
+			type: 'line',
+			fill: false,
+			backgroundColor : 'rgba(255, 99, 132, 1)',
+			borderColor: 'rgba(255, 99, 132, 0.7)'
+		},{
+			data: [0.500, 0.655, 0.818, 0.683, 0.529],
+			stack: 'Stack 0',
+			label: 'SLG',
+			backgroundColor : 'rgba(54, 162, 235, 1)'
+		},{
+			data: [0.370, 0.529, 0.703, 0.640, 0.621],
+			stack: 'Stack 0',
+			label: 'OBP',
+			backgroundColor : 'rgba(75, 192, 192, 1)'
+		}]
+	},
+	options: {
+		scales: {
+		   xAxes: [{
+				stacked: true
+		   }]
+	   },
+		title: {
+            display: true,
+            text: '그래프5',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: false
+		}
+	}
+});
+var ctx2 = document.getElementById('myChart8');
+var myBarChart = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+		labels : ['2015년', '2016년', '2017년', '2018년', '2019년', '2020년'],
+		datasets: [{
+			data: [0.621, 0.500, 0.655, 0.818, 0.683, 0.529],
+			label: '누적 AVG',
+			type: 'line',
+			fill: false,
+			backgroundColor : 'rgba(255, 0, 0, 0.8)',
+			borderColor: 'rgba(255, 0, 0, 0.6)'
+		},{
+			data: [0.621, 0.370, 0.529, 0.703, 0.640, 0.621],
+			label: 'AVG',
+			backgroundColor : 'rgba(0, 0, 255, 0.6)'
+		}]
+	},
+	options: {
+		scales:{
+		   yAxes:[{
+				ticks: {
+					min: 0
+				}
+		   }]
+		},
+		title: {
+            display: true,
+            text: '그래프8',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: false
+		}
+	}
+});
+var ctx2 = document.getElementById('myChart9');
+var myBarChart = new Chart(ctx2, {
+    type: 'bar',
+    data: {
+		labels : ['2015년', '2016년', '2017년', '2018년', '2019년', '2020년'],
+		datasets: [{
+			data: [1.383, 0.870, 1.184, 1.521, 1.323, 0.621 + 0.529],
+			stack: 'Stack 1',
+			label: 'OPS',
+			type: 'line',
+			fill: false,
+			backgroundColor : 'rgba(255, 99, 132, 0.6)',
+			borderColor: 'rgba(255, 99, 132, 0.3)'
+		},{
+			data: [0.762, 0.500, 0.655, 0.818, 0.683, 0.529],
+			stack: 'Stack 0',
+			label: 'SLG',
+			backgroundColor : 'rgba(54, 162, 235, 0.6)'
+		},{
+			data: [0.621, 0.370, 0.529, 0.703, 0.640, 0.621],
+			stack: 'Stack 0',
+			label: 'OBP',
+			backgroundColor : 'rgba(75, 192, 192, 0.6)'
+		},{
+			data: [1.383, 0.970, 1.284, 1.421, 1.523, 0.821 + 0.529],
+			stack: 'Stack 3',
+			label: '누적 OPS',
+			type: 'line',
+			fill: false,
+			backgroundColor : 'rgba(255, 99, 132, 1)',
+			borderColor: 'rgba(255, 99, 132, 0.7)'
+		},{
+			data: [0.762, 0.500, 0.655, 0.818, 0.683, 0.529],
+			stack: 'Stack 2',
+			label: '누적 SLG',
+			backgroundColor : 'rgba(54, 162, 235, 1)'
+		},{
+			data: [0.621, 0.370, 0.529, 0.703, 0.640, 0.621],
+			stack: 'Stack 2',
+			label: '누적 OBP',
+			backgroundColor : 'rgba(75, 192, 192, 1)'
+		}]
+	},
+	options: {
+		scales: {
+		   xAxes: [{
+				stacked: true
+		   }]
+	   },
+		title: {
+            display: true,
+            text: '그래프9',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: false
+		}
+	}
+});
+/*
+var ctx2 = document.getElementById('myChart10');
+var mixedChart = new Chart(ctx2, {
+	type: 'bar',
+	data: {
+		labels: ['2014년', '2015년', '2016년', '2017년', '2018년', '2019년'],
+		datasets: [{
+			label: '전체',
+			data: [0.381, 0.385, 0.383, 0.381, 0.388, 0.400],
+			backgroundColor : 'rgba(56, 106, 205, 0.7)',
+			type: 'line',
+			fill: false,
+			order: 5
+		}, {
+			label: 'A',
+			data: [0.387, 0.379, 0.373, 0.377, 0.386, 0.400],
+			backgroundColor : 'rgba(220, 57, 18, 0.8)',
+			order: 1
+		}, {
+			label: 'B',
+			data: [0.359, 0.380, 0.370, 0.371, 0.377, 0.387],
+			backgroundColor : 'rgba(255, 153, 0, 0.8)',
+			order: 2
+		},  {
+			label: 'C',
+			data: [0.399, 0.401, 0.409, 0.391, 0.398, 0.407],
+			backgroundColor : 'rgba(16, 150, 24, 0.8)',
+			order: 3
+		}, {
+			label: 'D',
+			data: [0.351, 0.360, 0.378, 0.379, 0.377, 0.395],
+			backgroundColor : 'rgba(153, 0, 153, 0.8)',
+			order: 4
+		}]
+	},
+	options: {
+		title: {
+			display: true,
+			text: '그래프10',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+		}
+	}
+});
+var ctx2 = document.getElementById('myChart11');
+var scatterChart = new Chart(ctx2, {
+    type: 'scatter',
+    data: {
+        datasets: [{
+			pointBackgroundColor: 'rgba(56, 106, 205, 0.9)',
+			data: [{x: 0.621,y: 0.762},
+				{x: 0.640,y: 0.683}]
+        }],
+		xAxisID: 'SLG'
+    },
+    options: {
+		title: {
+			display: true,
+			text: '그래프11',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+		},
+		legend: {
+			display: false
+        },
+        scales: {
+            xAxes: [{
+                type: 'linear',
+                position: 'bottom',
+				scaleLabel: {
+					display: true,
+					labelString: 'SLG'
+				}
+            }],
+			yAxes: [{
+				scaleLabel: {
+					display: true,
+					labelString: 'OBP'
+				}
+		   }]
+        }
+    }
+});*/
+</script>
+
+<? include("footer/footer.html"); ?>
+</body>
+</html>

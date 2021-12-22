@@ -1,0 +1,64 @@
+<!DOCTYPE HTML>
+<html>
+<?
+	include "dbconn.php";
+	$league_rule_result = mysqli_query($conn,"SELECT * FROM league_rule WHERE league = '$no'");
+	$league_rule_row = mysqli_fetch_array($league_rule_result);
+?>
+	<body>
+		<div class="row" id="rule_table">
+			<table class="table table-bordered" style="vertical-align: middle;">
+				<thead>
+					<tr>
+						<th colspan="1" style="width:100%;text-align:center"><? echo $league_row['name']?> 규칙</th>
+					</tr>
+				</thead>
+				<? if($league_rule_row['contents']){?>
+				<tbody>
+					<tr>
+						<td colspan="1" style="width:100%">
+							<p id="leagueruleread"><? echo $league_rule_row['contents'];?></p>
+						</td>
+					</tr>
+				</tbody>
+				<? }?>
+			</table>
+			<? if($user_no == $pro_row['no']){?>
+			<div class="col-md-10"></div>
+			<div class="col-md-2">
+				<? if($league_rule_row['contents']){?>
+				<a class="btn btn-primary" href="javascript:;" onclick="rule_form_call()" role="button">수정</a>
+				<? } else {?>
+				<a class="btn btn-primary" href="javascript:;" onclick="rule_form_call()" role="button">등록</a>
+				<? } ?>
+			</div>
+			<? } ?>
+		</div>
+		<? if($user_no == $pro_row['no']){?>
+		<div id="edit_league_rule" style="display:none;width:100%">
+			<form name="league_rule_info" id="league_team_info" action="LeagueRuleUpdateProc.php" method="post">
+				<div class="row">
+					<div class="col-md-2 form-group">
+						<label for="leaguerule">리그 소개</label>
+					</div>
+					<div class="col-md-10 form-group">
+						<textarea class="form-control" style="resize:none" name="leaguerule" rows="20" id="leaguerule" aria-label="With textarea"><? echo $league_rule_row['contents'];?></textarea>
+					</div>
+				</div>
+				<input type="hidden" name="no" value="<?echo $no;?>">
+				<hr>							
+				<div class="row">
+					<div class="col-md-10"></div>
+					<div class="col-md-2 form-group">
+						<? if($league_rule_row['contents']){?>
+						<input type="submit" value="수정" class="btn btn-primary" onclick="league_rule()">
+						<? } else {?>
+						<input type="submit" value="등록" class="btn btn-primary" onclick="league_rule()">
+						<? } ?>
+					</div>
+				</div>
+			</form>
+		</div>
+		<? } ?>
+	</body>
+</html>

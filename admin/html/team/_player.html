@@ -1,0 +1,117 @@
+<!DOCTYPE HTML>
+<?
+	include "dbconn.php";
+	if(!$_GET['pos'] || $_GET['search']){
+		$main_active = "btn-secondary disabled";
+		$pos1_active = "btn-primary";
+		$pos2_active = "btn-primary";
+		$pos3_active = "btn-primary";
+		if($_GET['search']){
+			$search = $_GET['search'];
+			$query = "SELECT team_members.back_num, user.no as userno, user.name, team_members.position, player.img, player.leri_hit, player.leri_pic FROM team_members JOIN user JOIN player WHERE team_members.team='$no' AND player.no = team_members.player AND user.no = player.user AND team_members.states='1' AND user.name LIKE '%$search%' ORDER BY team_members.created_at ASC";
+		}else{
+			$query = "SELECT team_members.back_num, user.no as userno, user.name, team_members.position, player.img, player.leri_hit, player.leri_pic FROM team_members JOIN user JOIN player WHERE team_members.team='$no' AND player.no = team_members.player AND user.no = player.user AND team_members.states='1' ORDER BY team_members.created_at ASC";
+		}
+	}else if($_GET['pos'] == 1){
+		$main_active = "btn-primary";
+		$pos1_active = "btn-secondary disabled";
+		$pos2_active = "btn-primary";
+		$pos3_active = "btn-primary";
+		$query = "SELECT team_members.back_num, user.no as userno, user.name, team_members.position, player.img, player.leri_hit, player.leri_pic FROM team_members JOIN user JOIN player WHERE team_members.team='$no' AND player.no = team_members.player AND user.no = player.user AND team_members.states='1' AND team_members.position = '1' ORDER BY team_members.created_at ASC";
+	}else if($_GET['pos'] == 2){
+		$main_active = "btn-primary";
+		$pos1_active = "btn-primary";
+		$pos2_active = "btn-secondary disabled";
+		$pos3_active = "btn-primary";
+		$query = "SELECT team_members.back_num, user.no as userno, user.name, team_members.position, player.img, player.leri_hit, player.leri_pic FROM team_members JOIN user JOIN player WHERE team_members.team='$no' AND player.no = team_members.player AND user.no = player.user AND team_members.states='1' AND (team_members.position between '2' and '6') ORDER BY team_members.created_at ASC";
+	}else if($_GET['pos'] == 3){
+		$main_active = "btn-primary";
+		$pos1_active = "btn-primary";
+		$pos2_active = "btn-primary";
+		$pos3_active = "btn-secondary disabled";
+		$query = "SELECT team_members.back_num, user.no as userno, user.name, team_members.position, player.img, player.leri_hit, player.leri_pic FROM team_members JOIN user JOIN player WHERE team_members.team='$no' AND player.no = team_members.player AND user.no = player.user AND team_members.states='1' AND 6 < team_members.position ORDER BY team_members.created_at ASC";
+	}
+	$player_result = mysqli_query($conn, $query);
+?>
+<html>
+	<body>
+		<div class="row top-destination">
+			<div class="col-md-12" style="margin-bottom:10px">
+				<form action="team.html?team=page&no=3&page=player" class="form-inline element-animate" id="search-form" method="get">
+					<input type="hidden" name="team" value="page">
+					<input type="hidden" name="no" value="<? echo $no;?>">
+					<input type="hidden" name="page" value="player">
+					<input type="text" style="border:1px solid #dee2e6; border-right:0px;" name="search" class="form-control form-control-block search-input col-md-9" id="autocomplete" placeholder="이름으로 검색" required>
+					<button type="submit" class="btn btn-primary col-md-3">검색</button>		
+				</form>
+			</div>
+			<div class="col-md-2">
+				<a class="btn <?=$main_active?>" href="team.html?team=page&no=<? echo $no?>&page=player">전&nbsp;&nbsp;&nbsp;체</a>
+			</div>
+			<div class="col-md-2">
+				<a class="btn <?=$pos1_active?>" href="team.html?team=page&no=<? echo $no?>&page=player&pos=1">투&nbsp;&nbsp;&nbsp;수</a>
+			</div>
+			<div class="col-md-2">
+				<a class="btn <?=$pos2_active?>" href="team.html?team=page&no=<? echo $no?>&page=player&pos=2">내야수</a>
+			</div>
+			<div class="col-md-2">
+				<a class="btn <?=$pos3_active?>" href="team.html?team=page&no=<? echo $no?>&page=player&pos=3">외야수</a>
+			</div>
+			<div class="col-md-4"></div>
+			<br><br><br>
+			<? while($player_row = mysqli_fetch_array($player_result)){
+			if($player_row['back_num']){
+				$back_num = "No.".$player_row['back_num']."&nbsp;&nbsp;";
+			}
+			if($player_row['position'] == 1){
+				$position = "투수";
+			}else if($player_row['position'] == 2){
+				$position = "포수";
+			}else if($player_row['position'] == 3){
+				$position = "1루수";
+			}else if($player_row['position'] == 4){
+				$position = "2루수";
+			}else if($player_row['position'] == 5){
+				$position = "3루수";
+			}else if($player_row['position'] == 6){
+				$position = "유격수";
+			}else if($player_row['position'] == 7){
+				$position = "좌익수";
+			}else if($player_row['position'] == 8){
+				$position = "중견수";
+			}else if($player_row['position'] == 9){
+				$position = "우익수";
+			}else{
+				$position = "null";
+			}
+			if($player_row['leri_pic'] == 1){
+				$pic = "좌투";
+			}else if($player_row['leri_pic'] == 2){
+				$pic = "우투";
+			}else{
+				$pic = "";
+			}
+			if($player_row['leri_hit'] == 1){
+				$hit = "좌타";
+			}else if($player_row['leri_hit'] == 2){
+				$hit = "우타";
+			}else{
+				$hit = "";
+			}
+			?>		
+			<div class="col-md-4">
+				<a href="javascript:;" onclick="new_page('<? echo $player_row['userno'];?>')" class="place">
+				<!-- <a href="$player_row no" class="place"> -->
+					<?if($player_row['img']){?>
+					<img class="img-thumbnail" style="width:100%;height:200px" src="<? echo $player_row['img'];?>" alt="<? echo $player_row['name']?>">
+					<? } else {?>
+					<img class="img-thumbnail" style="width:100%;height:200px" src="images/none_player_img.png" alt="<? echo $player_row['name']?>">
+					<? } ?>
+					<h5><? echo $back_num.$player_row['name'];?></h5>
+					<p><? echo $position; ?>&nbsp;|&nbsp;<? echo $pic.$hit;?></p>
+				</a>
+			</div>
+			<? } ?>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE HTML>
+<html>
+	<body>
+		<? if(!$member_check_row){?>
+		<form name="members_form" action="TeamMembersInsertProc.php" method="post">
+			<div class="row">
+				<div class="col-md-2 form-group">
+					<label for="position">주 포지션</label>
+				</div>
+				<div class="col-md-10 form-group">
+					<select class="custom-select" id="position" name="position">
+						<option value="" selected>선택해 주세요</option>
+						<option value="1">투수</option>
+						<option value="2">포수</option>
+						<option value="3">1루수</option>
+						<option value="4">2루수</option>
+						<option value="5">3루수</option>
+						<option value="6">유격수</option>
+						<option value="7">좌익수</option>
+						<option value="8">중견수</option>
+						<option value="9">우익수</option>
+					</select>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-2 form-group">
+					<label for="back_num">등번호</label>
+				</div>
+				<div class="col-md-10 form-group">
+					<input type="text" name="back_num" id="back_num" class="form-control " placeholder="희망하는 등번호를 입력해 주세요" pattern="\d{1,2}" required>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-2 form-group">
+					<label for="phone">연락처</label>
+				</div>
+				<div class="col-md-10 form-group">
+					<input type="tel" name="phone" id="phone" class="form-control " placeholder="ex)010-1234-5678" pattern="(010)-\d{3,4}-\d{4}" value="<? echo $my_row['phone']?>" required>
+				</div>
+			</div>	
+			<div class="row">
+				<div class="col-md-2 form-group">
+					<label for="email">E-mail</label>
+				</div>
+				<div class="col-md-10 form-group">
+					<input type="email" name="email" id="email" class="form-control " placeholder="test@example.com" pattern="[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a-zA-Z]{2,3}$" value="<? echo $my_row['email'];?>" required>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-2 form-group">
+					<label for="memberinsert">자유글</label>
+				</div>
+				<div class="col-md-10 form-group">
+					<textarea class="form-control" style="resize: none;" name="memberinsert" rows="8" id="memberinsert" aria-label="With textarea"></textarea>
+				</div>
+			</div>
+			<input type="hidden" name="team_no" value="<?echo $no;?>">
+			<hr>							
+			<div class="row">
+				<div class="col-md-10"></div>
+				<div class="col-md-2 form-group">
+					<input type="submit" value="신청" class="btn btn-primary" onclick="member_insert()">
+				</div>
+			</div>
+		</form>
+		<? } else { ?>
+		<?
+		if($member_check_row['position'] == 1){
+			$position_1 = "selected";
+		}else if($member_check_row['position'] == 2){
+			$position_2 = "selected";
+		}else if($member_check_row['position'] == 3){
+			$position_3 = "selected";
+		}else if($member_check_row['position'] == 4){
+			$position_4 = "selected";
+		}else if($member_check_row['position'] == 5){
+			$position_5 = "selected";
+		}else if($member_check_row['position'] == 6){
+			$position_6 = "selected";
+		}else if($member_check_row['position'] == 7){
+			$position_7 = "selected";
+		}else if($member_check_row['position'] == 8){
+			$position_8 = "selected";
+		}else if($member_check_row['position'] == 9){
+			$position_9 = "selected";
+		}
+		?>
+		<body onload="member_edit_contents()">
+			<form name="members_form" action="TeamMembersUpdateProc.php" method="post">
+				<div class="row">
+					<div class="col-md-2 form-group">
+						<label for="position">주 포지션</label>
+					</div>
+					<div class="col-md-10 form-group">
+						<select class="custom-select" id="position" name="position">
+							<option value="1" <?=$position_1?>>투수</option>
+							<option value="2" <?=$position_2?>>포수</option>
+							<option value="3" <?=$position_3?>>1루수</option>
+							<option value="4" <?=$position_4?>>2루수</option>
+							<option value="5" <?=$position_5?>>3루수</option>
+							<option value="6" <?=$position_6?>>유격수</option>
+							<option value="7" <?=$position_7?>>좌익수</option>
+							<option value="8" <?=$position_8?>>중견수</option>
+							<option value="9" <?=$position_9?>>우익수</option>
+						</select>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-2 form-group">
+						<label for="back_num">등번호</label>
+					</div>
+					<div class="col-md-10 form-group">
+						<input type="text" name="back_num" id="back_num" class="form-control " placeholder="희망하는 등번호를 입력해 주세요" pattern="\d{1,2}" value="<? echo $member_check_row['back_num']?>" required>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-2 form-group">
+						<label for="phone">연락처</label>
+					</div>
+					<div class="col-md-10 form-group">
+						<input type="tel" name="phone" id="phone" class="form-control " placeholder="ex)010-1234-5678" pattern="(010)-\d{3,4}-\d{4}" value="<? echo $member_check_row['phone']?>" required>
+					</div>
+				</div>	
+				<div class="row">
+					<div class="col-md-2 form-group">
+						<label for="email">E-mail</label>
+					</div>
+					<div class="col-md-10 form-group">
+						<input type="email" name="email" id="email" class="form-control " placeholder="test@example.com" pattern="[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a-zA-Z]{2,3}$" value="<? echo $member_check_row['email'];?>" required>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-2 form-group">
+						<label for="memberedit">자유글</label>
+					</div>
+					<div class="col-md-10 form-group">
+						<textarea class="form-control" style="resize: none;" name="memberedit" rows="8" id="memberedit" aria-label="With textarea"><? echo $member_check_row['contents']?></textarea>
+					</div>
+				</div>
+				<input type="hidden" name="no" value="<? echo $member_check_row['no'];?>">
+				<input type="hidden" name="com" value="edit">
+				<hr>
+				<div class="row">
+					<div class="col-md-10"></div>
+					<div class="col-md-2 form-group">
+						<input type="submit" value="수정" class="btn btn-primary" onclick="member_edit()">
+					</div>
+				</div>
+			</form>
+		</body>
+		<? } ?>
+</html>

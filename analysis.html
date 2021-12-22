@@ -1,0 +1,56 @@
+<? include("header/header.html");?>
+<? include("header/menu.html"); ?>
+<div class="ro_subpage">
+	<div class="container-fluid ro_subpage_title_img ro_posi_r">
+		<img src="img/subpage_title/content_titleimg.jpg">
+		<div class="ro_subpage_nav">
+			<p>Analysis</p>
+			<ul>
+				<li>Home</li>
+				<li>Analysis</li>
+			</ul>
+		</div>
+	</div>
+	<div class="container ro_subpage_content ro_contentList" >
+		<div class='row'>
+		<?
+		include "dbconn.php";
+		$analysis_query = "SELECT * FROM analysis ORDER BY -no";
+		$analysis_result = mysqli_query($conn,$analysis_query);
+		mysqli_close($conn);
+		while($analysis_row = mysqli_fetch_array($analysis_result)){ ?>
+			<div class="col-xs-6 col-sm-6 col-md-3 recode_save_contents_list">
+				<a href="analysis_detail.html?no=<?=$analysis_row['number']?>">
+					<img src="img/contents/<?=$analysis_row['title_img']?>">
+					<?if($analysis_row['title_info'] == 1){?>
+					<div class="recode_save_contents_list_info">
+						<span><?=$analysis_row['title']?></span>
+					</div>
+					<? } ?>
+				</a>
+			</div>
+		<? } ?>
+		</div>
+		
+	  	<!--
+	  	<div class="ro_page_nation">
+	  		<ul>
+	  			<li class="pn_active"><a href="#">1</a></li>
+	  			<li><a href="#">2</a></li>
+	  			<li><a href="#">3</a></li>
+	  			<li><a href="#">4</a></li>
+	  			<li><a href="#">5</a></li>
+	  			<li><a href="#">6</a></li>
+	  			<li><a href="#">7</a></li>
+	  			<li><a href="#">8</a></li>
+	  			<li><a href="#">9</a></li>
+	  			<li><a href="#">10</a></li>
+	  		</ul>
+	  	</div>
+		-->
+	  	
+	</div>
+</div>
+<? include("footer/footer.html"); ?>	
+</body>
+</html>

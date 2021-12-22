@@ -1,0 +1,2907 @@
+<? include("header/header.html");?>
+<? include("header/menu.html");?>
+<?
+$isMobile = 0;
+
+$mobileos = ["iPhone","iPod","Android","BlackBerry","Windows CE","Nokia","Webos","Opera Mini","SonyEricsson","Opera Mobi","IEMobile"];
+
+for($i=0 ; $i<sizeof($mobileos); $i++) {
+	if(strpos($_SERVER['HTTP_USER_AGENT'],$mobileos[$i]) !== false) {
+		$isMobile = 1;
+		break;
+	}
+}
+include "dbconn.php";
+$no = $_GET['no'];
+$league_query = "SELECT * FROM 
+					(SELECT league_info.*, 
+						league.name as name,
+						league.leagueclass as leagueclass,
+						league.address as address,
+						league.img as img,
+						league.no as league_no,
+						COUNT(*) AS player_count 
+					FROM league JOIN league_info JOIN league_record_hit WHERE league.deleted_at IS NULL AND league.no = league_info.league AND league_info.no = $no AND league_record_hit.league_info = $no) AS league_info_table
+				JOIN 
+					(SELECT COUNT(*) AS team_count,
+							ROUND(SUM(hit)/SUM(at_bat),3) AS avg,
+							SUM(hit) AS hit,
+							SUM(at_bat) AS at_bat,
+							SUM(at_play) AS at_play,
+							SUM(bb) AS bb,
+							SUM(hr) AS hr,
+							SUM(so) AS so,
+							SUM(sb) AS sb,
+							SUM(rbi) AS rbi,
+							ROUND((SUM(hit)+SUM(bb)+SUM(hbp))/(SUM(at_bat) + SUM(bb) + SUM(hbp)),3) AS obp,
+							ROUND((SUM(hit1) + SUM(hit2)*2 + SUM(hit3)*3 + SUM(hr)*4)/SUM(at_bat),3) AS slg,
+							ROUND((SUM(hit)+SUM(bb)+SUM(hbp))/(SUM(at_bat) + SUM(bb) + SUM(hbp)) + (SUM(hit1) + SUM(hit2)*2 + SUM(hit3)*3 + SUM(hr)*4)/SUM(at_bat),3) AS ops, 
+							ROUND((sum(hit2) + sum(hit3)*2 + sum(hr)*3)/sum(at_bat),3) as iso,
+							(sum(hit1) + sum(hit2)*2 + sum(hit3)*3 + sum(hr)*4) as tb,
+							(sum(hit2) + sum(hit3) + sum(hr)) as xbh,
+							ROUND(sum(bb)/sum(so),2) as bbk,
+							ROUND(SUM(so)/(SUM(at_bat)-SUM(hit)),3) as sop,
+							ROUND(1- SUM(so)/SUM(at_bat),3) as csp,
+							ROUND((((sum(hit1) + sum(hit2)*2 + sum(hit3)*3 +sum(hr)*4)/sum(at_bat))+1.8*((sum(hit1) + sum(hit2) + sum(hit3) + sum(hr) + sum(bb) + sum(hbp))/(sum(at_bat) + sum(bb) + sum(hbp))))/4,3) as gpa,
+							ROUND(sum(hit1)*0.5 + sum(hit2)*0.72 + sum(hit3)*1.04 + sum(hr)*1.44 + (sum(hbp) + sum(bb))*0.34  + sum(sb)*0.18 - (sum(at_bat) - sum(hit) - sum(so))*0.09 - sum(so)*0.098,1) as xr,
+							ROUND((21*(sum(hit1)*0.5 + sum(hit2)*0.72 + sum(hit3)*1.04 + sum(hr)*1.44 + (sum(hbp) + sum(bb))*0.34  + sum(sb)*0.18 - (sum(at_bat) - sum(hit) - sum(so))*0.09 - sum(so)*0.098))/(sum(at_bat) - sum(hit)),3) as xr21,
+							ROUND((sum(hit)+sum(bb)+sum(hbp))*(sum(hit1) + sum(hit2)*2 + sum(hit3)*3 + sum(hr)*4)/(sum(at_bat)+sum(bb)+sum(hbp)),3) as rc,
+							ROUND(21*((sum(hit)+sum(bb)+sum(hbp))*(sum(hit1) + sum(hit2)*2 + sum(hit3)*3 + sum(hr)*4)/(sum(at_bat)+sum(bb)+sum(hbp)))/(sum(at_bat) - sum(hit)),3) as rc21,
+							ROUND((0.728*sum(bb)+0.75*sum(hbp)+0.9*sum(hit1)+1.24*sum(hit2)+1.56*sum(hit3)+1.95*sum(hr))/sum(at_play),3) as woba
+					FROM (SELECT team_name,
+								SUM(hit) AS hit,
+								SUM(at_bat) AS at_bat,
+								SUM(at_play) AS at_play,
+								SUM(bb) AS bb,
+								SUM(hr) AS hr,
+								SUM(so) AS so,
+								SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END) AS hbp,
+								SUM(CASE WHEN sb != 9999 THEN sb ELSE 0 END) AS sb,
+								SUM(CASE WHEN hit1 != 9999 THEN hit1 ELSE hit-hr END) AS hit1,
+								SUM(CASE WHEN hit2 != 9999 THEN hit2 ELSE 0 END) AS hit2,
+								SUM(CASE WHEN hit3 != 9999 THEN hit3 ELSE 0 END) AS hit3,
+								SUM(rbi) AS rbi
+							FROM league_record_hit WHERE league_info = $no GROUP BY team_name) AS hit_table
+					WHERE 1) AS league_hit_table
+				JOIN
+					(SELECT SUM(CASE WHEN league_record_pit.er != 9999 THEN er ELSE rs END) as er,
+							ROUND((SUM(CASE WHEN er != 9999 THEN er ELSE rs END)*7)/(SUM(inning)/3),2) AS era,
+							ROUND((SUM(CASE WHEN hit != 9999 THEN hit ELSE 0 END)+SUM(CASE WHEN bb != 9999 THEN bb ELSE 0 END)+SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END))/(SUM(inning)/3),2) as whip
+					FROM league_record_pit WHERE league_record_pit.league_info = $no) AS league_pit_table
+				WHERE 1";
+$league_result = mysqli_query($conn,$league_query);
+$league_row = mysqli_fetch_array($league_result);
+$count_hit_query = "SELECT COUNT(*) AS count FROM user_player_record JOIN league_record_hit WHERE user_player_record.record = league_record_hit.no AND user_player_record.position = 1 AND league_record_hit.league_info = $no AND user_player_record.player = $player_no";
+$count_hit_result = mysqli_query($conn,$count_hit_query);
+$count_hit_row = mysqli_fetch_array($count_hit_result);
+if($league_row['leagueclass'] == 1){
+	$leagueclass= "사회인 1부";
+}else if($league_row['leagueclass'] == 2){
+	$leagueclass= "사회인 2부";
+}else if($league_row['leagueclass'] == 3){
+	$leagueclass= "사회인 3부";
+}else if($league_row['leagueclass'] == 4){
+	$leagueclass= "사회인 4부";
+}else{
+	$leagueclass= "-";
+}
+if($league_row['address']){
+	$address = $league_row['address'];
+}else{
+	$address= "-";
+}
+$league_list_query = "SELECT league_info.no, league_info.years FROM league_info JOIN league WHERE league.no = league_info.league AND league.no = ".$league_row['league_no']." ORDER BY league_info.years DESC";
+$league_list_result = mysqli_query($conn,$league_list_query);
+$league_list = "";
+while($league_list_row = mysqli_fetch_array($league_list_result)){
+	if($league_list_row['years'] != $league_row['years']){
+		$league_list .= "<option value='".$league_list_row['no']."'>".$league_list_row['years']."</option>";
+	}else{
+		$league_list .= "<option value='0' selected>".$league_list_row['years']."</option>";
+	}
+}
+if($count_hit_row['count'] == 1){
+$hit_query = "SELECT c_table.*,
+				ROUND(team_hit/team_at_bat,3) as team_avg,
+				ROUND((team_hit1 + team_hit2*2 + team_hit3*3 + team_hr*4)/team_at_bat,3) as team_slg,
+				ROUND((team_hit1 + team_hit2 + team_hit3 + team_hr + team_bb + team_hbp)/(team_at_bat + team_bb + team_hbp),3) as team_obp,
+				ROUND(((team_hit1 + team_hit2*2 + team_hit3*3 + team_hr*4)/team_at_bat)+((team_hit1 + team_hit2 + team_hit3 + team_hr + team_bb + team_hbp)/(team_at_bat + team_bb + team_hbp)),3) as team_ops,
+				ROUND((team_hit2 + team_hit3*2 + team_hr*3)/team_at_bat,3) as team_iso,
+				(team_hit1 + team_hit2*2 + team_hit3*3 + team_hr*4) as team_tb,
+				(team_hit2 + team_hit3 + team_hr) as team_xbh,
+				ROUND(team_bb/team_so,2) as team_bbk,
+				ROUND(team_so/(team_at_bat-team_hit),3) as team_sop,
+				ROUND(1- team_so/team_at_bat,3) as team_csp,
+				ROUND((((team_hit1 + team_hit2*2 + team_hit3*3 +team_hr*4)/team_at_bat)+1.8*((team_hit1 + team_hit2 + team_hit3 + team_hr + team_bb + team_hbp)/(team_at_bat + team_bb + team_hbp)))/4,3) as team_gpa,
+				ROUND(team_hit1*0.5 + team_hit2*0.72 + team_hit3*1.04 + team_hr*1.44 + (team_hbp + team_bb)*0.34  + team_sb*0.18 - (team_at_bat - team_hit - team_so)*0.09 - team_so*0.098,1) as team_xr,
+				ROUND((21*(team_hit1*0.5 + team_hit2*0.72 + team_hit3*1.04 + team_hr*1.44 + (team_hbp + team_bb)*0.34  + team_sb*0.18 - (team_at_bat - team_hit - team_so)*0.09 - so*0.098))/(team_at_bat - team_hit),1) as team_xr21,
+				ROUND((team_hit+team_bb+team_hbp)*(team_hit1 + team_hit2*2 + team_hit3*3 + team_hr*4)/(team_at_bat+team_bb+team_hbp),1) as team_rc,
+				ROUND((21*((team_hit+team_bb+team_hbp)*(team_hit1 + team_hit2*2 + team_hit3*3 + team_hr*4)/(team_at_bat+team_bb+team_hbp)))/(team_at_bat - team_hit),1) as team_rc21,
+				ROUND((0.728*team_bb+0.75*team_hbp+0.9*team_hit1+1.24*team_hit2+1.56*team_hit3+1.95*team_hr)/team_at_play,3) as team_woba
+			FROM (SELECT b_table.*,
+					COUNT(*) AS player_count,
+					SUM(CASE WHEN league_record_hit.at_game != 9999 THEN league_record_hit.at_game ELSE 0 END) AS team_at_game,
+					SUM(league_record_hit.at_play) AS team_at_play, 
+					SUM(league_record_hit.at_bat) AS team_at_bat,
+					SUM(league_record_hit.hit) AS team_hit,
+					SUM(CASE WHEN league_record_hit.hit1 != 9999 THEN league_record_hit.hit1 ELSE league_record_hit.hit-league_record_hit.hr END) AS team_hit1,
+					SUM(CASE WHEN league_record_hit.hit2 != 9999 THEN league_record_hit.hit2 ELSE 0 END) AS team_hit2,
+					SUM(CASE WHEN league_record_hit.hit3 != 9999 THEN league_record_hit.hit3 ELSE 0 END) AS team_hit3,
+					SUM(league_record_hit.hr) AS team_hr,
+					SUM(league_record_hit.rbi) AS team_rbi,
+					SUM(league_record_hit.bb) AS team_bb,
+					SUM(league_record_hit.so) AS team_so,
+					SUM(CASE WHEN league_record_hit.rs != 9999 THEN league_record_hit.rs ELSE 0 END) AS team_rs,
+					SUM(CASE WHEN league_record_hit.sb != 9999 THEN league_record_hit.sb ELSE 0 END) AS team_sb,
+					SUM(CASE WHEN league_record_hit.hbp != 9999 THEN league_record_hit.hbp ELSE 0 END) AS team_hbp
+				FROM (SELECT a_table.*, 
+						ROUND(hit/at_bat,3) as avg,
+						ROUND((hit1 + hit2*2 + hit3*3 +hr*4)/at_bat,3) as slg,
+						ROUND((hit1 + hit2 + hit3 + hr + bb + hbp)/(at_bat + bb + hbp),3) as obp,
+						ROUND(((hit1 + hit2*2 + hit3*3 +hr*4)/at_bat)+((hit1 + hit2 + hit3 + hr + bb + hbp)/(at_bat + bb + hbp)),3) as ops,
+						ROUND((hit2 + hit3*2 + hr*3)/at_bat,3) as iso,
+						(hit1 + hit2*2 + hit3*3 + hr*4) as tb,
+						(hit2 + hit3 + hr) as xbh,
+						ROUND(bb/so,2) as bbk,
+						ROUND(so/(at_bat-hit),3) as sop,
+						ROUND(1- so/at_bat,3) as csp,
+						ROUND((((hit1 + hit2*2 + hit3*3 +hr*4)/at_bat)+1.8*((hit1 + hit2 + hit3 + hr + bb + hbp)/(at_bat + bb + hbp)))/4,3) as gpa,
+						ROUND(hit1*0.5 + hit2*0.72 + hit3*1.04 + hr*1.44 + (hbp + bb)*0.34  + sb*0.18 - (at_bat - hit - so)*0.09 - so*0.098,1) as xr,
+						ROUND((21*(hit1*0.5 + hit2*0.72 + hit3*1.04 + hr*1.44 + (hbp + bb)*0.34  + sb*0.18 - (at_bat - hit - so)*0.09 - so*0.098))/(at_bat - hit),1) as xr21,
+						ROUND((hit+bb+hbp)*(hit1 + hit2*2 + hit3*3 + hr*4)/(at_bat+bb+hbp),1) as rc,
+						ROUND((21*((hit+bb+hbp)*(hit1 + hit2*2 + hit3*3 + hr*4)/(at_bat+bb+hbp)))/(at_bat - hit),1) as rc21,
+						ROUND((0.728*bb+0.75*hbp+0.9*hit1+1.24*hit2+1.56*hit3+1.95*hr)/at_play,3) as woba
+					FROM (SELECT league_info,player_name,team_name,
+							CASE WHEN at_game != 9999 THEN at_game ELSE 0 END AS at_game,
+							CASE WHEN at_game != 9999 THEN 1 ELSE 0 END AS at_game_null,
+							at_play, at_bat, hit,
+							CASE WHEN hit1 != 9999 THEN hit1 ELSE hit-hr END AS hit1,
+							CASE WHEN hit1 != 9999 THEN 1 ELSE 0 END AS hit1_null,
+							CASE WHEN hit2 != 9999 THEN hit2 ELSE 0 END AS hit2,
+							CASE WHEN hit2 != 9999 THEN 1 ELSE 0 END AS hit2_null,
+							CASE WHEN hit3 != 9999 THEN hit3 ELSE 0 END AS hit3,
+							CASE WHEN hit3 != 9999 THEN 1 ELSE 0 END AS hit3_null,
+							hr, rbi, bb, so,
+							CASE WHEN rs != 9999 THEN rs ELSE 0 END AS rs,
+							CASE WHEN rs != 9999 THEN 1 ELSE 0 END AS rs_null,
+							CASE WHEN sb != 9999 THEN sb ELSE 0 END AS sb,
+							CASE WHEN sb != 9999 THEN 1 ELSE 0 END AS sb_null,
+							CASE WHEN hbp != 9999 THEN hbp ELSE 0 END AS hbp,
+							CASE WHEN hbp != 9999 THEN 1 ELSE 0 END AS hbp_null 
+						FROM user_player_record JOIN league_record_hit 
+						WHERE user_player_record.record = league_record_hit.no AND user_player_record.position = 1 AND league_record_hit.league_info = $no AND user_player_record.player = $player_no) AS a_table
+				WHERE 1) AS b_table JOIN league_record_hit WHERE league_record_hit.league_info = b_table.league_info AND league_record_hit.team_name = b_table.team_name) AS c_table
+			WHERE 1";
+$hit_result = mysqli_query($conn,$hit_query);
+$hit_row = mysqli_fetch_array($hit_result);
+$data_1 = (0.1073-0.11*0.8)*pow(((25*$league_row['obp']*$league_row['rbi'])/(1-$league_row['avg'])),1/3);
+$ops_plus = number_format(round(($hit_row['obp']/$league_row['obp'] + $hit_row['slg']/$league_row['slg'] - 1)*100,1),1);
+$team_ops_plus = number_format(round(($hit_row['team_obp']/$league_row['obp'] + $hit_row['team_slg']/$league_row['slg'] - 1)*100,1),1);
+$wraa = number_format(round((($hit_row['woba']-$league_row['woba'])/1.15)*$hit_row['at_play'],3),3);
+$raa = number_format(round($wraa+$data_1+0.175*$hit_row['sb'],3),3);
+$war = number_format(round($raa/10,2),2);
+if($war > 0){
+	$war_text = "<span style='color:blue'>".$war."</span>";
+}else{
+	$war_text = "<span style='color:red'>".$war."</span>";
+}
+if($hit_row['avg'] - $hit_row['team_avg'] > 0){
+	$team_back = " <td style='color:blue'> + ".number_format($hit_row['avg'] - $hit_row['team_avg'],3)." </td>";
+}else if($hit_row['avg'] - $hit_row['team_avg'] < 0){
+	$team_back = " <td style='color:red'> - ".number_format($hit_row['team_avg'] - $hit_row['avg'],3)." </td>";
+}else{
+	$team_back = "<td style='color:green'>- 0.000</td>";
+}
+if($hit_row['bbk'] - $hit_row['team_bbk'] > 0){
+	$team_back .= " <td style='color:blue'> + ".number_format($hit_row['bbk'] - $hit_row['team_bbk'],2)." </td>";
+}else if($hit_row['bbk'] - $hit_row['team_bbk'] < 0){
+	$team_back .= " <td style='color:red'> - ".number_format($hit_row['team_bbk'] - $hit_row['bbk'],2)." </td>";
+}else{
+	$team_back .= "<td style='color:green'>- 0.000</td>";
+}
+if($hit_row['sop'] - $hit_row['team_sop'] > 0){
+	$team_back .= " <td style='color:red'> + ".number_format($hit_row['sop'] - $hit_row['team_sop'],3)." </td>";
+}else if($hit_row['sop'] - $hit_row['team_sop'] < 0){
+	$team_back .= " <td style='color:blue'> - ".number_format($hit_row['sop'] - $hit_row['team_sop'],3)." </td>";
+}else{
+	$team_back .= "<td style='color:green'>- 0.000</td>";
+}
+if($hit_row['csp'] - $hit_row['team_csp'] > 0){
+	$team_back .= " <td style='color:blue'> + ".number_format($hit_row['csp'] - $hit_row['team_csp'],3)." </td>";
+}else if($hit_row['csp'] - $hit_row['team_csp'] < 0){
+	$team_back .= " <td style='color:red'> - ".number_format($hit_row['team_csp'] - $hit_row['csp'],3)." </td>";
+}else{
+	$team_back .= "<td style='color:green'>- 0.000</td>";
+}
+if($hit_row['iso'] - $hit_row['team_iso'] > 0){
+	$team_back .= " <td style='color:blue'> + ".number_format($hit_row['iso'] - $hit_row['team_iso'],3)." </td>";
+}else if($hit_row['iso'] - $hit_row['team_iso'] < 0){
+	$team_back .= " <td style='color:red'> - ".number_format($hit_row['team_iso'] - $hit_row['iso'],3)." </td>";
+}else{
+	$team_back .= "<td style='color:green'>- 0.000</td>";
+}
+if($hit_row['obp'] - $hit_row['team_obp'] > 0){
+	$team_back .= " <td style='color:blue'> + ".number_format($hit_row['obp'] - $hit_row['team_obp'],3)." </td>";
+}else if($hit_row['obp'] - $hit_row['team_obp'] < 0){
+	$team_back .= " <td style='color:red'> - ".number_format($hit_row['team_obp'] - $hit_row['obp'],3)." </td>";
+}else{
+	$team_back .= "<td style='color:green'>- 0.000</td>";
+}
+if($hit_row['slg'] - $hit_row['team_slg'] > 0){
+	$team_back .= " <td style='color:blue'> + ".number_format($hit_row['slg'] - $hit_row['team_slg'],3)." </td>";
+}else if($hit_row['slg'] - $hit_row['team_slg'] < 0){
+	$team_back .= " <td style='color:red'> - ".number_format($hit_row['team_slg'] - $hit_row['slg'],3)." </td>";
+}else{
+	$team_back .= "<td style='color:green'>- 0.000</td>";
+}
+if($hit_row['ops'] - $hit_row['team_ops'] > 0){
+	$team_back .= " <td style='color:blue'> + ".number_format($hit_row['ops'] - $hit_row['team_ops'],3)." </td>";
+}else if($hit_row['ops'] - $hit_row['team_ops'] < 0){
+	$team_back .= " <td style='color:red'> - ".number_format($hit_row['team_ops'] - $hit_row['ops'],3)." </td>";
+}else{
+	$team_back .= "<td style='color:green'>- 0.000</td>";
+}
+if($ops_plus - $team_ops_plus > 0){
+	$team_back .= " <td style='color:blue'> + ".number_format($ops_plus - $team_ops_plus,1)." </td>";
+}else if($ops_plus - $team_ops_plus < 0){
+	$team_back .= " <td style='color:red'> - ".number_format($team_ops_plus - $ops_plus,1)." </td>";
+}else{
+	$team_back .= "<td style='color:green'>- 0.000</td>";
+}
+
+if($hit_row['avg'] - $league_row['avg'] > 0){
+	$league_back = " <td style='color:blue'> + ".number_format($hit_row['avg'] - $league_row['avg'],3)." </td>";
+}else if($hit_row['avg'] - $league_row['avg'] < 0){
+	$league_back = " <td style='color:red'> - ".number_format($league_row['avg'] - $hit_row['avg'],3)." </td>";
+}else{
+	$league_back = "<td style='color:green'>- 0.000</td>";
+}
+if($hit_row['bbk'] - $league_row['bbk'] > 0){
+	$league_back .= " <td style='color:blue'> + ".number_format($hit_row['bbk'] - $league_row['bbk'],2)." </td>";
+}else if($hit_row['bbk'] - $league_row['bbk'] < 0){
+	$league_back .= " <td style='color:red'> - ".number_format($league_row['bbk'] - $hit_row['bbk'],2)." </td>";
+}else{
+	$league_back .= "<td style='color:green'>- 0.000</td>";
+}
+if($hit_row['sop'] - $league_row['sop'] > 0){
+	$league_back .= " <td style='color:red'> + ".number_format($hit_row['sop'] - $league_row['sop'],3)." </td>";
+}else if($hit_row['sop'] - $league_row['sop'] < 0){
+	$league_back .= " <td style='color:blue'> - ".number_format($league_row['sop'] - $hit_row['sop'],3)." </td>";
+}else{
+	$league_back .= "<td style='color:green'>- 0.000</td>";
+}
+if($hit_row['csp'] - $league_row['csp'] > 0){
+	$league_back .= " <td style='color:blue'> + ".number_format($hit_row['csp'] - $league_row['csp'],3)." </td>";
+}else if($hit_row['csp'] - $league_row['csp'] < 0){
+	$league_back .= " <td style='color:red'> - ".number_format($league_row['csp'] - $hit_row['csp'],3)." </td>";
+}else{
+	$league_back .= "<td style='color:green'>- 0.000</td>";
+}
+if($hit_row['iso'] - $league_row['iso'] > 0){
+	$league_back .= " <td style='color:blue'> + ".number_format($hit_row['iso'] - $league_row['iso'],3)." </td>";
+}else if($hit_row['iso'] - $league_row['iso'] < 0){
+	$league_back .= " <td style='color:red'> - ".number_format($league_row['iso'] - $hit_row['iso'],3)." </td>";
+}else{
+	$league_back .= "<td style='color:green'>- 0.000</td>";
+}
+if($hit_row['obp'] - $league_row['obp'] > 0){
+	$league_back .= " <td style='color:blue'> + ".number_format($hit_row['obp'] - $league_row['obp'],3)." </td>";
+}else if($hit_row['obp'] - $league_row['obp'] < 0){
+	$league_back .= " <td style='color:red'> - ".number_format($league_row['obp'] - $hit_row['obp'],3)." </td>";
+}else{
+	$league_back .= "<td style='color:green'>- 0.000</td>";
+}
+if($hit_row['slg'] - $league_row['slg'] > 0){
+	$league_back .= " <td style='color:blue'> + ".number_format($hit_row['slg'] - $league_row['slg'],3)." </td>";
+}else if($hit_row['slg'] - $league_row['slg'] < 0){
+	$league_back .= " <td style='color:red'> - ".number_format($league_row['slg'] - $hit_row['slg'],3)." </td>";
+}else{
+	$league_back .= "<td style='color:green'>- 0.000</td>";
+}
+if($hit_row['ops'] - $league_row['ops'] > 0){
+	$league_back .= " <td style='color:blue'> + ".number_format($hit_row['ops'] - $league_row['ops'],3)." </td>";
+}else if($hit_row['ops'] - $league_row['ops'] < 0){
+	$league_back .= " <td style='color:red'> - ".number_format($league_row['ops'] - $hit_row['ops'],3)." </td>";
+}else{
+	$league_back .= "<td style='color:green'>- 0.000</td>";
+}
+if($ops_plus - 100 > 0){
+	$league_back .= " <td style='color:blue'> + ".number_format($ops_plus - 100,1)." </td>";
+}else if($ops_plus - 100 < 0){
+	$league_back .= " <td style='color:red'> - ".number_format(100 - $ops_plus,1)." </td>";
+}else{
+	$league_back .= "<td style='color:green'>- 0.000</td>";
+}
+$league_session_query = "SELECT a_table.*, years_avg_all, years_ops_all, years_era_all, years_whip_all FROM (SELECT league_no_record.*, 
+									ROUND((SUM(CASE WHEN er != 9999 THEN er ELSE rs END)*7)/(SUM(inning)/3),2) AS years_era,
+									ROUND((SUM(CASE WHEN hit != 9999 THEN hit ELSE 0 END)+SUM(CASE WHEN bb != 9999 THEN bb ELSE 0 END)+SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END))/(SUM(inning)/3),2) as years_whip
+							FROM league_record_pit JOIN league_info JOIN
+								(SELECT league_no_record.*,
+										ROUND(SUM(hit)/SUM(at_bat),3) AS years_avg,
+										ROUND((SUM(hit) + SUM(bb) + SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END))/(SUM(at_bat) + SUM(bb) + SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END)),3) AS years_obp,
+										ROUND((SUM(CASE WHEN hit1 != 9999 THEN hit1 ELSE hit-hr END) + SUM(CASE WHEN hit2 != 9999 THEN hit2 ELSE 0 END)*2 + SUM(CASE WHEN hit3 != 9999 THEN hit3 ELSE 0 END)*3 + SUM(hr)*4)/(SUM(at_bat)),3) AS years_slg,
+										ROUND((SUM(CASE WHEN hit1 != 9999 THEN hit1 ELSE hit-hr END) + SUM(CASE WHEN hit2 != 9999 THEN hit2 ELSE 0 END)*2 + SUM(CASE WHEN hit3 != 9999 THEN hit3 ELSE 0 END)*3 + SUM(hr)*4)/(SUM(at_bat)) + (SUM(hit) + SUM(bb) + SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END))/(SUM(at_bat) + SUM(bb) + SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END)),3) years_ops
+								FROM league_record_hit JOIN league_info JOIN
+									(SELECT league_no_hit.years AS years,
+										league_no_hit.avg AS avg,
+										league_no_hit.obp AS obp,
+										league_no_hit.slg AS slg,
+										league_no_hit.ops AS ops,
+										ROUND((SUM(CASE WHEN er != 9999 THEN er ELSE rs END)*7)/(SUM(inning)/3),2) AS era,
+										ROUND((SUM(CASE WHEN hit != 9999 THEN hit ELSE 0 END)+SUM(CASE WHEN bb != 9999 THEN bb ELSE 0 END)+SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END))/(SUM(inning)/3),2) as whip
+									FROM league_record_pit JOIN (
+										SELECT league_info.*, 
+											ROUND(SUM(hit)/SUM(at_bat),3) AS avg,
+											ROUND((SUM(hit) + SUM(bb) + SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END))/(SUM(at_bat) + SUM(bb) + SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END)),3) AS obp,
+											ROUND((SUM(CASE WHEN hit1 != 9999 THEN hit1 ELSE hit-hr END) + SUM(CASE WHEN hit2 != 9999 THEN hit2 ELSE 0 END)*2 + SUM(CASE WHEN hit3 != 9999 THEN hit3 ELSE 0 END)*3 + SUM(hr)*4)/(SUM(at_bat)),3) AS slg,
+											ROUND((SUM(CASE WHEN hit1 != 9999 THEN hit1 ELSE hit-hr END) + SUM(CASE WHEN hit2 != 9999 THEN hit2 ELSE 0 END)*2 + SUM(CASE WHEN hit3 != 9999 THEN hit3 ELSE 0 END)*3 + SUM(hr)*4)/(SUM(at_bat)) + (SUM(hit) + SUM(bb) + SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END))/(SUM(at_bat) + SUM(bb) + SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END)),3) ops
+										from league_record_hit JOIN league_info JOIN (
+											SELECT league AS league_no FROM league_info WHERE league_info.no = $no) AS league_no_only 
+										WHERE league_info.league = league_no_only.league_no AND league_info.no = league_record_hit.league_info GROUP BY league_record_hit.league_info) AS league_no_hit
+									WHERE league_no_hit.no = league_record_pit.league_info GROUP BY league_record_pit.league_info ORDER BY years) AS league_no_record
+								WHERE league_info.years = league_no_record.years AND league_info.no = league_record_hit.league_info GROUP BY league_no_record.years) AS league_no_record
+							WHERE league_info.years = league_no_record.years AND league_info.no = league_record_pit.league_info GROUP BY league_no_record.years) AS a_table
+						JOIN (SELECT years ,
+									GROUP_CONCAT(years_avg) AS years_avg_all,
+									GROUP_CONCAT(years_ops) AS years_ops_all
+								FROM (SELECT years, 
+											SUM(hit)/SUM(at_bat) AS years_avg,
+											ROUND((SUM(CASE WHEN hit1 != 9999 THEN hit1 ELSE hit-hr END) + SUM(CASE WHEN hit2 != 9999 THEN hit2 ELSE 0 END)*2 + SUM(CASE WHEN hit3 != 9999 THEN hit3 ELSE 0 END)*3 + SUM(hr)*4)/(SUM(at_bat)) + (SUM(hit) + SUM(bb) + SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END))/(SUM(at_bat) + SUM(bb) + SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END)),3) years_ops 
+										FROM league_record_hit JOIN league_info 
+										WHERE league_info.no = league_record_hit.league_info GROUP BY league_info.no ORDER BY years) AS years_table WHERE 1 GROUP BY years) AS b_table
+						JOIN (SELECT years ,
+									GROUP_CONCAT(years_era) AS years_era_all,
+									GROUP_CONCAT(years_whip) AS years_whip_all
+								FROM (SELECT years, 
+											ROUND((SUM(CASE WHEN er != 9999 THEN er ELSE rs END)*7)/(SUM(inning)/3),2) AS years_era,
+											ROUND((SUM(CASE WHEN hit != 9999 THEN hit ELSE 0 END)+SUM(CASE WHEN bb != 9999 THEN bb ELSE 0 END)+SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END))/(SUM(inning)/3),2) as years_whip
+										FROM league_record_pit JOIN league_info 
+										WHERE league_info.no = league_record_pit.league_info GROUP BY league_info.no ORDER BY years) AS years_table WHERE 1 GROUP BY years) AS c_table
+						WHERE a_table.years = b_table.years AND a_table.years = c_table.years AND b_table.years = c_table.years";
+$league_session_result = mysqli_query($conn,$league_session_query);
+$league_session_table = "";
+while($league_session_row = mysqli_fetch_array($league_session_result)){
+	//▲▼
+	if($league_session_table){
+		$barplot_label .= ",'".$league_session_row['years']."'";
+		$barplot_avg .= ",".$league_session_row['avg'];
+		$barplot_league_avg .= ",".$league_session_row['years_avg'];
+		$barplot_league_avg_all .= ",[".$league_session_row['years_avg_all']."]";
+		$barplot_obp .= ",".$league_session_row['obp'];
+		$barplot_slg .= ",".$league_session_row['slg'];
+		$barplot_ops .= ",".$league_session_row['ops'];
+		$barplot_league_ops .= ",".$league_session_row['years_ops'];
+		$barplot_league_ops_all .= ",[".$league_session_row['years_ops_all']."]";
+		$barplot_era .= ",".$league_session_row['era'];
+		$barplot_league_era .= ",".$league_session_row['years_era'];
+		$barplot_league_era_all .= ",[".$league_session_row['years_era_all']."]";
+		$barplot_whip .= ",".$league_session_row['whip'];
+		$barplot_league_whip .= ",".$league_session_row['years_whip'];
+		$barplot_league_whip_all .= ",[".$league_session_row['years_whip_all']."]";
+		if($league_session_row['avg'] - $avg_before > 0){
+			$avg_back = " (<span style='color:blue'> ▲ ".number_format($league_session_row['avg'] - $avg_before,3)." </span>)";
+			$barplot_color_avg .= ",'blue'";
+		}else if($league_session_row['avg'] - $avg_before < 0){
+			$avg_back = " (<span style='color:red'> ▼".number_format($league_session_row['avg'] - $avg_before,3)." </span>)";
+			$barplot_color_avg .= ",'red'";
+		}else{
+			$avg_back = " (<span style='color:green'> - 0.000 </span>)";
+			$barplot_color_avg .= ",'green'";
+		}
+		if($league_session_row['obp'] - $obp_before > 0){
+			$obp_back = " (<span style='color:blue'> ▲ ".number_format($league_session_row['obp'] - $obp_before,3)." </span>)";
+		}else if($league_session_row['obp'] - $obp_before < 0){
+			$obp_back = " (<span style='color:red'> ▼".number_format($league_session_row['obp'] - $obp_before,3)." </span>)";
+		}else{
+			$obp_back = " (<span style='color:green'> - 0.000 </span>)";
+		}
+		if($league_session_row['slg'] - $slg_before > 0){
+			$slg_back = " (<span style='color:blue'> ▲ ".number_format($league_session_row['slg'] - $slg_before,3)." </span>)";
+		}else if($league_session_row['slg'] - $slg_before < 0){
+			$slg_back = " (<span style='color:red'> ▼".number_format($league_session_row['slg'] - $slg_before,3)." </span>)";
+		}else{
+			$slg_back = " (<span style='color:green'> - 0.000 </span>)";
+		}
+		if($league_session_row['ops'] - $ops_before > 0){
+			$ops_back = " (<span style='color:blue'> ▲ ".number_format($league_session_row['ops'] - $ops_before,3)." </span>)";
+			$barplot_color_ops .= ",'blue'";
+		}else if($league_session_row['ops'] - $ops_before < 0){
+			$ops_back = " (<span style='color:red'> ▼".number_format($league_session_row['ops'] - $ops_before,3)." </span>)";
+			$barplot_color_ops .= ",'red'";
+		}else{
+			$ops_back = " (<span style='color:green'> - 0.000 </span>)";
+			$barplot_color_ops .= ",'green'";
+		}
+		if($league_session_row['era'] - $era_before > 0){
+			$era_back = " (<span style='color:red'> ▲ ".number_format($league_session_row['era'] - $era_before,2)." </span>)";
+			$barplot_color_era .= ",'red'";
+		}else if($league_session_row['era'] - $era_before < 0){
+			$era_back = " (<span style='color:blue'> ▼".number_format($league_session_row['era'] - $era_before,2)." </span>)";
+			$barplot_color_era .= ",'blue'";
+		}else{
+			$era_back = " (<span style='color:green'> - 0.00 </span>)";
+			$barplot_color_era .= ",'green'";
+		}
+		if($league_session_row['whip'] - $whip_before > 0){
+			$whip_back = " (<span style='color:red'> ▲ ".number_format($league_session_row['whip'] - $whip_before,2)." </span>)";
+			$barplot_color_whip .= ",'red'";
+		}else if($league_session_row['whip'] - $whip_before < 0){
+			$whip_back = " (<span style='color:blue'> ▼".number_format($league_session_row['whip'] - $whip_before,2)." </span>)";
+			$barplot_color_whip .= ",'blue'";
+		}else{
+			$whip_back = " (<span style='color:green'> - 0.00 </span>)";
+			$barplot_color_whip .= ",'green'";
+		}
+		$avg_before = $league_session_row['avg'];
+		$obp_before = $league_session_row['obp'];
+		$slg_before = $league_session_row['slg'];
+		$ops_before = $league_session_row['ops'];
+		$era_before = $league_session_row['era'];
+		$whip_before = $league_session_row['whip'];
+	}else{
+		$avg_before = $league_session_row['avg'];
+		$obp_before = $league_session_row['obp'];
+		$slg_before = $league_session_row['slg'];
+		$ops_before = $league_session_row['ops'];
+		$era_before = $league_session_row['era'];
+		$whip_before = $league_session_row['whip'];
+		$avg_back = " (<span style='color:green'> - 0.000 </span>)";
+		$obp_back = " (<span style='color:green'> - 0.000 </span>)";
+		$slg_back = " (<span style='color:green'> - 0.000 </span>)";
+		$ops_back = " (<span style='color:green'> - 0.000 </span>)";
+		$era_back = " (<span style='color:green'> - 0.00 </span>)";
+		$whip_back = " (<span style='color:green'> - 0.00 </span>)";
+		$barplot_label = $league_session_row['years'];
+		$barplot_avg = $league_session_row['avg'];
+		$barplot_league_avg = $league_session_row['years_avg'];
+		$barplot_league_avg_all = "[".$league_session_row['years_avg_all']."]";
+		$barplot_color_avg = "'green'";
+		$barplot_obp = $league_session_row['obp'];
+		$barplot_slg = $league_session_row['slg'];
+		$barplot_ops = $league_session_row['ops'];
+		$barplot_league_ops = $league_session_row['years_ops'];
+		$barplot_league_ops_all = "[".$league_session_row['years_ops_all']."]";
+		$barplot_color_ops = "'green'";
+		$barplot_era = $league_session_row['era'];
+		$barplot_league_era = $league_session_row['years_era'];
+		$barplot_league_era_all = "[".$league_session_row['years_era_all']."]";
+		$barplot_color_era = "'green'";
+		$barplot_whip = $league_session_row['whip'];
+		$barplot_league_whip = $league_session_row['years_whip'];
+		$barplot_league_whip_all = "[".$league_session_row['years_whip_all']."]";
+		$barplot_color_whip = "'green'";
+	}
+	$league_session_table = "<tr><td>".$league_session_row['years']."</td><td>".$league_session_row['avg'].$avg_back."</td><td>".$league_session_row['obp'].$obp_back."</td><td>".$league_session_row['slg'].$slg_back."</td><td>".$league_session_row['ops'].$ops_back."</td><td>".$league_session_row['era'].$era_back."</td><td>".$league_session_row['whip'].$whip_back."</td></tr>".$league_session_table;
+}
+
+//팀
+$league_record_team_query = "SELECT * FROM league_record_team WHERE league_info = '$no' ORDER BY num";
+$league_record_team_result = mysqli_query($conn, $league_record_team_query);
+$team_table = "";
+while($league_record_team_row = mysqli_fetch_array($league_record_team_result)){
+	$wp = number_format(round($league_record_team_row['win_games']/($league_record_team_row['win_games']+$league_record_team_row['lose_games']),3),3);
+	$team_table = $team_table."<tr>
+								<td>".$league_record_team_row['num']."</td><td>".$league_record_team_row['team_name']."</td><td>".$league_record_team_row['games']."</td><td>".$league_record_team_row['win_games']."</td><td>".$league_record_team_row['lose_games']."</td><td>".$league_record_team_row['draw_games']."</td><td>".$wp."</td><td>".$league_record_team_row['win_point']."</td>
+							</tr>";
+}
+$team_summary_query = "SELECT hit_table.*,pit_hit,pit_er,era,pit_bb,pit_so,pit_hr,whip
+						FROM 
+							(SELECT REPLACE(team_name,' ','') AS team_name, 
+									SUM(hit) AS hit_hit, 
+									ROUND(SUM(hit)/SUM(at_bat),3) AS avg,
+									SUM(rbi) AS hit_rbi,
+									SUM(bb+CASE WHEN hbp != 9999 THEN hbp ELSE 0 END) AS hit_bb,
+									SUM(so) AS hit_so,
+									SUM(hr) AS hit_hr,
+									ROUND((SUM(hit) + SUM(bb) + SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END))/(SUM(at_bat) + SUM(bb) + SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END)),3) AS obp,
+									ROUND((SUM(CASE WHEN hit1 != 9999 THEN hit1 ELSE hit-hr END) + SUM(CASE WHEN hit2 != 9999 THEN hit2 ELSE 0 END)*2 + SUM(CASE WHEN hit3 != 9999 THEN hit3 ELSE 0 END)*3 + SUM(hr)*4)/(SUM(at_bat)),3) AS slg,
+									ROUND((SUM(hit) + SUM(bb) + SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END))/(SUM(at_bat) + SUM(bb) + SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END)) + (SUM(CASE WHEN hit1 != 9999 THEN hit1 ELSE hit-hr END) + SUM(CASE WHEN hit2 != 9999 THEN hit2 ELSE 0 END)*2 + SUM(CASE WHEN hit3 != 9999 THEN hit3 ELSE 0 END)*3 + SUM(hr)*4)/(SUM(at_bat)),3) AS ops
+							FROM league_info JOIN league_record_hit WHERE league_info.no = $no AND league_info.no = league_record_hit.league_info GROUP BY team_name) AS hit_table
+						JOIN
+							(SELECT REPLACE(team_name,' ','') AS team_name, 
+									SUM(CASE WHEN hit != 9999 THEN hit ELSE 0 END) AS pit_hit,
+									SUM(CASE WHEN er != 9999 THEN er ELSE rs END) AS pit_er,
+									ROUND((SUM(CASE WHEN er != 9999 THEN er ELSE rs END)*7)/(SUM(inning)/3),2) AS era,
+									SUM(CASE WHEN bb != 9999 THEN bb ELSE 0 END + CASE WHEN hbp != 9999 THEN hbp ELSE 0 END) AS pit_bb,
+									SUM(so) AS pit_so,
+									SUM(hr) AS pit_hr,
+									ROUND((SUM(CASE WHEN hit != 9999 THEN hit ELSE 0 END)+SUM(CASE WHEN bb != 9999 THEN bb ELSE 0 END)+SUM(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END))/(SUM(inning)/3),2) as whip			
+							FROM league_info JOIN league_record_pit WHERE league_info.no = $no AND league_info.no = league_record_pit.league_info GROUP BY team_name) AS pit_table
+						WHERE hit_table.team_name = pit_table.team_name ORDER BY era-ops";
+$team_summary_result = mysqli_query($conn, $team_summary_query);
+$team_summary_table = "";
+while($team_summary_row = mysqli_fetch_array($team_summary_result)){
+	if(mb_strlen($team_summary_row['team_name'], 'UTF-8') <= 5){
+		$team_name = $team_summary_row['team_name'];
+	}else{
+		$team_name = mb_substr($team_summary_row['team_name'], 0, 4, 'UTF-8')."‥";
+	}
+	if($team_summary_table){
+		$plora_hit_hit .= ",".$team_summary_row['hit_hit'];
+		if($team_summary_row['hit_hit'] >= $league_row['hit']/$league_row['team_count']*1.05){
+			$plora_hit_color .= ",'#9AD0F5CC'";
+		}else if($team_summary_row['hit_hit'] >= $league_row['hit']/$league_row['team_count']*0.95){
+			$plora_hit_color .= ",'#FFCD56CC'";
+		}else{
+			$plora_hit_color .= ",'#FF6384CC'";
+		}
+		$plora_bb_hit .= ",".$team_summary_row['hit_bb'];
+		if($team_summary_row['hit_bb'] >= $league_row['bb']/$league_row['team_count']*1.2){
+			$plora_bb_color .= ",'#9AD0F5CC'";
+		}else if($team_summary_row['hit_bb'] >= $league_row['bb']/$league_row['team_count']*0.95){
+			$plora_bb_color .= ",'#FFCD56CC'";
+		}else{
+			$plora_bb_color .= ",'#FF6384CC'";
+		}
+		$plora_rbi_hit .= ",".$team_summary_row['hit_rbi'];
+		if($team_summary_row['hit_rbi'] >= $league_row['rbi']/$league_row['team_count']*1.05){
+			$plora_rbi_color .= ",'#9AD0F5CC'";
+		}else if($team_summary_row['hit_rbi'] >= $league_row['rbi']/$league_row['team_count']*0.95){
+			$plora_rbi_color .= ",'#FFCD56CC'";
+		}else{
+			$plora_rbi_color .= ",'#FF6384CC'";
+		}
+		$plora_so_hit .= ",".$team_summary_row['hit_so'];
+		if($team_summary_row['hit_so'] >= $league_row['so']/$league_row['team_count']*1.2){
+			$plora_so_color .= ",'#FF6384CC'";
+		}else if($team_summary_row['hit_so'] >= $league_row['so']/$league_row['team_count']*0.8){
+			$plora_so_color .= ",'#FFCD56CC'";
+		}else{
+			$plora_so_color .= ",'#9AD0F5CC'";
+		}
+		$plora_hit_pit .= ",".$team_summary_row['pit_hit'];
+		if($team_summary_row['pit_hit'] >= $league_row['hit']/$league_row['team_count']*1.05){
+			$plora_hitp_color .= ",'#FF6384CC'";
+		}else if($team_summary_row['pit_hit'] >= $league_row['hit']/$league_row['team_count']*0.95){
+			$plora_hitp_color .= ",'#FFCD56CC'";
+		}else{
+			$plora_hitp_color .= ",'#9AD0F5CC'";
+		}
+		$plora_bb_pit .= ",".$team_summary_row['pit_bb'];
+		if($team_summary_row['pit_bb'] >= $league_row['bb']/$league_row['team_count']*1.2){
+			$plora_bbp_color .= ",'#FF6384CC'";
+		}else if($team_summary_row['pit_bb'] >= $league_row['bb']/$league_row['team_count']*0.95){
+			$plora_bbp_color .= ",'#FFCD56CC'";
+		}else{
+			$plora_bbp_color .= ",'#9AD0F5CC'";
+		}
+		$plora_er_pit .= ",".$team_summary_row['pit_er'];
+		if($team_summary_row['pit_er'] >= $league_row['er']/$league_row['team_count']*1.2){
+			$plora_erp_color .= ",'#FF6384CC'";
+		}else if($team_summary_row['pit_er'] >= $league_row['er']/$league_row['team_count']*0.8){
+			$plora_erp_color .= ",'#FFCD56CC'";
+		}else{
+			$plora_erp_color .= ",'#9AD0F5CC'";
+		}
+		$plora_so_pit .= ",".$team_summary_row['pit_so'];
+		if($team_summary_row['pit_so'] >= $league_row['so']/$league_row['team_count']*1.2){
+			$plora_sop_color .= ",'#9AD0F5CC'";
+		}else if($team_summary_row['pit_so'] >= $league_row['so']/$league_row['team_count']*0.8){
+			$plora_sop_color .= ",'#FFCD56CC'";
+		}else{
+			$plora_sop_color .= ",'#FF6384CC'";
+		}
+		$plora_label .= ",'".$team_name."'";
+		$bar_team_avg .= ",".$team_summary_row['avg'];
+		$bar_team_slg .= ",".$team_summary_row['slg'];
+		$bar_team_obp .= ",".$team_summary_row['obp'];
+		$bar_team_ops .= ",".$team_summary_row['ops'];
+		$bar_team_era .= ",".$team_summary_row['era'];
+		$bar_team_whip .= ",".$team_summary_row['whip'];
+		if($team_summary_row['hit_hit']/$team_summary_row['pit_hit'] >= 1.1){
+			$scatter_hit_color = "'#9AD0F5CC'";
+		}else if($team_summary_row['hit_hit']/$team_summary_row['pit_hit'] >= 0.9){
+			$scatter_hit_color = "'#FFCD56CC'";
+		}else{
+			$scatter_hit_color = "'#FF6384CC'";
+		}
+		if($team_summary_row['hit_bb']/$team_summary_row['pit_bb'] >= 1.1){
+			$scatter_bb_color = "'#9AD0F5CC'";
+		}else if($team_summary_row['hit_bb']/$team_summary_row['pit_bb'] >= 0.9){
+			$scatter_bb_color = "'#FFCD56CC'";
+		}else{
+			$scatter_bb_color = "'#FF6384CC'";
+		}
+		if($team_summary_row['hit_rbi']/$team_summary_row['pit_er'] >= 1.1){
+			$scatter_rs_color = "'#9AD0F5CC'";
+		}else if($team_summary_row['hit_rbi']/$team_summary_row['pit_er'] >= 0.9){
+			$scatter_rs_color = "'#FFCD56CC'";
+		}else{
+			$scatter_rs_color = "'#FF6384CC'";
+		}
+		if($team_summary_row['hit_so']/$team_summary_row['pit_so'] >= 1.1){
+			$scatter_so_color = "'#FF6384CC'";
+		}else if($team_summary_row['hit_so']/$team_summary_row['pit_so'] >= 0.9){
+			$scatter_so_color = "'#FFCD56CC'";
+		}else{
+			$scatter_so_color = "'#9AD0F5CC'";
+		}
+		$scatter_hit .= ",{
+			data: [{x: ".$team_summary_row['hit_hit'].",y: ".$team_summary_row['pit_hit']."}],
+			label:'".$team_name."',
+			backgroundColor :  ".$scatter_hit_color."
+				
+		}";
+		$scatter_bb .= ",{
+			data: [{x: ".$team_summary_row['hit_bb'].",y: ".$team_summary_row['pit_bb']."}],
+			label:'".$team_name."',
+			backgroundColor :  ".$scatter_bb_color."
+				
+		}";
+		$scatter_rs .= ",{
+			data: [{x: ".$team_summary_row['hit_rbi'].",y: ".$team_summary_row['pit_er']."}],
+			label:'".$team_name."',
+			backgroundColor :  ".$scatter_rs_color."
+				
+		}";
+		$scatter_so .= ",{
+			data: [{x: ".$team_summary_row['hit_so'].",y: ".$team_summary_row['pit_so']."}],
+			label:'".$team_name."',
+			backgroundColor :  ".$scatter_so_color."
+				
+		}";
+	}else{
+		$plora_hit_hit = $team_summary_row['hit_hit'];
+		if($team_summary_row['hit_hit'] >= $league_row['hit']/$league_row['team_count']*1.05){
+			$plora_hit_color = "'#9AD0F5CC'";
+		}else if($team_summary_row['hit_hit'] >= $league_row['hit']/$league_row['team_count']*0.95){
+			$plora_hit_color = "'#FFCD56CC'";
+		}else{
+			$plora_hit_color = "'#FF6384CC'";
+		}
+		$plora_bb_hit = $team_summary_row['hit_bb'];
+		if($team_summary_row['hit_bb'] >= $league_row['bb']/$league_row['team_count']*1.2){
+			$plora_bb_color = "'#9AD0F5CC'";
+		}else if($team_summary_row['hit_bb'] >= $league_row['bb']/$league_row['team_count']*0.95){
+			$plora_bb_color = "'#FFCD56CC'";
+		}else{
+			$plora_bb_color = "'#FF6384CC'";
+		}
+		$plora_rbi_hit = $team_summary_row['hit_rbi'];
+		if($team_summary_row['hit_rbi'] >= $league_row['rbi']/$league_row['team_count']*1.05){
+			$plora_rbi_color = "'#9AD0F5CC'";
+		}else if($team_summary_row['hit_rbi'] >= $league_row['rbi']/$league_row['team_count']*0.95){
+			$plora_rbi_color = "'#FFCD56CC'";
+		}else{
+			$plora_rbi_color = "'#FF6384CC'";
+		}
+		$plora_so_hit = $team_summary_row['hit_so'];
+		if($team_summary_row['hit_so'] >= $league_row['so']/$league_row['team_count']*1.2){
+			$plora_so_color = "'#FF6384CC'";
+		}else if($team_summary_row['hit_so'] >= $league_row['so']/$league_row['team_count']*0.8){
+			$plora_so_color = "'#FFCD56CC'";
+		}else{
+			$plora_so_color = "'#9AD0F5CC'";
+		}
+		$plora_hit_pit = $team_summary_row['pit_hit'];
+		if($team_summary_row['pit_hit'] >= $league_row['hit']/$league_row['team_count']*1.05){
+			$plora_hitp_color = "'#FF6384CC'";
+		}else if($team_summary_row['pit_hit'] >= $league_row['hit']/$league_row['team_count']*0.95){
+			$plora_hitp_color = "'#FFCD56CC'";
+		}else{
+			$plora_hitp_color = "'#9AD0F5CC'";
+		}
+		$plora_bb_pit = $team_summary_row['pit_bb'];
+		if($team_summary_row['pit_bb'] >= $league_row['bb']/$league_row['team_count']*1.2){
+			$plora_bbp_color = "'#FF6384CC'";
+		}else if($team_summary_row['pit_bb'] >= $league_row['bb']/$league_row['team_count']*0.95){
+			$plora_bbp_color = "'#FFCD56CC'";
+		}else{
+			$plora_bbp_color = "'#9AD0F5CC'";
+		}
+		$plora_er_pit = $team_summary_row['pit_er'];
+		if($team_summary_row['pit_er'] >= $league_row['er']/$league_row['team_count']*1.2){
+			$plora_erp_color = "'#FF6384CC'";
+		}else if($team_summary_row['pit_er'] >= $league_row['er']/$league_row['team_count']*0.8){
+			$plora_erp_color = "'#FFCD56CC'";
+		}else{
+			$plora_erp_color = "'#9AD0F5CC'";
+		}
+		$plora_so_pit = $team_summary_row['pit_so'];
+		if($team_summary_row['pit_so'] >= $league_row['so']/$league_row['team_count']*1.2){
+			$plora_sop_color = "'#9AD0F5CC'";
+		}else if($team_summary_row['pit_so'] >= $league_row['so']/$league_row['team_count']*0.8){
+			$plora_sop_color = "'#FFCD56CC'";
+		}else{
+			$plora_sop_color = "'#FF6384CC'";
+		}
+		$plora_label = "'".$team_name."'";
+		$bar_team_avg = $team_summary_row['avg'];
+		$bar_team_slg = $team_summary_row['slg'];
+		$bar_team_obp = $team_summary_row['obp'];
+		$bar_team_ops = $team_summary_row['ops'];
+		$bar_team_era = $team_summary_row['era'];
+		$bar_team_whip = $team_summary_row['whip'];
+		if($team_summary_row['hit_hit']/$team_summary_row['pit_hit'] >= 1.1){
+			$scatter_hit_color = "'#9AD0F5CC'";
+		}else if($team_summary_row['hit_hit']/$team_summary_row['pit_hit'] >= 0.9){
+			$scatter_hit_color = "'#FFCD56CC'";
+		}else{
+			$scatter_hit_color = "'#FF6384CC'";
+		}
+		if($team_summary_row['hit_bb']/$team_summary_row['pit_bb'] >= 1.1){
+			$scatter_bb_color = "'#9AD0F5CC'";
+		}else if($team_summary_row['hit_bb']/$team_summary_row['pit_bb'] >= 0.9){
+			$scatter_bb_color = "'#FFCD56CC'";
+		}else{
+			$scatter_bb_color = "'#FF6384CC'";
+		}
+		if($team_summary_row['hit_rbi']/$team_summary_row['pit_er'] >= 1.1){
+			$scatter_rs_color = "'#9AD0F5CC'";
+		}else if($team_summary_row['hit_rbi']/$team_summary_row['pit_er'] >= 0.9){
+			$scatter_rs_color = "'#FFCD56CC'";
+		}else{
+			$scatter_rs_color = "'#FF6384CC'";
+		}
+		if($team_summary_row['hit_so']/$team_summary_row['pit_so'] >= 1.1){
+			$scatter_so_color = "'#FF6384CC'";
+		}else if($team_summary_row['hit_so']/$team_summary_row['pit_so'] >= 0.9){
+			$scatter_so_color = "'#FFCD56CC'";
+		}else{
+			$scatter_so_color = "'#9AD0F5CC'";
+		}
+		$scatter_hit = "{
+			data: [{x: ".$team_summary_row['hit_hit'].",y: ".$team_summary_row['pit_hit']."}],
+			label:'".$team_name."',
+			backgroundColor :  ".$scatter_hit_color."
+				
+		}";
+		$scatter_bb = "{
+			data: [{x: ".$team_summary_row['hit_bb'].",y: ".$team_summary_row['pit_bb']."}],
+			label:'".$team_name."',
+			backgroundColor :  ".$scatter_bb_color."
+				
+		}";
+		$scatter_rs = "{
+			data: [{x: ".$team_summary_row['hit_rbi'].",y: ".$team_summary_row['pit_er']."}],
+			label:'".$team_name."',
+			backgroundColor :  ".$scatter_rs_color."
+				
+		}";
+		$scatter_so = "{
+			data: [{x: ".$team_summary_row['hit_so'].",y: ".$team_summary_row['pit_so']."}],
+			label:'".$team_name."',
+			backgroundColor :  ".$scatter_so_color."
+				
+		}";
+	}
+	$team_summary_table = $team_summary_table."<tr>
+								<td>".$team_summary_row['team_name']."</td><td>".$team_summary_row['hit_hit']."</td><td>".$team_summary_row['pit_hit']."</td><td>".$team_summary_row['hit_hr']."</td><td>".$team_summary_row['pit_hr']."</td><td>".$team_summary_row['hit_bb']."</td><td>".$team_summary_row['pit_bb']."</td><td>".$team_summary_row['hit_so']."</td><td>".$team_summary_row['pit_so']."</td><td>".$team_summary_row['hit_rbi']."</td><td>".$team_summary_row['pit_er']."</td><td>".$team_summary_row['avg']."</td><td>".$team_summary_row['era']."</td><td>".$team_summary_row['obp']."</td><td>".$team_summary_row['whip']."</td><td>".$team_summary_row['slg']."</td><td>".$team_summary_row['ops']."</td>
+							</tr>";
+}
+//타자
+$league_record_hit_query = "SELECT league_record_hit.*,
+			ROUND(hit/at_bat,3) as avg ,
+			ROUND((hit1 + hit2 + hit3 + hr + bb + hbp)/(at_bat + bb + hbp + sf),3) as obp,
+			ROUND((hit1 + hit2*2 + hit3*3 +hr*4)/at_bat,3) as slg,
+			ROUND(((hit1 + hit2*2 + hit3*3 +hr*4)/at_bat)+((hit1 + hit2 + hit3 + hr + bb + hbp)/(at_bat + bb + hbp + sf)),3) as ops,
+			(hit1 + hit2*2 + hit3*3 + hr*4) as tb,
+			(hit2 + hit3 + hr) as xbh 
+		FROM league_record_hit WHERE league_info = '$no' ORDER BY num";
+$league_record_hit_result = mysqli_query($conn, $league_record_hit_query);
+$i=0;
+$hitter_top10_table = "";
+$hitter_more_table = "";
+while($league_record_hit_row = mysqli_fetch_array($league_record_hit_result)){
+	if($i<10){
+		$hitter_top10_table = $hitter_top10_table."<tr>
+								<td>".$league_record_hit_row['num']."</td><td>".$league_record_hit_row['team_name']."</td><td>".$league_record_hit_row['player_name']."</td><td>".$league_record_hit_row['at_bat']."</td><td>".$league_record_hit_row['hit']."</td><td>".$league_record_hit_row['avg']."</td>
+							</tr>";
+		$i++;
+	}
+	$hit_no = $league_record_hit_row['no'];
+	// avg
+	if($league_record_hit_row['at_bat'] == '0'){
+		$avg = "-";
+	}else{
+		$avg = number_format(round($league_record_hit_row['hit']/$league_record_hit_row['at_bat'],3),3);
+	}
+	//hbp
+	if($league_record_hit_row['hbp'] == '9999'){
+		$hbp = 0;
+		$hbp_text = "-";
+	}else{
+		$hbp = $league_record_hit_row['hbp'];
+		$hbp_text = $league_record_hit_row['hbp'];
+	}
+	// obp
+	if($league_record_hit_row['at_bat'] + $league_record_hit_row['bb'] + $hbp != 0){
+		$obp = number_format(round(($league_record_hit_row['hit'] + $league_record_hit_row['bb'] + $hbp)/($league_record_hit_row['at_bat'] + $league_record_hit_row['bb'] + $hbp),3),3);
+	}else{
+		$obp = "-";
+	}
+	// slg, tb, xbh
+	if($league_record_hit_row['hit2'] == '9999' || $league_record_hit_row['hit3'] == '9999'){
+		$hit2 = "-";
+		$hit3 = "-";
+		$slg = "-";
+		$tb = "-";
+		$xbh = "-";
+	}else{
+		$hit2 = $league_record_hit_row['hit2'];
+		$hit3 = $league_record_hit_row['hit3'];
+		if($league_record_hit_row['at_bat'] != 0){
+			$slg = number_format(round(($league_record_hit_row['hit1'] + $hit2*2 + $hit3*3 +$league_record_hit_row['hr']*4)/$league_record_hit_row['at_bat'],3),3);
+		}else{
+			$slg = "-";
+		}
+		$tb = $league_record_hit_row['hit1'] + $hit2*2 + $hit3*3 + $league_record_hit_row['hr']*4;
+		$xbh = $hit2 + $hit3 + $league_record_hit_row['hr'];
+	}
+	// ops
+	if($slg == "-" || $obp == "-"){
+		$ops = "-";
+	}else{
+		$ops = number_format($obp + $slg,3);
+	}
+	if($league_record_hit_row['at_game'] == '9999'){
+		$at_game = "-";
+	}else{
+		$at_game = $league_record_hit_row['at_game'];
+	}
+	if($league_record_hit_row['rs'] == '9999'){
+		$rs = "-";
+	}else{
+		$rs = $league_record_hit_row['rs'];
+	}
+	if($league_record_hit_row['sb'] == '9999'){
+		$sb = "-";
+	}else{
+		$sb = $league_record_hit_row['sb'];
+	}
+	if($league_record_hit_row['sf'] == '9999'){
+		$sf = "-";
+	}else{
+		$sf = $league_record_hit_row['sf'];
+	}
+	if($league_record_hit_row['hbp'] == '9999'){
+		$hbp = "-";
+	}else{
+		$hbp = $league_record_hit_row['hbp'];
+	}
+	$hitter_more_table = $hitter_more_table."<tr><td id='1_save_data_$hit_no'><a class='btn btn-primary btn-sm' href='javascript:;' role='button' onclick='save_data($hit_no,1);' style='background-color:rgb(83, 131, 232);width:100%'>저장하기</a></td><td>".$league_record_hit_row['num']."</td><td>".$league_record_hit_row['team_name']."</td><td>".$league_record_hit_row['player_name']."</td><td>".$avg."</td><td>".$at_game."</td><td>".$league_record_hit_row['at_play']."</td><td>".$league_record_hit_row['at_bat']."</td><td>".$league_record_hit_row['hit']."</td><td>".$hit2."</td><td>".$hit3."</td><td>".$league_record_hit_row['hr']."</td><td>".$league_record_hit_row['rbi']."</td><td>".$rs."</td><td>".$sb."</td><td>".$league_record_hit_row['bb']."</td><td>".$hbp_text."</td><td>".$league_record_hit_row['so']."</td><td>".$sf."</td><td>".$tb."</td><td>".$xbh."</td><td>".$obp."</td><td>".$slg."</td><td>".$ops."</td></tr>";
+}
+//투수
+$league_record_pit_query = "SELECT league_record_pit.*, 
+			ROUND((er * 7)/(inning/3),2) as era, 
+			ROUND((rs * 7)/(inning/3),2) as rsa, 
+			ROUND((so)/(hbp + bb),2) as kbb, 
+			ROUND((win_games)/(win_games + lose_games),3) as pct, 
+			ROUND((hit + bb + hbp)/(inning/3),2) as whip 
+		FROM league_record_pit WHERE league_info = '$no' ORDER BY num";
+$league_record_pit_result = mysqli_query($conn, $league_record_pit_query);
+$i=0;
+$pitcher_top10_table = "";
+$pitcher_more_table = "";
+while($league_record_pit_row = mysqli_fetch_array($league_record_pit_result)){
+	if($i<10 && $league_record_pit_row['player_name'] != null){
+	if($league_record_pit_row['hold_games'] == '9999'){
+		$hold_games = "-";
+	}else{
+		$hold_games = $league_record_pit_row['hold_games'];
+	}
+	$pitcher_top10_table = $pitcher_top10_table."<tr>
+							<td>".$league_record_pit_row['num']."</td><td>".$league_record_pit_row['team_name']."</td><td>".$league_record_pit_row['player_name']."</td><td>".$league_record_pit_row['win_games']."</td><td>".$league_record_pit_row['lose_games']."</td><td>".$hold_games."</td><td>".$league_record_pit_row['save_games']."</td>
+						</tr>";
+		$i++;
+	}
+	if($league_record_pit_row['at_game'] == '9999'){
+		$at_game = "-";
+	}else{
+		$at_game = $league_record_pit_row['at_game'];
+	}
+	if($league_record_pit_row['hold_games'] == '9999'){
+		$hold_games = "-";
+	}else{
+		$hold_games = $league_record_pit_row['hold_games'];
+	}
+	if($league_record_pit_row['hit'] == '9999'){
+		$hit = "-";
+	}else{
+		$hit = $league_record_pit_row['hit'];
+	}
+	if($league_record_pit_row['bb'] == '9999'){
+		$bb = "-";
+	}else{
+		$bb = $league_record_pit_row['bb'];
+	}
+	if($league_record_pit_row['pitcher_count'] == '9999'){
+		$pitcher_count = "-";
+	}else{
+		$pitcher_count = $league_record_pit_row['pitcher_count'];
+	}
+	if($league_record_pit_row['inning'] != 0){
+		if($league_record_pit_row['rs'] == '9999'){
+			$rs = "-";
+			$rsa = "-";
+		}else{
+			$rs = $league_record_pit_row['rs'];
+			$rsa = $league_record_pit_row['rsa'];
+		}
+		if($league_record_pit_row['er'] == '9999'){
+			$er = "-";
+			$era = "-";
+		}else{
+			$er = $league_record_pit_row['er'];
+			$era = $league_record_pit_row['era'];
+		}
+	}else{
+		$rsa = "-";
+		$era = "-";
+	}
+	if($league_record_pit_row['pct']){
+		$pct = $league_record_pit_row['pct'];
+	}else{
+		$pct = "-";
+	}
+	$h_inning = ($league_record_pit_row['inning'] - ($league_record_pit_row['inning'] % 3)) / 3;
+	if($league_record_pit_row['inning'] % 3 == 0){
+		$f_inning = "";
+	}else if($league_record_pit_row['inning'] % 3 == 1){
+		$f_inning = "⅓";
+	}else if($league_record_pit_row['inning'] % 3 == 2){
+		$f_inning = "⅔";
+	}
+	if($league_record_pit_row['hbp'] == '9999'){
+		$hbp = "-";
+		$whip = number_format(round(($league_record_pit_row['hit'] + $league_record_pit_row['bb'])/($league_record_pit_row['inning']/3),2),2); 
+	}else{
+		$hbp = $league_record_pit_row['hbp'];
+		$whip = number_format(round(($league_record_pit_row['hit'] + $league_record_pit_row['bb'] + $league_record_pit_row['hbp'])/($league_record_pit_row['inning']/3),2),2); 
+	}
+	$pit_no = $league_record_pit_row['no'];
+	$pitcher_more_table = $pitcher_more_table."<tr><td id='2_save_data_$pit_no'><a class='btn btn-primary btn-sm' href='javascript:;' role='button' onclick='save_data($pit_no,2);' style='background-color:rgb(83, 131, 232);width:100%'>저장하기</a></td><td>".$league_record_pit_row['num']."</td><td>".$league_record_pit_row['team_name']."</td><td>".$league_record_pit_row['player_name']."</td><td>".$era."</td><td>".$rsa."</td><td>".$at_game."</td><td>".$league_record_pit_row['win_games']."</td><td>".$league_record_pit_row['lose_games']."</td><td>".$hold_games."</td><td>".$league_record_pit_row['save_games']."</td><td>".$pitcher_count."</td><td>".$h_inning.$f_inning."</td><td>".$er."</td><td>".$rs."</td><td>".$hit."</td><td>".$league_record_pit_row['hr']."</td><td>".$bb."</td><td>".$hbp."</td><td>".$league_record_pit_row['so']."</td><td>".$pct."</td><td>".$whip."</td></tr>";
+}
+$part_ranking_query = "(SELECT team_name, player_name, ROUND(hit/at_bat,3) AS record, 'avg' AS record_name FROM league_record_hit WHERE league_info = $no AND at_bat >= 20 ORDER BY record DESC, at_game DESC, num ASC LIMIT 5)
+						UNION
+						(SELECT team_name, player_name, hr AS record, 'hr' AS record_name FROM league_record_hit WHERE league_info = $no ORDER BY record DESC, at_game DESC, num ASC LIMIT 5)
+						UNION
+						(SELECT team_name, player_name, rbi AS record, 'rbi' AS record_name FROM league_record_hit WHERE league_info = $no ORDER BY record DESC, at_game DESC, num ASC LIMIT 5)
+						UNION
+						(SELECT team_name, player_name, hit AS record, 'hit' AS record_name FROM league_record_hit WHERE league_info = $no ORDER BY record DESC, at_game DESC, num ASC LIMIT 5)
+						UNION
+						(SELECT team_name, player_name, rs AS record, 'rs' AS record_name FROM league_record_hit WHERE league_info = $no ORDER BY record DESC, at_game DESC, num ASC LIMIT 5)
+						UNION
+						(SELECT team_name, player_name, ROUND((hit+bb+(CASE WHEN hbp != 9999 THEN hbp ELSE 0 END))/(at_bat + bb + (CASE WHEN hbp != 9999 THEN hbp ELSE 0 END) + (CASE WHEN sf != 9999 THEN sf ELSE 0 END)),3) AS record, 'obp' AS record_name FROM league_record_hit WHERE league_info = $no AND at_bat >= 20 ORDER BY record DESC, at_game DESC, num ASC LIMIT 5)
+						UNION
+						(SELECT team_name, player_name, sb AS record, 'sb' AS record_name FROM league_record_hit WHERE league_info = $no ORDER BY record DESC, at_game DESC, num ASC LIMIT 5)
+						UNION
+						(SELECT team_name, player_name, win_games AS record, 'win' AS record_name FROM league_record_pit WHERE league_info = $no ORDER BY record DESC, at_game DESC, num ASC LIMIT 5)
+						UNION
+						(SELECT team_name, player_name, so AS record, 'so' AS record_name FROM league_record_pit WHERE league_info = $no ORDER BY record DESC, at_game DESC, num ASC LIMIT 5)
+						UNION
+						(SELECT team_name, player_name, hold_games AS record, 'hold' AS record_name FROM league_record_pit WHERE league_info = $no ORDER BY record DESC, at_game DESC, num ASC LIMIT 5)
+						UNION
+						(SELECT team_name, player_name, (CASE WHEN er != 9999 THEN ROUND((er*7)/(inning/3),2) ELSE ROUND((rs*7)/(inning/3),2) END) AS record, 'era' AS record_name FROM league_record_pit WHERE league_info = $no AND inning>=21 ORDER BY record ASC, at_game DESC, num ASC LIMIT 5)
+						UNION
+						(SELECT team_name, player_name, ROUND((hit + bb + (CASE WHEN hbp != 9999 THEN hbp ELSE 0 END))/(inning/3),2) AS record, 'whip' AS record_name FROM league_record_pit WHERE league_info = $no AND inning>=21 ORDER BY record ASC, at_game DESC, num ASC LIMIT 5)";
+$part_ranking_result = mysqli_query($conn, $part_ranking_query);
+$parts = ["타율","홈런","타점","안타","득점","출루율","도루","승","탈삼진","홀드","평균자책점","출루허용율"];
+$s = 0;
+$rank = 0;
+$parts_table = array();
+$before_record = "";
+$before_data = -9999;
+while($part_ranking_row = mysqli_fetch_array($part_ranking_result)){
+	if($before_record != $part_ranking_row['record_name'] && $before_record != ""){	
+		$rank = 0;
+		$before_record = "";
+		$before_data = -9999;
+		$parts_table[$s] .="</tbody>
+						</table>
+					</div>
+				</div>";
+		$s++;
+	}
+	if($before_record == ""){
+		$parts_table[$s] = "<div class='swiper-slide text-center'>
+								<div class='table-responsive rounded shadow'>
+									<table class='table'>
+										<thead>
+											<tr><th>순위</th><th>팀명</th><th>선수</th><th>".$parts[$s]."</th></tr>
+										</thead>
+										<tbody>";
+		$before_record = $part_ranking_row['record_name'];
+	}
+	if($before_data != $part_ranking_row['record']){
+		$before_data = $part_ranking_row['record'];
+		$rank++;
+	}
+	if($s == 0 || $s == 5 || $s == 11){
+		$parts_record = number_format($part_ranking_row['record'],3);
+	}else if($s == 10){
+		$parts_record = number_format($part_ranking_row['record'],2);
+	}else{
+		$parts_record = number_format($part_ranking_row['record']);
+	}
+	$parts_table[$s] .= "<tr><td>".$rank."</td><td>".$part_ranking_row['team_name']."</td><td>".$part_ranking_row['player_name']."</td><td>".$parts_record."</td></tr>";
+}
+$parts_table[$s] .="</tbody>
+						</table>
+					</div>
+				</div>";
+}else if($count_hit_row['count'] == 0){
+
+}else{
+
+}
+mysqli_close($conn);
+?>
+<div class="ro_subpage ro_subpage_leaguedetail leaguedetail2019">
+	<div class="container league_contents">
+		<div class="to_mb_40">
+			<div class="col-xs-12 col-md-6 text-left">
+				<div class="to_titlebar">
+					리그정보
+				</div>
+			</div>
+			<div class="col-xs-12 col-md-3"></div>
+			<div class="col-xs-12 col-md-3 text-right record_select_kinds">
+				<form>
+					<select class="rounded shadow" id="select_kind" onchange="">
+						<option value="">리그기록</option>
+						<option value="" selected>리그분석</option>
+						<option value="">리그정보</option>
+						<option value="">일정결과</option>
+						<option value="">커뮤니티</option>
+					</select>
+				</form>
+			</div>
+		</div>
+		<hr>
+		<div class="to_page_content2 to_mb_30 table-responsive rounded shadow">
+			<table class="table recode_player_table">
+				<tr>
+					<td>
+						<div class="recode_player"><img src="img/logo/spogg_icon.png" class="d-inline-block align-top rounded" style=""> <?=$league_row['name']?></div>
+						<div class="recode_player_info_table table-responsive">
+							<table class="table">
+								<tr>
+									<th>시즌</th>
+									<td>
+										<form>
+											<select id="select_years" onchange="change_years()">
+												<?=$league_list?>
+											</select>
+										</form>
+									</td>
+									<th>리그 수준</th><td><?=$leagueclass?></td>
+									<th>지역</th><td><?=$address?></td>
+								</tr>
+								<tr>
+									<th>팀</th><td><?=$league_row['team_count']?>팀</td>
+									<th>선수</th><td><?=$league_row['player_count']?>명</td>
+									<th>최근 우승팀</th><td><?=$league_row['victory_team']?></td>
+								</tr>
+							</table>
+						</div>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<?if($count_hit_row['count'] == 1){?>
+		<div class="col-xs-12 to_mb_30">
+			<div class="league_hr_padding_bottom">
+				<div class="col-xs-12 col-md-7 text-left">
+					<div class="to_titlebar">
+						<?=$league_row['years']?> 시즌 기록
+					</div>
+				</div>
+				<div class="col-xs-12 col-md-5 search_chart">
+					<table>
+						<tr>
+							<td><b style="color:#515151;">-</b></td><td>전체</td>
+							<td><b style="color:#e85383;">-</b></td><td>리그</td>
+							<td><b style="color:#83e853;">-</b></td><td>팀</td>
+							<td><b style="color:#5383e8;">-</b></td><td>선수</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+			<hr>
+			<div class='table-responsive rounded shadow'>
+				<table class="table table_h_b record_table">
+					<thead>
+						<tr>
+							<th><?=$league_row['years']?> 시즌</th><th>타율</th><th>볼넷/삼진</th><th>삼진율</th><th>컨택성공율</th><th>순장타율</th><th>출루율</th><th>장타율</th><th>OPS</th><th>OPS+</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr style="border-bottom:2px solid #5093ff;">
+							<td><?=$hit_row['player_name']?></td><td><?=$hit_row['avg']?></td><td><?=$hit_row['bbk']?></td><td><?=$hit_row['sop']?></td><td><?=$hit_row['csp']?></td><td><?=$hit_row['iso']?></td><td><?=$hit_row['obp']?></td><td><?=$hit_row['slg']?></td><td><?=$hit_row['ops']?></td><td><?=$ops_plus?></td>
+						</tr>
+						<tr>
+							<td><?=$hit_row['team_name']?></td><td><?=$hit_row['team_avg']?></td><td><?=$hit_row['team_bbk']?></td><td><?=$hit_row['team_sop']?></td><td><?=$hit_row['team_csp']?></td><td><?=$hit_row['team_iso']?></td><td><?=$hit_row['team_obp']?></td><td><?=$hit_row['team_slg']?></td><td><?=$hit_row['team_ops']?></td><td><?=$team_ops_plus?></td>
+						</tr>
+						<tr style="border-bottom:2px solid #5093ff;">
+							<td>팀 대비</td><?=$team_back?>
+						</tr>
+						<tr>
+							<td><?=$league_row['name']?></td><td><?=$league_row['avg']?></td><td><?=$league_row['bbk']?></td><td><?=$league_row['sop']?></td><td><?=$league_row['csp']?></td><td><?=$league_row['iso']?></td><td><?=$league_row['obp']?></td><td><?=$league_row['slg']?></td><td><?=$league_row['ops']?></td><td>100.0</td>
+						</tr>
+						<tr>
+							<td>리그 대비</td><?=$league_back?>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<div class="col-xs-12 col-md-6" style="padding:0px">
+			<div class='col-xs-6 col-md-6'>
+				<div class='to_border rounded shadow'>
+					<canvas id='chart_avg' height="300"></canvas>
+				</div>
+			</div>
+			<div class='col-xs-6 col-md-6'>
+				<div class='to_border rounded shadow'>
+					<canvas id='chart_ops' height="300"></canvas>
+				</div>
+			</div>
+			<div class="col-xs-12">
+				<div class="to_border rounded shadow">
+				그래프 그려야한당<br>타율 OPS
+				</div>
+			</div>
+		</div>
+		<div class="col-xs-12 col-md-6" style="padding:0px">
+			<div class='col-xs-6 col-md-6'>
+				<div class='to_border rounded shadow'>
+					<canvas id='chart_era' height="300"></canvas>
+				</div>
+			</div>
+			<div class='col-xs-6 col-md-6'>
+				<div class='to_border rounded shadow'>
+					<canvas id='chart_whip' height="300"></canvas>
+				</div>
+			</div>
+			<div class="col-xs-12">
+				<div class="to_border rounded shadow">
+				그래프 그려야한당<br>볼넷/삼진 컨택성공율 
+				</div>
+			</div>
+		</div>
+		<div class="col-xs-12 to_mb_10">
+			<div class='table-responsive rounded shadow'>
+				<table class="table table_h_b record_table">
+					<thead>
+						<tr>
+							<th>GPA</th><th>추정득점</th><th>경기당 추정득점</th><th>득점생산</th><th>경기당 추정득점</th><th>wOBA</th><th>wRAA</th><th>RAA</th><th>WAR</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr><td><?=$hit_row['gpa']?></td><td><?=$hit_row['xr']?></td><td><?=$hit_row['xr21']?></td><td><?=$hit_row['rc']?></td><td><?=$hit_row['rc21']?></td><td><?=$hit_row['woba']?></td><td><?=$wraa?></td><td><?=$raa?></td><td><?=$war_text?></td></tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<div class="col-xs-6 col-md-3">
+			<div class="to_border rounded shadow">
+				test.html -> 도나스 차트, 
+			</div>
+		</div>
+		<div class="col-xs-6 col-md-3">
+			<div class="to_border rounded shadow">
+				test.html -> 레이다 차트, 
+			</div>
+		</div>
+		<div class="col-xs-12 col-md-6">
+			<div class="to_border rounded shadow">
+				123123
+			</div>
+		</div>
+		<div class="col-xs-12 to_mb_30 to_mt_30">
+			<div class="league_hr_padding_bottom">
+				<div class="col-xs-12 text-left">
+					<div class="to_titlebar">
+						<?=$league_row['name']?> 시즌 별 기록
+					</div>
+				</div>
+			</div>
+			<hr>
+			<div class='table-responsive rounded shadow'>
+				<table class="table table_h_b record_table">
+					<thead>
+						<tr>
+							<th>시즌</th><th>타율</th><th>출루율</th><th>장타율</th><th>OPS</th><th>평균자책점</th><th>출루허용율</th>
+						</tr>
+					</thead>
+					<tbody>
+						<?=$league_session_table?>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<div class="swiper-container swiper-container1">
+			<div class="swiper-wrapper league_rank_slider">
+				<div class='swiper-slide'>
+					<div class="col-xs-12" style="padding:15px 0px">
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='line_chart_avg' height="150%"></canvas>
+							</div>
+						</div>
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='boxplot_avg' height="150%"></canvas>
+							</div>
+						</div>
+						<div class="col-xs-12">
+							<div class="to_border rounded shadow text-left">
+							123123<br>123123
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class='swiper-slide'>
+					<div class="col-xs-12" style="padding:15px 0px">
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='line_chart_ops' height="150%"></canvas>
+							</div>
+						</div>
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='boxplot_ops' height="150%"></canvas>
+							</div>
+						</div>
+						<div class="col-xs-12">
+							<div class="to_border rounded shadow text-left">
+							123123<br>123123
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class='swiper-slide'>
+					<div class="col-xs-12" style="padding:15px 0px">
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='line_chart_era' height="150%"></canvas>
+							</div>
+						</div>
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='boxplot_era' height="150%"></canvas>
+							</div>
+						</div>
+						<div class="col-xs-12">
+							<div class="to_border rounded shadow text-left">
+							123123<br>123123
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class='swiper-slide'>
+					<div class="col-xs-12" style="padding:15px 0px">
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='line_chart_whip' height="150%"></canvas>
+							</div>
+						</div>
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='boxplot_whip' height="150%"></canvas>
+							</div>
+						</div>
+						<div class="col-xs-12">
+							<div class="to_border rounded shadow text-left">
+							123123<br>123123
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- Add Pagination -->
+			<div class="swiper-pagination"></div>
+			<? if(!$isMobile){ ?>
+			<!-- Add Arrows -->
+			<div class="swiper-button-next"></div>
+			<div class="swiper-button-prev"></div>
+			<? } ?>
+		</div>
+		<? } else if($count_hit_row['count'] == 0){?>
+		
+		<? } else {?>
+		
+		<? } ?>
+	</div>
+	
+	<div class="container ro_subpage_content ro_subpage_content_leaguedetail">
+		<!-- TEAM RANKING -->
+		<div class="row to_mb_50">
+			<?if($team_table){?>
+			<div class="col-xs-12" style="margin-bottom:30px">
+				<div class="to_titlebar">
+					팀 순위
+				</div>
+				<hr>
+				<div class="table-responsive teamranking_table rounded shadow">
+					<table class="table" id="teamranking_table">
+						<thead>
+							<tr>
+								<th>순위</th>
+								<th>팀명</th>
+								<th>경기</th>
+								<th>승</th>
+								<th>패</th>
+								<th>무</th>
+								<th>승률</th>
+								<th>승점</th>
+							</tr>
+						</thead>
+						<tbody>
+							<?=$team_table?>			
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<? } ?>
+			<div class="col-xs-12">
+				<div class="to_titlebar">
+					<?=$league_row['name']?> 팀 별 기록
+				</div>
+				<hr>
+				<div class='table-responsive rounded shadow'>
+					<table class="table table_h_b record_table">
+						<thead>
+							<tr>
+								<th rowspan='2' style='vertical-align:middle'>팀명</th><th colspan='2'>안타</th><th colspan='2'>홈런</th><th colspan='2'>볼넷</th><th colspan='2'>삼진</th><th colspan='2'>득실점</th><th colspan='6'>비율스텟</th>
+							</tr>
+							<tr>
+								<th>안타</th><th>피안타</th><th>홈런</th><th>피홈런</th><th>볼넷<small>(타)</small></th><th>볼넷<small>(투)</small></th><th>삼진</th><th>탈삼진</th><th>득점</th><th>자책<small>(실점)</small></th><th>타율</th><th>평균자책점</th><th>출루율</th><th>출루허용율</th><th>장타율</th><th>OPS</th>
+							</tr>
+						</thead>
+						<tbody>
+							<?=$team_summary_table?>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="swiper-container swiper-container4 to_mb_50">
+			<div class="swiper-wrapper league_rank_slider">
+				<div class='swiper-slide'>
+					<div class="col-xs-12" style="padding:15px 0px">
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='plora_hit_hit' height="150%"></canvas>
+							</div>
+						</div>
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='plora_bb_hit' height="150%"></canvas>
+							</div>
+						</div>
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='plora_rbi_hit' height="150%"></canvas>
+							</div>
+						</div>
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='plora_so_hit' height="150%"></canvas>
+							</div>
+						</div>
+						<div class="col-xs-12">
+							<div class="to_border rounded shadow text-left">
+							123123<br>123123
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class='swiper-slide'>
+					<div class="col-xs-12" style="padding:15px 0px">
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='plora_hit_pit' height="150%"></canvas>
+							</div>
+						</div>
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='plora_bb_pit' height="150%"></canvas>
+							</div>
+						</div>
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='plora_er_pit' height="150%"></canvas>
+							</div>
+						</div>
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='plora_so_pit' height="150%"></canvas>
+							</div>
+						</div>
+						<div class="col-xs-12">
+							<div class="to_border rounded shadow text-left">
+							123123<br>123123
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class='swiper-slide'>
+					<div class="col-xs-12" style="padding:15px 0px">
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='scatter_chart_hit' height="150%"></canvas>
+							</div>
+						</div>
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='scatter_chart_bb' height="150%"></canvas>
+							</div>
+						</div>
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='scatter_chart_rs' height="150%"></canvas>
+							</div>
+						</div>
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='scatter_chart_so' height="150%"></canvas>
+							</div>
+						</div>
+						<div class="col-xs-12">
+							<div class="to_border rounded shadow text-left">
+							123123<br>123123
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class='swiper-slide'>
+					<div class="col-xs-12" style="padding:15px 0px">
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='bar_team_avg' height="150%"></canvas>
+							</div>
+						</div>
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='bar_team_ops' height="150%"></canvas>
+							</div>
+						</div>
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='bar_team_era' height="150%"></canvas>
+							</div>
+						</div>
+						<div class='col-xs-12 col-md-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='bar_team_whip' height="150%"></canvas>
+							</div>
+						</div>
+						<div class="col-xs-12">
+							<div class="to_border rounded shadow text-left">
+							123123<br>123123
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- Add Pagination -->
+			<div class="swiper-pagination"></div>
+			<? if(!$isMobile){ ?>
+			<!-- Add Arrows -->
+			<div class="swiper-button-next"></div>
+			<div class="swiper-button-prev"></div>
+			<? } ?>
+		</div>
+		<!-- TEAM RANKING -->
+		<div class="row to_mb_50">
+			<!-- HITTER RANKING -->
+			<div class="col-xs-12 col-md-6">
+				<div class="to_titlebar">
+					타자 순위
+					<span class="shadow"><a href="javascript:;" onclick="moreranking(0)">전체보기</a></span>
+				</div>
+				<hr>
+				<div class="table-responsive ranking_table rounded shadow">
+					<table class="table league_table">
+						<tr>
+							<th colspan="1" style="text-align:center;width:10%">순위</th>
+							<th style="text-align:center;width:22%">팀명</th>
+							<th style="text-align:center;width:17%">선수</th>
+							<th style="text-align:center;width:17%">타수</th>
+							<th style="text-align:center;width:17%">안타</th>
+							<th style="text-align:center;width:17%">타율</th>
+						</tr>
+						<?=$hitter_top10_table;?>
+					</table>
+				</div>
+			</div>
+			<!-- HITTER RANKING -->
+			
+			<!-- PITCHER RANKING -->
+			<div class="col-xs-12 col-md-6">
+				<div class="to_titlebar">
+					투수 순위
+					<span class="shadow"><a href="javascript:;" onclick="moreranking(1)">전체보기</a></span>
+				</div>
+				<hr>
+				<div class="table-responsive ranking_table rounded shadow">
+					<table class="table league_table">
+						<tr>
+							<th colspan="1" style="text-align:center;width:10%">순위</th>
+							<th style="text-align:center;width:20%">팀명</th>
+							<th style="text-align:center;width:14%">선수</th>
+							<th style="text-align:center;width:14%">승</th>
+							<th style="text-align:center;width:14%">패</th>
+							<th style="text-align:center;width:14%">홀</th>
+							<th style="text-align:center;width:14%">세</th>
+						</tr>
+						<?=$pitcher_top10_table?>
+					</table>
+				</div>
+			</div>
+			<!-- PITCHER RANKING -->			
+			<div class="col-xs-12" style="margin-top:50px">
+				<div class="to_titlebar">
+					부분별 타자 순위
+				</div>
+				<hr>
+				<div class="swiper-container swiper-container2">
+					<div class="swiper-wrapper league_rank_slider">
+						<?=$parts_table[0]?>
+						<?=$parts_table[1]?>
+						<?=$parts_table[2]?>
+						<?=$parts_table[3]?>
+						<?=$parts_table[4]?>
+						<?=$parts_table[5]?>
+						<?=$parts_table[6]?>
+					</div>
+					<!-- Add Pagination -->
+					<div class="swiper-pagination"></div>
+					<? if(!$isMobile){ ?>
+					<!-- Add Arrows -->
+					<div class="swiper-button-next"></div>
+					<div class="swiper-button-prev"></div>
+					<? } ?>
+				</div>
+			</div>
+			<div class="col-xs-12" style="margin-top:50px">
+				<div class="to_titlebar">
+					부분별 투수 순위
+				</div>
+				<hr>
+				<div class="swiper-container swiper-container3">
+					<div class="swiper-wrapper league_rank_slider">
+						<?=$parts_table[7]?>
+						<?=$parts_table[8]?>
+						<?=$parts_table[9]?>
+						<?=$parts_table[10]?>
+						<?=$parts_table[11]?>
+					</div>
+					<!-- Add Pagination -->
+					<div class="swiper-pagination"></div>
+					<? if(!$isMobile){ ?>
+					<!-- Add Arrows -->
+					<div class="swiper-button-next"></div>
+					<div class="swiper-button-prev"></div>
+					<? } ?>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<!-- IE8 에서 HTML5 요소와 미디어 쿼리를 위한 HTML5 shim 와 Respond.js -->
+<!-- WARNING: Respond.js 는 당신이 file:// 을 통해 페이지를 볼 때는 동작하지 않습니다. -->
+<!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+<link href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css" rel="stylesheet">
+
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
+<script src="https://cdn.datatables.net/fixedcolumns/3.3.0/js/dataTables.fixedColumns.min.js"></script>
+<script>
+function change_years(){
+	var selectyears = document.getElementById("select_years");
+	var selectedValue = selectyears.options[selectyears.selectedIndex].value;
+	if(selectedValue != 0){
+		location.href = "test5.html?no="+selectedValue;
+	}
+}
+</script>
+<!-- Initialize Swiper -->
+<script src="js/swiper.min.js"></script>
+<script>
+	var swiper = new Swiper('.swiper-container1', {
+		slidesPerView: 1,
+		spaceBetween: 30,
+		pagination: {
+			el: '.swiper-pagination',
+			clickable: true,
+		},
+		navigation: {
+			nextEl: '.swiper-button-next',
+			prevEl: '.swiper-button-prev',
+		},
+    });
+	var swiper = new Swiper('.swiper-container4', {
+		slidesPerView: 1,
+		spaceBetween: 30,
+		pagination: {
+			el: '.swiper-pagination',
+			clickable: true,
+		},
+		navigation: {
+			nextEl: '.swiper-button-next',
+			prevEl: '.swiper-button-prev',
+		},
+    });
+    var swiper = new Swiper('.swiper-container2', {
+	<?if($isMobile == 0){?>
+		slidesPerView: 3,
+	<?}else{?>
+		slidesPerView: 1,
+	<?}?>
+		spaceBetween: 30,
+		pagination: {
+			el: '.swiper-pagination',
+			clickable: true,
+		},
+		navigation: {
+			nextEl: '.swiper-button-next',
+			prevEl: '.swiper-button-prev',
+		},
+    });
+	var swiper = new Swiper('.swiper-container3', {
+	<?if($isMobile == 0){?>
+		slidesPerView: 3,
+	<?}else{?>
+		slidesPerView: 1,
+	<?}?>
+		spaceBetween: 30,
+		pagination: {
+			el: '.swiper-pagination',
+			clickable: true,
+		},
+		navigation: {
+			nextEl: '.swiper-button-next',
+			prevEl: '.swiper-button-prev',
+		},
+    });
+</script>
+<script type="text/javascript">
+	
+	var defaultModal_league = $("#defaultModal_league");
+	var modal_body_league = $("#modal_body_league");
+	var modal_footer_league = $("#modal_footer_league");
+	
+	var append_content;
+	var append_btn;
+	
+	var sorttableid="";
+	
+	
+	var count = 0;
+	
+	/*$(document).ready(function() {
+		$("#teamranking_table").DataTable({
+			// 표시 건수기능 숨기기
+	        lengthChange: false,
+	        // 페이징 기능 숨기기
+	        paging: false,
+	     	// 검색 기능 숨기기
+	        searching: false,
+		});	
+	} );*/
+	
+	
+	function moreranking(check) {
+		modal_body_league.empty();
+		modal_footer_league.empty();
+		if(check==0){				//타자랭킹더보기 
+			
+			console.log("0check : "+check);
+			
+			append_content = "<div class='ro_color_g'>"
+							+"	<div class='to_titlebar'>"
+							+"		HITTER RANKING"
+							+"	</div>"
+							+"	<hr>"
+							+"	<div class='table-responsive'>"
+							+"	<table class='table table-hover table_h_g hiterranking_modal league_table_modal' id='hiterranking_modal'>"
+							+"		<thead>"
+							+"			<tr>"
+							+"				<th>　</th><th>No</th><th>팀명</th><th>선수명</th><th>타율</th><th>경기</th><th>타석</th><th>타수</th><th>안타</th><th>2루타</th><th>3루타</th><th>홈런</th><th>타점</th><th>득점</th><th>도루</th><th>볼넷</th><th>사사구</th><th>삼진</th><th>희생</th><th>루타</th><th>장타</th><th>출루율</th><th>장타율</th><th>OPS</th>"
+							+"			</tr>"
+							+"		</thead>"
+							+"		<tbody>"
+							+"<?=$hitter_more_table;?>" 
+							+"		</tbody>"				
+							+"	</table></div></div>";
+							
+			sorttableid = '#hiterranking_modal'; 				
+							
+		}else{		//투수랭킹더보기 
+			console.log("1check : "+check);
+			append_content = "<div class='ro_color_g'>"
+							+"	<div class='to_titlebar'>"
+							+"		PITCHER RANKING"
+							+"	</div>"
+							+"	<hr>"
+							+"	<div class='table-responsive'>"
+							+"	<table class='table table-hover table_h_g pitcherranking_modal league_table_modal' id='pitcherranking_modal'>"
+							+"		<thead>"
+							+"			<tr>"
+							+"				<th>　</th><th>No</th><th>팀명</th><th>선수명</th><th>평균자책점</th><th>실점율</th><th>경기</th><th>승</th><th>패</th><th>홀</th><th>세</th><th>투구</th><th>이닝</th><th>자책</th><th>실점</th><th>피안타</th><th>피홈런</th><th>볼넷</th><th>사사구</th><th>탈삼진</th><th>승률</th><th>출루허용율</th>"
+							+"			</tr>"
+							+"		</thead>"
+							+"		<tbody>"
+							+"<?=$pitcher_more_table;?>" 
+							+"		</tbody>"				
+							+"	</table></div></div>";
+			
+			sorttableid = '#pitcherranking_modal'; 	
+			
+		}
+		if(count!=0){
+			table.destroy();
+		}
+		
+		modal_body_league.append(append_content);
+		table = $(sorttableid).DataTable({
+			// 표시 건수기능 숨기기
+	        lengthChange: false,
+	        // 페이징 기능 숨기기
+	        paging: false,
+			searching: false,
+	        scrollY:        "400px",
+	        scrollX:        true,
+	        scrollCollapse: true,
+	        language: {
+	            search: "",
+	            paginate:{
+	            	"previous" : "<",
+	            	"next" : ">"
+	            }
+	        },
+		});	
+		defaultModal_league.modal('show');
+		count =1;
+	}
+	function save_data(num,pos) {
+		var player_no = "<?=$player_no?>";
+		document.getElementById(pos+"_save_data_"+num).innerHTML = "<a class='btn btn-secondary btn-sm' href='javascript:;' role='button' style='width:100%'><i class='fas fa-spinner fa-pulse'></i></a>";
+		if(player_no != ""){
+			$.ajax({
+				type: 'POST',
+				url: 'save_data.php',
+				data: {
+					no : num,
+					position : pos,
+					player : player_no
+				},
+				dataTpye: 'text',
+				success: function(data){
+					document.getElementById(pos+"_save_data_"+num).innerHTML = "<a class='btn btn-secondary btn-sm' href='javascript:;' role='button' style='width:100%'>저장하기</a>";
+					alert(data);
+				},
+				error: function() {
+					alert('Error');
+				}
+			});
+		}else{
+			alert('로그인이 필요합니다.');
+			location.href = "login.html";
+		}
+	}
+</script>
+<script>
+var ctx = document.getElementById('chart_avg');
+var mixedChart = new Chart(ctx, {
+	type: 'line',
+	data: {
+		datasets: [{
+			data: [{x:<?=$league_row['avg']?>-0.002,y:88}, {x:<?=$league_row['avg']?>+0.002,y:88}],
+			backgroundColor : 'rgba(83, 131, 232, 0.9)',
+			pointRadius: 0,
+			
+		}, {
+			data: [{x:<?=$league_row['years_avg']?>-0.002,y:90}, {x:<?=$league_row['years_avg']?>+0.002,y:90}],
+			backgroundColor : 'rgba(232, 83, 131, 0.7)',
+			pointRadius: 0,
+			
+		}, {
+			data: [{x:0.30,y:13},{x:0.33,y:31},{x:0.35,y:82},{x:0.37,y:91},{x:0.39,y:58},{x:0.41,y:27},{x:0.43,y:19},{x:0.45,y:12},{x:0.47,y:5},{x:0.49,y:4},{x:0.51,y:7},{x:0.53,y:8},{x:0.55,y:6},{x:0.57,y:5}],
+			backgroundColor : 'rgba(81, 81, 81, 0.25)',
+			type: 'line',
+			pointRadius: 0,
+			fill: true
+		}]
+	},
+	options: {
+		title: {
+			display: true,
+			text: '타율',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+		},
+		scales: {
+		   yAxes: [{
+				scaleLabel: {
+					display: false,
+					labelString: 'count_player'
+				},
+				ticks: {
+					min: 0,
+					max: 100
+				}
+		   }],
+		   xAxes: [{
+				scaleLabel: {
+					display: false,
+					labelString: '타율'
+				},
+				type: 'linear',
+				ticks: {
+					min: 0.30,
+					max: 0.57
+				}
+		   }]
+		},
+		tooltips: {
+			mode: 'index',
+			intersect: false,
+			enabled: false
+		},
+		legend: {
+				display: false
+		}
+	}
+});
+var ctx = document.getElementById('chart_ops');
+var mixedChart = new Chart(ctx, {
+	type: 'line',
+	data: {
+		datasets: [{
+			data: [{x:<?=$league_row['ops']?>-0.003,y:66}, {x:<?=$league_row['ops']?>+0.003,y:66}],
+			backgroundColor : 'rgba(83, 131, 232, 0.9)',
+			pointRadius: 0,
+			
+		}, {
+			data: [{x:<?=$league_row['years_ops']?>-0.003,y:68}, {x:<?=$league_row['years_ops']?>+0.003,y:68}],
+			backgroundColor : 'rgba(232, 83, 131, 0.7)',
+			pointRadius: 0,
+			
+		}, {
+			data: [{x:0.80,y:6},{x:0.85,y:23},{x:0.90,y:52},{x:0.95,y:66},{x:1.00,y:56},{x:1.05,y:31},{x:1.10,y:7},{x:1.15,y:5},{x:1.20,y:2},{x:1.25,y:10}],
+			backgroundColor : 'rgba(81, 81, 81, 0.25)',
+			type: 'line',
+			pointRadius: 0,
+			fill: true
+		}]
+	},
+	options: {
+		title: {
+			display: true,
+			text: 'OPS',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+		},
+		scales: {
+		   yAxes: [{
+				scaleLabel: {
+					display: false,
+					labelString: 'count_player'
+				},
+				ticks: {
+					min: 0,
+					max: 70
+				}
+		   }],
+		   xAxes: [{
+				scaleLabel: {
+					display: false,
+					labelString: 'OPS'
+				},
+				type: 'linear',
+				ticks: {
+					min: 0.80,
+					max: 1.25
+				}
+		   }]
+		},
+		tooltips: {
+			mode: 'index',
+			intersect: false,
+			enabled: false
+		},
+		legend: {
+				display: false
+		}
+	}
+});
+var ctx = document.getElementById('chart_era');
+var mixedChart = new Chart(ctx, {
+	type: 'line',
+	data: {
+		datasets: [{
+			data: [{x:<?=$league_row['era']?>-0.08,y:66}, {x:<?=$league_row['era']?>+0.08,y:66}],
+			backgroundColor : 'rgba(83, 131, 232, 0.9)',
+			pointRadius: 0,
+			
+		}, {
+			data: [{x:<?=$league_row['years_era']?>-0.08,y:68}, {x:<?=$league_row['years_era']?>+0.08,y:68}],
+			backgroundColor : 'rgba(232, 83, 131, 0.7)',
+			pointRadius: 0,
+			
+		}, {
+			data: [{x:5,y:16},{x:6,y:19},{x:7,y:35},{x:8,y:61},{x:9,y:57},{x:10,y:65},{x:11,y:34},{x:12,y:38},{x:13,y:21},{x:14,y:14},{x:15,y:4},{x:16,y:4}],
+			backgroundColor : 'rgba(81, 81, 81, 0.25)',
+			type: 'line',
+			pointRadius: 0,
+			fill: true
+		}]
+	},
+	options: {
+		title: {
+			display: true,
+			text: '평균자책점',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+		},
+		scales: {
+		   yAxes: [{
+				scaleLabel: {
+					display: false,
+					labelString: 'count_player'
+				},
+				ticks: {
+					min: 0,
+					max: 70
+				}
+		   }],
+		   xAxes: [{
+				scaleLabel: {
+					display: false,
+					labelString: 'ERA'
+				},
+				type: 'linear',
+				ticks: {
+					min: 5,
+					max: 16
+				}
+		   }]
+		},
+		tooltips: {
+			mode: 'index',
+			intersect: false,
+			enabled: false
+		},
+		legend: {
+				display: false
+		}
+	}
+});
+var ctx = document.getElementById('chart_whip');
+var mixedChart = new Chart(ctx, {
+	type: 'line',
+	data: {
+		datasets: [{
+			data: [{x:<?=$league_row['whip']?>-0.015,y:88}, {x:<?=$league_row['whip']?>+0.015,y:88}],
+			backgroundColor : 'rgba(83, 131, 232, 0.9)',
+			pointRadius: 0,
+			
+		}, {
+			data: [{x:<?=$league_row['years_whip']?>-0.015,y:90}, {x:<?=$league_row['years_whip']?>+0.015,y:90}],
+			backgroundColor : 'rgba(232, 83, 131, 0.7)',
+			pointRadius: 0,
+			
+		}, {
+			data: [{x:1.4,y:17},{x:1.6,y:8},{x:1.8,y:3},{x:2.0,y:7},{x:2.2,y:36},{x:2.4,y:43},{x:2.6,y:79},{x:2.8,y:93},{x:3.0,y:46},{x:3.2,y:34},{x:3.4,y:10}],
+			backgroundColor : 'rgba(81, 81, 81, 0.25)',
+			type: 'line',
+			pointRadius: 0,
+			fill: true
+		}]
+	},
+	options: {
+		title: {
+			display: true,
+			text: '출루허용율',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+		},
+		scales: {
+		   yAxes: [{
+				scaleLabel: {
+					display: false,
+					labelString: 'count_player'
+				},
+				ticks: {
+					min: 0,
+					max: 100
+				}
+		   }],
+		   xAxes: [{
+				scaleLabel: {
+					display: false,
+					labelString: 'whip'
+				},
+				type: 'linear',
+				ticks: {
+					min: 1.4,
+					max: 3.4
+				}
+		   }]
+		},
+		tooltips: {
+			mode: 'index',
+			intersect: false,
+			enabled: false
+		},
+		legend: {
+				display: false
+		}
+	}
+});
+</script>
+<script>
+var ctx = document.getElementById('line_chart_avg');
+var myLineChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+		labels : [<?=$barplot_label?>],
+		datasets : [{
+			data : [<?=$barplot_avg?>],
+			label: '타율',
+			type: 'line',
+			backgroundColor : 'rgba(0, 0, 255, 0.8)',
+			borderColor: 'rgba(0, 0, 255, 0.6)',
+			fill : false
+		},{
+			data : [<?=$barplot_league_avg?>],
+			label: '리그평균',
+			type: 'line',
+			backgroundColor: 'rgba(179, 181, 198, 0.8)',
+			borderColor: 'rgba(179, 181, 198, 0.6)',
+			fill : false
+		}]
+	},
+	options: {
+		title: {
+            display: false,
+            text: '타율',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: false
+		}
+	}
+});
+var ctx = document.getElementById('line_chart_ops');
+var myLineChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+		labels : [<?=$barplot_label?>],
+		datasets : [{
+			data : [<?=$barplot_ops?>],
+			label: 'OPS',
+			type: 'line',
+			stack: 'Stack 1',
+			backgroundColor : 'rgba(255, 99, 132, 1)',
+			borderColor: 'rgba(255, 99, 132, 0.7)',
+			fill : false
+		},{
+			data : [<?=$barplot_league_ops?>],
+			label: '리그평균',
+			type: 'line',
+			stack: 'Stack 2',
+			backgroundColor: 'rgba(179, 181, 198, 0.8)',
+			borderColor: 'rgba(179, 181, 198, 0.6)',
+			fill : false
+		},{
+			data: [<?=$barplot_slg?>],
+			stack: 'Stack 0',
+			label: '장타율',
+			hidden: true,
+			backgroundColor : 'rgba(54, 162, 235, 1)'
+		},{
+			data: [<?=$barplot_obp?>],
+			stack: 'Stack 0',
+			label: '출루율',
+			hidden: true,
+			backgroundColor : 'rgba(75, 192, 192, 1)'
+		}]
+	},
+	options: {
+		title: {
+            display: false,
+            text: 'OPS',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: false
+		}
+	}
+});
+var ctx = document.getElementById('line_chart_era');
+var myLineChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+		labels : [<?=$barplot_label?>],
+		datasets : [{
+			data : [<?=$barplot_era?>],
+			label: '평균자책점',
+			type: 'line',
+			backgroundColor : 'rgba(0, 0, 255, 0.8)',
+			borderColor: 'rgba(0, 0, 255, 0.6)',
+			fill : false
+		},{
+			data : [<?=$barplot_league_era?>],
+			label: '리그평균',
+			type: 'line',
+			backgroundColor: 'rgba(179, 181, 198, 0.8)',
+			borderColor: 'rgba(179, 181, 198, 0.6)',
+			fill : false
+		}]
+	},
+	options: {
+		title: {
+            display: false,
+            text: '평균자책점',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: false
+		}
+	}
+});
+var ctx = document.getElementById('line_chart_whip');
+var myLineChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+		labels : [<?=$barplot_label?>],
+		datasets : [{
+			data : [<?=$barplot_whip?>],
+			label: '출루허용율',
+			type: 'line',
+			backgroundColor : 'rgba(0, 0, 255, 0.8)',
+			borderColor: 'rgba(0, 0, 255, 0.6)',
+			fill : false
+		},{
+			data : [<?=$barplot_league_whip?>],
+			label: '리그평균',
+			type: 'line',
+			backgroundColor: 'rgba(179, 181, 198, 0.8)',
+			borderColor: 'rgba(179, 181, 198, 0.6)',
+			fill : false
+		}]
+	},
+	options: {
+		title: {
+            display: false,
+            text: '출루허용율',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: false
+		}
+	}
+});
+</script>
+<script>
+var ctx = document.getElementById('plora_hit_hit');
+var plorachart = new Chart(ctx, {
+    type: 'polarArea',
+    data: {
+		labels : [<?=$plora_label?>],
+		datasets : [{
+			data : [<?=$plora_hit_hit?>],
+			backgroundColor : [<?=$plora_hit_color?>]
+		}]
+	},
+	options: {
+		title: {
+            display: true,
+            text: '안타',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: true
+		},
+		legend: {
+			position: 'right',
+			<?echo $league_row['team_count']>=12?'display:false':'display:true';?>
+		}
+	}
+});
+var ctx = document.getElementById('plora_bb_hit');
+var plorachart = new Chart(ctx, {
+    type: 'polarArea',
+    data: {
+		labels : [<?=$plora_label?>],
+		datasets : [{
+			data : [<?=$plora_bb_hit?>],
+			backgroundColor : [<?=$plora_bb_color?>]
+		}]
+	},
+	options: {
+		title: {
+            display: true,
+            text: '볼넷(타)',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: true
+		},
+		legend: {
+			position: 'right',
+			<?echo $league_row['team_count']>=12?'display:false':'display:true';?>
+		}
+	}
+});
+var ctx = document.getElementById('plora_rbi_hit');
+var plorachart = new Chart(ctx, {
+    type: 'polarArea',
+    data: {
+		labels : [<?=$plora_label?>],
+		datasets : [{
+			data : [<?=$plora_rbi_hit?>],
+			backgroundColor : [<?=$plora_rbi_color?>]
+		}]
+	},
+	options: {
+		title: {
+            display: true,
+            text: '득점',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: true
+		},
+		legend: {
+			position: 'right',
+			<?echo $league_row['team_count']>=12?'display:false':'display:true';?>
+		}
+	}
+});
+var ctx = document.getElementById('plora_so_hit');
+var plorachart = new Chart(ctx, {
+    type: 'polarArea',
+    data: {
+		labels : [<?=$plora_label?>],
+		datasets : [{
+			data : [<?=$plora_so_hit?>],
+			backgroundColor : [<?=$plora_so_color?>]
+		}]
+	},
+	options: {
+		title: {
+            display: true,
+            text: '삼진',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: true
+		},
+		legend: {
+			position: 'right',
+			<?echo $league_row['team_count']>=12?'display:false':'display:true';?>
+		}
+	}
+});
+</script>
+<script>
+var ctx = document.getElementById('plora_hit_pit');
+var plorachart = new Chart(ctx, {
+    type: 'polarArea',
+    data: {
+		labels : [<?=$plora_label?>],
+		datasets : [{
+			data : [<?=$plora_hit_pit?>],
+			backgroundColor : [<?=$plora_hitp_color?>]
+		}]
+	},
+	options: {
+		title: {
+            display: true,
+            text: '피안타',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: true
+		},
+		legend: {
+			position: 'right',
+			<?echo $league_row['team_count']>=12?'display:false':'display:true';?>
+		}
+	}
+});
+var ctx = document.getElementById('plora_bb_pit');
+var plorachart = new Chart(ctx, {
+    type: 'polarArea',
+    data: {
+		labels : [<?=$plora_label?>],
+		datasets : [{
+			data : [<?=$plora_bb_pit?>],
+			backgroundColor : [<?=$plora_bbp_color?>]
+		}]
+	},
+	options: {
+		title: {
+            display: true,
+            text: '볼넷(투)',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: true
+		},
+		legend: {
+			position: 'right',
+			<?echo $league_row['team_count']>=12?'display:false':'display:true';?>
+		}
+	}
+});
+var ctx = document.getElementById('plora_er_pit');
+var plorachart = new Chart(ctx, {
+    type: 'polarArea',
+    data: {
+		labels : [<?=$plora_label?>],
+		datasets : [{
+			data : [<?=$plora_er_pit?>],
+			backgroundColor : [<?=$plora_erp_color?>]
+		}]
+	},
+	options: {
+		title: {
+            display: true,
+            text: '자책(실점)',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: true
+		},
+		legend: {
+			position: 'right',
+			<?echo $league_row['team_count']>=12?'display:false':'display:true';?>
+		}
+	}
+});
+var ctx = document.getElementById('plora_so_pit');
+var plorachart = new Chart(ctx, {
+    type: 'polarArea',
+    data: {
+		labels : [<?=$plora_label?>],
+		datasets : [{
+			data : [<?=$plora_so_pit?>],
+			backgroundColor : [<?=$plora_sop_color?>]
+		}]
+	},
+	options: {
+		title: {
+            display: true,
+            text: '탈삼진',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: true
+		},
+		legend: {
+			position: 'right',
+			<?echo $league_row['team_count']>=12?'display:false':'display:true';?>
+		}
+	}
+});
+</script>
+<script>
+var ctx = document.getElementById('scatter_chart_hit');
+var scatterChart = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+		labels: [<?=$plora_label?>],
+        datasets: [<?=$scatter_hit?>],
+		xAxisID: 'HIT'
+    },
+    options: {
+		title: {
+			display: true,
+			text: '안타 - 피안타',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+		},
+		legend: {
+			position: 'right',
+			<?echo $league_row['team_count']>=14?'display:false':'display:true';?>
+        },
+        scales: {
+            xAxes: [{
+                type: 'linear',
+                position: 'bottom',
+				scaleLabel: {
+					display: true,
+					labelString: '안타'
+				}
+            }],
+			yAxes: [{
+				scaleLabel: {
+					display: true,
+					labelString: '피안타'
+				}
+		   }]
+        },
+		tooltips: {
+			 callbacks: {
+				label: function(tooltipItem, data) {
+					var label = data.labels[tooltipItem.index];
+					return label + ': 안타 (' + tooltipItem.xLabel + '), 피안타 (' + tooltipItem.yLabel + ')';
+				}
+			}
+		}
+    }
+});
+var ctx = document.getElementById('scatter_chart_bb');
+var scatterChart = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+		labels: [<?=$plora_label?>],
+        datasets: [<?=$scatter_bb?>],
+		xAxisID: 'BB'
+    },
+    options: {
+		title: {
+			display: true,
+			text: '볼넷(타) - 볼넷(투)',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+		},
+		legend: {
+			position: 'right',
+			<?echo $league_row['team_count']>=14?'display:false':'display:true';?>
+        },
+        scales: {
+            xAxes: [{
+                type: 'linear',
+                position: 'bottom',
+				scaleLabel: {
+					display: true,
+					labelString: '볼넷(타)'
+				}
+            }],
+			yAxes: [{
+				scaleLabel: {
+					display: true,
+					labelString: '볼넷(투)'
+				}
+		   }]
+        },
+		tooltips: {
+			 callbacks: {
+				label: function(tooltipItem, data) {
+					var label = data.labels[tooltipItem.index];
+					return label + ': 안타 (' + tooltipItem.xLabel + '), 피안타 (' + tooltipItem.yLabel + ')';
+				}
+			}
+		}
+    }
+});
+var ctx = document.getElementById('scatter_chart_rs');
+var scatterChart = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+		labels: [<?=$plora_label?>],
+        datasets: [<?=$scatter_rs?>],
+		xAxisID: 'RS'
+    },
+    options: {
+		title: {
+			display: true,
+			text: '득점 - 자책(실점)',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+		},
+		legend: {
+			position: 'right',
+			<?echo $league_row['team_count']>=14?'display:false':'display:true';?>
+        },
+        scales: {
+            xAxes: [{
+                type: 'linear',
+                position: 'bottom',
+				scaleLabel: {
+					display: true,
+					labelString: '득점'
+				}
+            }],
+			yAxes: [{
+				scaleLabel: {
+					display: true,
+					labelString: '자책(실점)'
+				}
+		   }]
+        },
+		tooltips: {
+			 callbacks: {
+				label: function(tooltipItem, data) {
+					var label = data.labels[tooltipItem.index];
+					return label + ': 안타 (' + tooltipItem.xLabel + '), 피안타 (' + tooltipItem.yLabel + ')';
+				}
+			}
+		}
+    }
+});
+var ctx = document.getElementById('scatter_chart_so');
+var scatterChart = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+		labels: [<?=$plora_label?>],
+        datasets: [<?=$scatter_so?>],
+		xAxisID: 'SO'
+    },
+    options: {
+		title: {
+			display: true,
+			text: '삼진 - 탈삼진',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+		},
+		legend: {
+			position: 'right',
+			<?echo $league_row['team_count']>=14?'display:false':'display:true';?>
+        },
+        scales: {
+            xAxes: [{
+                type: 'linear',
+                position: 'bottom',
+				scaleLabel: {
+					display: true,
+					labelString: '삼진'
+				}
+            }],
+			yAxes: [{
+				scaleLabel: {
+					display: true,
+					labelString: '탈삼진'
+				}
+		   }]
+        },
+		tooltips: {
+			 callbacks: {
+				label: function(tooltipItem, data) {
+					var label = data.labels[tooltipItem.index];
+					return label + ': 안타 (' + tooltipItem.xLabel + '), 피안타 (' + tooltipItem.yLabel + ')';
+				}
+			}
+		}
+    }
+});
+</script>
+<script>
+var ctx = document.getElementById('bar_team_avg');
+var myBarChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+		labels : [<?=$plora_label?>],
+		datasets : [{
+			data : [<?=$bar_team_avg?>],
+			label: '타율',
+			backgroundColor : 'rgba(80, 147, 255, 0.8)',
+			borderColor: 'rgba(80, 147, 255, 0.6)',
+			fill : false
+		}]
+	},
+	options: {
+		title: {
+            display: false,
+            text: '팀 타율',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: false
+		}
+	}
+});
+var ctx = document.getElementById('bar_team_ops');
+var myBarChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+		labels : [<?=$plora_label?>],
+		datasets: [{
+			data: [<?=$bar_team_ops?>],
+			stack: 'Stack 1',
+			label: 'OPS',
+			type: 'line',
+			fill: false,
+			backgroundColor : 'rgba(255, 99, 132, 1)',
+			showLine: false,
+			pointStyle: 'line',
+			pointBorderWidth: 3,
+			pointRadius: 6,
+			borderColor: 'rgba(255, 99, 132, 0.7)'
+		},{
+			data: [<?=$bar_team_slg?>],
+			stack: 'Stack 0',
+			label: '장타율',
+			backgroundColor : 'rgba(54, 162, 235, 1)'
+		},{
+			data: [<?=$bar_team_obp?>],
+			stack: 'Stack 0',
+			label: '출루율',
+			backgroundColor : 'rgba(75, 192, 192, 1)'
+		}]
+	},
+	options: {
+		scales: {
+		   xAxes: [{
+				stacked: true
+		   }]
+	   },
+		title: {
+            display: false,
+            text: '팀 OPS',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: false
+		}
+	}
+});
+var ctx = document.getElementById('bar_team_era');
+var myBarChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+		labels : [<?=$plora_label?>],
+		datasets : [{
+			data : [<?=$bar_team_era?>],
+			label: '평균자책점',
+			backgroundColor : 'rgba(80, 147, 255, 0.8)',
+			borderColor: 'rgba(80, 147, 255, 0.6)',
+			fill : false
+		}]
+	},
+	options: {
+		title: {
+            display: false,
+            text: '팀 평균자책점',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: false
+		}
+	}
+});
+var ctx = document.getElementById('bar_team_whip');
+var myBarChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+		labels : [<?=$plora_label?>],
+		datasets : [{
+			data : [<?=$bar_team_whip?>],
+			label: '출루허용율',
+			backgroundColor : 'rgba(80, 147, 255, 0.8)',
+			borderColor: 'rgba(80, 147, 255, 0.6)',
+			fill : false
+		}]
+	},
+	options: {
+		title: {
+            display: false,
+            text: '팀 출루허용율',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		tooltips: {
+			mode: 'index',
+			intersect: false
+		}
+	}
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-box-and-violin-plot@2.3.0/build/Chart.BoxPlot.min.js"></script>
+<script>
+const boxplotData = {
+	labels: [<?=$barplot_label?>],
+	datasets: [{
+		label: '전체분포',
+		borderColor: [<?=$barplot_color_avg?>],
+		medianColor: [<?=$barplot_color_avg?>],
+		borderWidth: 1,
+		outlierRadius: 3,
+		itemRadius: 3,
+		outlierColor: [<?=$barplot_color_avg?>],
+		data: [<?=$barplot_league_avg_all?>],
+	}]
+};
+const boxplotData2 = {
+	labels: [<?=$barplot_label?>],
+	datasets: [{
+		label: '전체분포',
+		borderColor: [<?=$barplot_color_ops?>],
+		medianColor: [<?=$barplot_color_ops?>],
+		borderWidth: 1,
+		outlierRadius: 3,
+		itemRadius: 3,
+		outlierColor: [<?=$barplot_color_ops?>],
+		data: [<?=$barplot_league_ops_all?>],
+	}]
+};
+const boxplotData3 = {
+	labels: [<?=$barplot_label?>],
+	datasets: [{
+		label: '전체분포',
+		borderColor: [<?=$barplot_color_era?>],
+		medianColor: [<?=$barplot_color_era?>],
+		borderWidth: 1,
+		outlierRadius: 3,
+		itemRadius: 3,
+		outlierColor: [<?=$barplot_color_era?>],
+		data: [<?=$barplot_league_era_all?>],
+	}]
+};
+const boxplotData4 = {
+	labels: [<?=$barplot_label?>],
+	datasets: [{
+		label: '전체분포',
+		borderColor: [<?=$barplot_color_whip?>],
+		medianColor: [<?=$barplot_color_whip?>],
+		borderWidth: 1,
+		outlierRadius: 3,
+		itemRadius: 3,
+		outlierColor: [<?=$barplot_color_whip?>],
+		data: [<?=$barplot_league_whip_all?>],
+	}]
+};
+window.onload = function() {
+	var ctx_boxpolt_avg = document.getElementById("boxplot_avg").getContext("2d");
+	window.myBar = new Chart(ctx_boxpolt_avg, {
+		type: 'boxplot',
+		data: boxplotData,
+		options: {
+			responsive: true,
+			legend: {
+				position: 'top',
+			},
+			title: {
+				display: false,
+				text: 'Chart.js Box Plot Chart'
+			},
+			scales: {
+				xAxes: [{
+				// Specific to Bar Controller
+				categoryPercentage: 0.9,
+				barPercentage: 0.8
+				}]
+			},
+			tooltips: {
+				enabled: false
+			}
+		}
+	});
+	var ctx_boxpolt_ops = document.getElementById("boxplot_ops").getContext("2d");
+	window.myBar = new Chart(ctx_boxpolt_ops, {
+		type: 'boxplot',
+		data: boxplotData2,
+		options: {
+			responsive: true,
+			legend: {
+				position: 'top',
+			},
+			title: {
+				display: false,
+				text: 'Chart.js Box Plot Chart'
+			},
+			scales: {
+				xAxes: [{
+				// Specific to Bar Controller
+				categoryPercentage: 0.9,
+				barPercentage: 0.8
+				}]
+			},
+			tooltips: {
+				enabled: false
+			}
+		}
+	});
+	var ctx_boxpolt_era = document.getElementById("boxplot_era").getContext("2d");
+	window.myBar = new Chart(ctx_boxpolt_era, {
+		type: 'boxplot',
+		data: boxplotData3,
+		options: {
+			responsive: true,
+			legend: {
+				position: 'top',
+			},
+			title: {
+				display: false,
+				text: 'Chart.js Box Plot Chart'
+			},
+			scales: {
+				xAxes: [{
+				// Specific to Bar Controller
+				categoryPercentage: 0.9,
+				barPercentage: 0.8
+				}]
+			},
+			tooltips: {
+				enabled: false
+			}
+		}
+	});
+	var ctx_boxpolt_whip = document.getElementById("boxplot_whip").getContext("2d");
+	window.myBar = new Chart(ctx_boxpolt_whip, {
+		type: 'boxplot',
+		data: boxplotData4,
+		options: {
+			responsive: true,
+			legend: {
+				position: 'top',
+			},
+			title: {
+				display: false,
+				text: 'Chart.js Box Plot Chart'
+			},
+			scales: {
+				xAxes: [{
+				// Specific to Bar Controller
+				categoryPercentage: 0.9,
+				barPercentage: 0.8
+				}]
+			},
+			tooltips: {
+				enabled: false
+			}
+		}
+	});
+};
+</script>
+<?include("footer/footer.html");?>	
+</body>
+</html>

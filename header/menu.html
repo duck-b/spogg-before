@@ -1,0 +1,80 @@
+<!-- 메인 메뉴 페이지 -->
+<div class="to_mainmenu">
+	<nav class="navbar navbar-expand-lg navbar-light bg-light nav_option">
+		<button class="navbar-toggler mobile_btn" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+		<a class="navbar-brand text-middle mobile_logo" href="index.html" style="width:140px;padding:10px 15px"><img src="img/logo/spogg_logo.png" class="img-responsive"></a>
+		<div class="collapse navbar-collapse to_main_menu menu_top_margin" id="navbarSupportedContent">
+			<ul class="navbar-nav mr-auto to_main_menu_nav1">
+				<li class="nav-item">
+					<a class="nav-link" href="index.html">Home <span class="sr-only">(current)</span></a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="league.html">리그</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="contents.html">콘텐츠</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="javascript:;" onclick="not_ready()">분석</a>
+				</li>
+				<!--
+				<li class="nav-item">
+					<a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
+				</li>
+				-->
+			</ul>
+			<ul class="navbar-nav mr-auto navbar-right to_main_menu_nav2">
+				<li>
+					<form class="form-inline" action="search.html" method="get">
+						<input class="form-control shadow" type="search" name="search" placeholder="이름으로 기록검색" aria-label="Search" style="width:90%">
+						<button class="btn" type="submit" style="width:10%"><i class="fas fa-search" style="color:#515151"></i></button>
+					</form>
+				</li>
+				<?if($user_no){?>
+				<li class="nav-item dropdown">
+					<a class="navbar-brand nav-link dropdown-toggle" href="javascript:;" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						<img src="<?=$user_img?>" class="d-inline-block align-top rounded-circle user_images" alt="" loading="lazy">
+						<?=$user_row['name']?>
+					</a>
+					<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+						<a class="dropdown-item" href="user_info.html">프로필 정보</a>
+						<?if($player_no == 3){?>
+							<a class="dropdown-item" href="report_landing.html">스카우팅리포트</a>
+							<a class="dropdown-item" href="https://m.spo.gg">팀페이지</a>
+						<? } else if($player_no){?>
+							<a class="dropdown-item" href="report_offi.html">스키우팅리포트</a>
+						<? } ?>
+                        <?if($manager_no){?>
+						<a class="dropdown-item" href="create_promotion.html">용병 모집</a>
+                        <? }?>
+						<div class="dropdown-divider"></div>
+						<a class="dropdown-item" href="LogoutProc.php">로그아웃</a>
+					</div>
+				</li>
+				<? } else{ ?>
+				<li class="nav-item">
+					<a class="nav-link" href="login.html">로그인</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="join_agree.html">회원가입</a>
+				</li>
+				<? } ?>
+			</ul>
+		</div>
+	</nav>
+</div>
+<script>
+	$( document ).ready( function() {
+		var jbOffset = $( '.to_mainmenu' ).offset();
+		$( window ).scroll( function() {
+			if ( $( document ).scrollTop() > jbOffset.top ) {
+				$( '.to_mainmenu' ).addClass( 'roFixed' );
+			}
+			else {
+				$( '.to_mainmenu' ).removeClass( 'roFixed' );
+			}
+		});
+	});
+</script>

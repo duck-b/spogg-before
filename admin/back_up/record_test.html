@@ -1,0 +1,1179 @@
+<? include("header/header.html");?>
+<? include("header/menu.html"); ?>
+<?
+if(!$user_no){
+	echo "<script>alert('로그인이 필요한 기능입니다.');";
+	echo "window.location.replace('login.html');</script>";
+}else{
+	include "dbconn.php";
+	$player_result = mysqli_query($conn,"SELECT * FROM user_player WHERE user='$user_no'");
+	$player_row = mysqli_fetch_array($player_result);
+	if($player_row['playercheck'] == 1){
+		$playercheck = "선출";
+	}else if($player_row['playercheck'] == 2){
+		$playercheck = "비선출";
+	}else{
+		$playercheck = "-";
+	}
+	if($player_row['playerclass'] == 1){
+		$playerclass = "사회인 1부";
+	}else if($player_row['playerclass'] == 2){
+		$playerclass = "사회인 2부";
+	}else if($player_row['playerclass'] == 3){
+		$playerclass = "사회인 3부";
+	}else if($player_row['playerclass'] == 4){
+		$playerclass = "사회인 4부";
+	}else{
+		$playerclass = "-";
+	}
+	if($player_row['position'] == 1){
+		$position = "내야수";
+	}else if($player_row['position'] == 2){
+		$position = "외야수";
+	}else if($player_row['position'] == 3){
+		$position = "투수";
+	}else{
+		$position = "-";
+	}
+	if($player_row['hitpitch'] == 1){
+		$hitpitch = "우투우타";
+	}else if($player_row['hitpitch'] == 2){
+		$hitpitch = "우투좌타";
+	}else if($player_row['hitpitch'] == 3){
+		$hitpitch = "좌투우타";
+	}else if($player_row['hitpitch'] == 4){
+		$hitpitch = "좌투좌타";
+	}else{
+		$hitpitch = "-";
+	}
+	if($user_row['birth'] == '0000-00-00'){
+		$birth = "-";
+	}else{
+		$birth = $user_row['birth'];
+	}
+	if($player_row['playertall'] == 0){
+		$playertall = "-";
+	}else{
+		$playertall = $player_row['playertall']."cm";
+	}
+	if($player_row['playerweight'] == 0){
+		$playerweight = "-";
+	}else{
+		$playerweight = $player_row['playerweight']."kg";
+	}
+	if($player_row['address']){
+		$address = $player_row['address'];
+	}else{
+		$address = "-";
+	}
+	//타자
+	$hit_record_query = "SELECT test_record_hit.*,
+		ROUND(hit/at_bat,3) as avg ,
+		ROUND((hit1 + hit2 + hit3 + hr + bb + hbp)/(at_bat + bb + hbp + sf),3) as obp,
+		ROUND((hit1 + hit2*2 + hit3*3 +hr*4)/at_bat,3) as slg,
+		ROUND(((hit1 + hit2*2 + hit3*3 +hr*4)/at_bat)+((hit1 + hit2 + hit3 + hr + bb + hbp)/(at_bat + bb + hbp + sf)),3) as ops,
+		(hit1 + hit2*2 + hit3*3 + hr*4) as tb,
+		(hit2 + hit3 + hr) as xbh 
+	FROM test_record_hit 
+	WHERE player='$player_no' ORDER BY game_date DESC, created_at";
+	$hit_record_result = mysqli_query($conn,$hit_record_query);
+	$hit_table_basic = "";
+	$i = 0;
+	while($hit_record_row = mysqli_fetch_array($hit_record_result)){
+		$i++;
+		$hit_no = $hit_record_row['no'];
+		if($hit_record_row['kind'] == 1){
+			$kind = '연습경기';
+		}else{
+			$kind = '용병경기';
+		}
+		$hit_table_basic = $hit_table_basic."<tr>
+			<td>".$i."</td><td>".$hit_record_row['game_date']."</td><td>".$kind."</td><td>".$hit_record_row['team_name']."</td><td>".$hit_record_row['avg']."</td><td>".$hit_record_row['at_play']."</td><td>".$hit_record_row['at_bat']."</td><td>".$hit_record_row['hit']."</td><td>".$hit_record_row['hit2']."</td><td>".$hit_record_row['hit3']."</td><td>".$hit_record_row['hr']."</td><td>".$hit_record_row['rbi']."</td><td>".$hit_record_row['rs']."</td><td>".$hit_record_row['sb']."</td><td>".$hit_record_row['bb']."</td><td>".$hit_record_row['hbp']."</td><td>".$hit_record_row['so']."</td><td>".$hit_record_row['sf']."</td><td>".$hit_record_row['tb']."</td><td>".$hit_record_row['xbh']."</td><td>".$hit_record_row['obp']."</td><td>".$hit_record_row['slg']."</td><td>".$hit_record_row['ops']."</td><td><a href='javascript:;' onclick='onclick=updaterecodeform(2,$hit_no)'><i class='fa fa-edit' style='color:green'></i></a></td><td><a href='javascript:;' onclick='delete_event($hit_no,1)'><i class='fa fa-trash' style='color:red'></i></a></td>
+		</tr>";
+	}
+	if($hit_table_basic){
+		$hit_record_summary_query = "SELECT COUNT(CASE WHEN player='$player_no' THEN 1 END) AS years, 
+				COUNT(CASE WHEN player='$player_no' THEN 1 END) AS at_game,
+				SUM(at_bat) AS at_bat,
+				SUM(hit) AS hit,
+				SUM(hr) AS hr,
+				SUM(bb+hbp) AS bb,
+				SUM(rs) AS rs,
+				SUM(rbi) AS rbi,
+				SUM(sb) AS sb,
+				ROUND(sum(hit)/sum(at_bat),3) as avg,
+				ROUND((sum(hit1) + sum(hit2)*2 + sum(hit3)*3 +sum(hr)*4)/sum(at_bat),3) as slg,
+				ROUND((sum(hit1) + sum(hit2) + sum(hit3) + sum(hr) + sum(bb) + sum(hbp))/(sum(at_bat) + sum(bb) + sum(hbp) + sum(sf)),3) as obp,
+				ROUND(((sum(hit1) + sum(hit2)*2 + sum(hit3)*3 +sum(hr)*4)/sum(at_bat))+((sum(hit1) + sum(hit2) + sum(hit3) + sum(hr) + sum(bb) + sum(hbp))/(sum(at_bat) + sum(bb) + sum(hbp) + sum(sf))),3) as ops
+			FROM test_record_hit WHERE player='$player_no'";
+		$hit_record_summary_result = mysqli_query($conn,$hit_record_summary_query);
+		$hit_record_summary_row = mysqli_fetch_array($hit_record_summary_result);
+		$hit_years_query = "SELECT COUNT(*) as hit_years FROM (SELECT YEAR(game_date) AS years FROM test_record_hit WHERE player='$player_no' GROUP BY YEAR(game_date))hit_count WHERE 1";
+		$hit_years_result = mysqli_query($conn,$hit_years_query);
+		$hit_years_row = mysqli_fetch_array($hit_years_result);
+		$hit_table_summary = "<td>".$hit_years_row['hit_years']."</td><td>".$hit_record_summary_row['avg']."</td><td>".$hit_record_summary_row['at_game']."</td><td>".$hit_record_summary_row['at_bat']."</td><td>".$hit_record_summary_row['hit']."</td><td>".$hit_record_summary_row['hr']."</td><td>".$hit_record_summary_row['bb']."</td><td>".$hit_record_summary_row['rbi']."</td><td>".$hit_record_summary_row['rs']."</td><td>".$hit_record_summary_row['sb']."</td><td>".$hit_record_summary_row['obp']."</td><td>".$hit_record_summary_row['slg']."</td><td>".$hit_record_summary_row['ops']."</td>";
+	}
+	//투수
+	$pit_record_query = "SELECT test_record_pit.*, 
+		ROUND((er * 7)/(inning/3),2) as era, 
+		ROUND((rs * 7)/(inning/3),2) as rsa, 
+		ROUND((so)/(hbp + bb),2) as kbb, 
+		ROUND((hit + hr + bb + hbp)/(inning/3),2) as whip 
+	FROM test_record_pit 
+	WHERE player='$player_no' ORDER BY game_date DESC, created_at";
+	$pit_record_result = mysqli_query($conn,$pit_record_query);
+	$pit_table_basic = "";
+	$i = 0;
+	while($pit_record_row = mysqli_fetch_array($pit_record_result)){
+		$i++;
+		if($pit_record_row['pitcher_count'] == ''){
+			$pitcher_count = "-";
+		}else{
+			$pitcher_count = $pit_record_row['pitcher_count'];
+		}
+		if($pit_record_row['rs'] == ''){
+			$rs = "-";
+			$rsa = "-";
+		}else{
+			$rs = $pit_record_row['rs'];
+			$rsa = $pit_record_row['rsa'];
+		}
+		if($pit_record_row['er'] == ''){
+			$er = "-";
+			$era = "-";
+		}else{
+			$er = $pit_record_row['er'];
+			$era = $pit_record_row['era'];
+		}
+		$h_inning = ($pit_record_row['inning'] - ($pit_record_row['inning'] % 3)) / 3;
+		if($pit_record_row['inning'] % 3 == 0){
+			$f_inning = "";
+		}else if($pit_record_row['inning'] % 3 == 1){
+			$f_inning = "⅓";
+		}else if($pit_record_row['inning'] % 3 == 2){
+			$f_inning = "⅔";
+		}
+		$pit_no = $pit_record_row['no'];
+		if($pit_record_row['kind'] == 1){
+			$kind = '연습경기';
+		}else{
+			$kind = '용병경기';
+		}
+		if($pit_record_row['game_result'] == 1){
+			$game_result = "승";
+		}else if($pit_record_row['game_result'] == 2){
+			$game_result = "패";
+		}else if($pit_record_row['game_result'] == 3){
+			$game_result = "홀";
+		}else if($pit_record_row['game_result'] == 4){
+			$game_result = "세";
+		}else{
+			$game_result = "-";
+		}
+		$pit_table_basic = $pit_table_basic."<tr>
+			<td>".$i."</td><td>".$pit_record_row['game_date']."</td><td>".$kind."</td><td>".$pit_record_row['team_name']."</td><td>".$era."</td><td>".$rsa."</td><td>".$game_result."</td><td>".$pitcher_count."</td><td>".$h_inning.$f_inning."</td><td>".$er."</td><td>".$rs."</td><td>".$pit_record_row['hit']."</td><td>".$pit_record_row['hr']."</td><td>".$pit_record_row['bb']."</td><td>".$pit_record_row['hbp']."</td><td>".$pit_record_row['so']."</td><td>".$pit_record_row['whip']."</td><td><a href='javascript:;' onclick='onclick=updaterecodeform(3,$pit_no)'><i class='fa fa-edit' style='color:green'></i></a></td><td><a href='javascript:;' onclick='delete_event($pit_no,2)'><i class='fa fa-trash' style='color:red'></i></a></td>
+		</tr>";
+	}
+	if($pit_table_basic){
+		$pit_record_summary_query = "SELECT COUNT(CASE WHEN player='$player_no' THEN 1 END) AS years, 
+				COUNT(CASE WHEN player='$player_no' THEN 1 END) AS at_game,
+				COUNT(CASE WHEN game_result='1' THEN 1 END) AS win_game,
+				COUNT(CASE WHEN game_result='2' THEN 1 END) AS lose_game,
+				SUM(inning) AS inning, 
+				SUM(hit) AS hit, 
+				SUM(so) AS so, 
+				SUM(CASE WHEN er IS NOT NULL THEN er END) AS er, 
+				SUM(CASE WHEN rs IS NOT NULL THEN rs END) AS rs, 
+				COUNT(CASE WHEN er IS NOT NULL THEN 1 END) AS er_c, 
+				COUNT(CASE WHEN rs IS NOT NULL THEN 1 END) AS rs_c, 
+				sum(CASE WHEN rs IS NOT NULL THEN inning END) as rs_in, 
+				sum(CASE WHEN er IS NOT NULL THEN inning END) as er_in,
+				ROUND((sum(hit) + sum(hr) + sum(bb) + sum(hbp))/(sum(inning)/3),2) as whip 
+			FROM test_record_pit WHERE player='$player_no'";
+		$pit_record_summary_result = mysqli_query($conn,$pit_record_summary_query);
+		$pit_record_summary_row = mysqli_fetch_array($pit_record_summary_result);
+		if($pit_record_summary_row['rs_in'] == ''){
+			$rs = "-";
+			$rsa = "-";
+		}else{
+			$rs = $pit_record_summary_row['rs'];
+			$rsa = number_format(round(($pit_record_summary_row['rs']*7)/($pit_record_summary_row['rs_in']/3),2),2);
+		}
+		if($pit_record_summary_row['er_in'] == ''){
+			$er = "-";
+			$era = "-";
+		}else{
+			$er = $pit_record_summary_row['er'];
+			$era = number_format(round(($pit_record_summary_row['er']*7)/($pit_record_summary_row['er_in']/3),2),2);
+		}
+		if($pit_record_summary_row['win_game']+$pit_record_summary_row['lose_game'] != 0){
+			$pct = number_format(round($pit_record_summary_row['win_game']/($pit_record_summary_row['win_game']+$pit_record_summary_row['lose_game'] != 0),3),3);
+		}else{
+			$pct = "-";
+		}
+		$h_inning = ($pit_record_summary_row['inning'] - ($pit_record_summary_row['inning'] % 3)) / 3;
+		if($pit_record_summary_row['inning'] % 3 == 0){
+			$f_inning = "";
+		}else if($pit_record_summary_row['inning'] % 3 == 1){
+			$f_inning = "⅓";
+		}else if($pit_record_summary_row['inning'] % 3 == 2){
+			$f_inning = "⅔";
+		}
+		$pit_years_query = "SELECT COUNT(*) as pit_years FROM (SELECT YEAR(game_date) AS years FROM test_record_pit WHERE player='$player_no' GROUP BY YEAR(game_date))pit_count WHERE 1";
+		$pit_years_result = mysqli_query($conn,$pit_years_query);
+		$pit_years_row = mysqli_fetch_array($pit_years_result);
+		$pit_table_summary = "<td>".$pit_years_row['pit_years']."</td><td>".$era." (".$pit_record_summary_row['er_c'].")</td><td>".$rsa." (".$pit_record_summary_row['rs_c'].")</td><td>".$pit_record_summary_row['at_game']."</td><td>".$pit_record_summary_row['win_game']."</td><td>".$pit_record_summary_row['lose_game']."</td><td>".$pct."</td><td>".$pit_record_summary_row['er']." (".$pit_record_summary_row['er_c'].")</td><td>".$pit_record_summary_row['rs']." (".$pit_record_summary_row['rs_c'].")</td><td>".$h_inning.$f_inning."</td><td>".$pit_record_summary_row['hit']."</td><td>".$pit_record_summary_row['so']."</td><td>".$pit_record_summary_row['whip']."</td>";
+	}
+	mysqli_close($conn);
+}
+?>
+
+<!-- IE8 에서 HTML5 요소와 미디어 쿼리를 위한 HTML5 shim 와 Respond.js -->
+<!-- WARNING: Respond.js 는 당신이 file:// 을 통해 페이지를 볼 때는 동작하지 않습니다. -->
+<!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+<link href="css/dataTables.bootstrap.min.css" rel="stylesheet">
+
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
+<script src="https://cdn.datatables.net/fixedcolumns/3.3.0/js/dataTables.fixedColumns.min.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function() {
+    $('#recode_hitplay').DataTable({
+        // 표시 건수기능 숨기기
+        lengthChange: false,
+        // 검색 기능 숨기기
+        searching: false,
+        // 페이징 기능 숨기기
+        paging: false,
+    });
+    $('#recode_pitchplay').DataTable({
+        // 표시 건수기능 숨기기
+        lengthChange: false,
+        // 검색 기능 숨기기
+        searching: false,
+        // 페이징 기능 숨기기
+        paging: false,
+    });
+} );
+</script>
+
+<div class="ro_subpage ">
+	<div class="container-fluid ro_subpage_title_img ro_posi_r">
+		<img src="img/subpage_title/2019league_titleimg.jpg">
+		<div class="ro_subpage_nav">
+			<p>연습·용병기록</p>
+			<ul>
+				<li>Home</li>
+				<li>User</li>
+				<li>연습·용병기록</li>
+			</ul>
+		</div>
+	</div>
+	
+	<div class="container ro_subpage_content ro_subpage_recode">
+		<div class="ro_subpage_recode_tab">
+			<ul id="myTab" class="nav nav-tabs" role="tablist">
+				<li role="presentation" class=""><a href="record_offical.html">공식기록</a></li>
+				<li role="presentation" class=""><a href="record_none.html">비공식기록</a></li>
+				<li role="presentation" class="active"><a href="#testrecord" role="tab" id="testrecord-tab" data-toggle="tab" aria-controls="testrecord" aria-expanded="true">연습·용병기록</a></li>
+				
+			</ul>
+			<div id="myTabContent" class="tab-content">
+
+	
+				<!-- ---------------------------------------------------------------------------------------------------- -->
+				<!-- 비공식기록 TAB -->
+				
+				<!-- 모달창 -->
+				<div class="modal fade" id="defaultModal_inputrecode">
+				    <div class="modal-dialog">
+				        <div class="modal-content">
+				            <div class="modal-header" id="modal_header_inputrecode">
+				                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+				            </div>
+				            <div class="modal-body" id="modal_body_inputrecode"></div>
+				            <div class="modal-footer" id="modal_footer_inputrecode"></div>
+				        </div><!-- /.modal-content -->
+				    </div><!-- /.modal-dialog -->
+				</div><!-- /.modal -->
+				<!--// 모달창 -->
+	
+				<div role="tabpanel" class="tab-pane fade active in ro_color_g" id="testrecord" aria-labelledby="testrecord-tab">
+					<div class="to_titlebar">
+						선수정보
+					</div>
+					<hr>
+					<div class="to_page_content2 to_mb_30 table-responsive">
+						<table class="table recode_player_table">
+							<tr>
+								<th><img src="<?=$user_img?>"></th>
+								<td>
+									<div class="recode_player"><span><?=$player_row['back_num']?></span><?=$user_row['name']?>
+										<a href="javascript:;" onclick="inputrecode()">기록입력</a>
+									</div>
+									<div class="recode_player_info_table table-responsive">
+										<table class="table">
+											<tr>
+												<th>주활동지역</th><td><?=$address?></td>
+												<th>주활동리그</th><td><?=$playerclass?></td>
+												<th>주포지션</th><td><?=$position?></td>
+											</tr>
+											<tr>
+												<th>생년월일</th><td><?=$birth?></td>
+												<th>신장/체중</th><td><?=$playertall?> / <?=$playerweight?></td>
+											</tr>
+											<tr>
+												<th>선출여부</th><td><?=$playercheck?></td>
+												<th>투/타</th><td><?=$hitpitch?></td>
+											</tr>
+										</table>
+									</div>
+								</td>
+							</tr>
+						</table>
+					</div><!-- 선수 정보 끝 -->
+					
+					<?if($hit_table_basic){ ?>
+					<div class="to_titlebar">
+						기록요약 - 타자
+					</div>
+					<hr>
+					<div class="to_page_content2 table-responsive to_mb_30">
+						<table class="table table_h_b">
+							<tr>
+								<th>YEAR</th><th>AVG</th><th>G</th><th>AB</th><th>H</th><th>HR</th><th>BB</th><th>R</th><th>RBI</th><th>SB</th><th>OBP</th><th>SLG</th><th>OPS</th>
+							</tr>
+							<tr>
+								<?=$hit_table_summary;?>
+							</tr>
+						</table>
+					</div>
+					<? } ?>
+					<?if($pit_table_basic){ ?>
+					<div class="to_titlebar">
+						기록요약 - 투수
+					</div>
+					<hr>
+					<div class="to_page_content2 table-responsive to_mb_30">
+						<table class="table table_h_b">
+							<tr>
+								<th>YEAR</th><th>ERA</th><th>RA</th><th>G</th><th>WIN</th><th>LOSE</th><th>PCT</th><th>ER</th><th>R</th><th>IP</th><th>HIT</th><th>SO</th><th>WHIP</th>
+							</tr>
+							<tr>
+								<?=$pit_table_summary;?>
+							</tr>
+						</table>
+					</div>
+					<? } ?>
+					<?if($hit_table_basic){ ?>
+					<div class="to_titlebar">
+						기본기록 - 타자
+					</div>
+					<hr>
+					<div class="to_page_content2 table-responsive to_mb_30">
+						<table class="table table_h_b recode_hitplay test_recode_hitplay ro_table_12" id="recode_hitplay">
+							<thead>
+								<tr>
+									<th>No</th><th style="width:100px">날짜</th><th>구분</th><th>팀명</th><th>AVG</th><th>PA</th><th>AB</th><th>HIT</th><th>2B</th><th>3B</th><th>HR</th><th>RBI</th><th>R</th><th>SB</th><th>BB</th><th>HBP</th><th>SO</th><th>SF</th><th>TB</th><th>XBH</th><th>OBP</th><th>SLG</th><th>OPS</th><th>수정</th><th>삭제</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?=$hit_table_basic;?>					
+							</tbody>				
+						</table>
+					</div>
+					<?}?>
+					<?if($pit_table_basic){ ?>
+					<div class="to_titlebar">
+						기본기록 - 투수
+					</div>
+					<hr>
+					<div class="to_page_content2 table-responsive to_mb_30">
+						<table class="table table_h_b recode_pitcherplay test_recode_pitcherplay ro_table_12" id="recode_pitchplay">
+							<thead>
+								<tr>
+									<th>No</th><th>날짜</th><th>구분</th><th>팀명</th><th>ERA</th><th>RA</th><th>GR</th><th>NP</th><th>IP</th><th>ER</th><th>R</th><th>HIT</th><th>HR</th><th>BB</th><th>HBP</th><th>SO</th><th>WHIP</th><th>수정</th><th>삭제</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?=$pit_table_basic;?>
+							</tbody>				
+						</table>
+					</div>
+					<? } ?>
+					<!--
+					<div class="to_titlebar">
+						저장콘텐츠
+					</div>
+					<hr>
+					<div class="row to_mb_30">
+						<div class="col-xs-6 col-sm-6 col-md-3 recode_save_contents_list" onclick="location.href='#'">
+							<img src="../img/sampleimg/TRYOUT_DESIGN1-18.png">
+							<div class="recode_save_contents_list_info">
+								<p>퓨처스리그</p>
+								<span>2019</span>
+							</div>
+						</div>
+						
+						<div class="col-xs-6 col-sm-6 col-md-3 recode_save_contents_list" onclick="location.href='#'">
+							<img src="../img/sampleimg/TRYOUT_DESIGN1-20.png">
+							<div class="recode_save_contents_list_info">
+								<p>퓨처스리그</p>
+								<span>2019</span>
+							</div>
+						</div>
+						
+						<div class="col-xs-6 col-sm-6 col-md-3 recode_save_contents_list" onclick="location.href='#'">
+							<img src="../img/sampleimg/TRYOUT_DESIGN1-18.png">
+							<div class="recode_save_contents_list_info">
+								<p>퓨처스리그</p>
+								<span>2019</span>
+							</div>
+						</div>
+						
+						<div class="col-xs-6 col-sm-6 col-md-3 recode_save_contents_list" onclick="location.href='#'">
+							<img src="../img/sampleimg/TRYOUT_DESIGN1-30.png">
+							<div class="recode_save_contents_list_info">
+								<p>퓨처스리그</p>
+								<span>2019</span>
+							</div>
+						</div>
+					</div>
+					-->
+				</div><!-- 비공식기록 TAB -->
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript">
+
+var defaultModal_inputrecode = $("#defaultModal_inputrecode");
+var modal_header_inputrecode = $("#modal_header_inputrecode");
+var modal_body_inputrecode = $("#modal_body_inputrecode");
+var modal_footer_inputrecode = $("#modal_footer_inputrecode");
+
+var append_title;
+var append_content;
+var append_btn;
+
+var thisDate = new Date();
+var thisYear = thisDate.getFullYear();		//올해년도
+
+function inputrecode() {
+
+	modal_body_inputrecode.empty();
+	modal_footer_inputrecode.empty();
+	append_content ="<div class='to_titlebar'>비공식 기록</div><hr>" 
+					+"<div class='nrecode_choice row'>"
+					+"<div class='col-xs-6 col-sm-6 col-md-6 nrecode_choice_btn' onclick=inputrecodeform(0)>"
+					+"	<img src='img/button/nrecodechoice_btn_hit.jpg'>"
+					+"</div>"
+					+"<div class='col-xs-6 col-sm-6 col-md-6 nrecode_choice_btn' onclick=inputrecodeform(1)>"
+					+"	<img src='img/button/nrecodechoice_btn_pitch.jpg'>"
+					+"</div>"
+					+"</div>";
+	modal_body_inputrecode.append(append_content);
+	
+	defaultModal_inputrecode.modal('show');
+}
+
+function inputrecodeform(check) {
+	console.log("=======check : "+check);
+	
+	var selectbox;
+	var selectbox2 = "<option value=''>월</option>";
+	
+	for(var y=thisYear; y>thisYear-15 ; y--){		//기록표에 들어갈 년도 선택 (y:변수 / thisYear:올해년도 / 올해년도부터 15년 전 기록까지 반복 )
+		selectbox += "<option value='"+y+"'>"+y+"</option>"; 
+	}
+	for(var m=1; m<13 ; m++){		
+		selectbox2 += "<option value='"+m+"'>"+m+"</option>"; 
+	}
+	modal_body_inputrecode.empty();
+	modal_footer_inputrecode.empty();
+	if(check==0){				//타자 - 비공식 기록 입력
+		append_content = "<div class='inputrecodeform' >"
+						+"	<div class='to_titlebar'>"
+						+"		연습 · 용병 기록 - 타자"
+						+"	</div>"
+						+"	<hr>"
+						+"	<form action='TestRecordInsertProc.php' method='post'>"
+						+"		<div class='form-group' id='divLeagueYear'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputLeagueYear'>날짜<span style='color:red'> *</span></label></div>"
+						+"	        <div class='col-xs-4 col-sm-3 col-md-3'>"
+						+"	            <select class='form-control' name='game_y' id='game_y'>"
+						+				selectbox	
+						+"	           	</select>" 
+						+"	        </div>"
+						+"	        <div class='col-xs-4 col-sm-3 col-md-3'>"
+						+"	            <select class='form-control' name='game_m' id='game_m' onchange='selectmonth(this.value)'>"
+						+				selectbox2	
+						+"	           	</select>" 
+						+"	        </div>"
+						+"	        <div class='col-xs-4 col-sm-3 col-md-3'>"
+						+"	            <select class='form-control' name='game_d' id='game_d'>"
+						+"					<option value=''>일</option>"	
+						+"	           	</select>" 
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divLeaguename'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputLeaguename'>경기구분</label></div>"
+						+"        	<div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <div class='col-xs-6 col-sm-6 col-md-6'>"
+						+"	            	<input type='radio' id='kinds_1' name='kind' value='1' checked onclick='check_kind(1)'/><label for='kinds_1'>연습경기</label>"
+						+"	            </div>"
+						+"	            <div class='col-xs-6 col-sm-6 col-md-6'>"
+						+"	            	<input type='radio' id='kinds_2' name='kind' value='2' onclick='check_kind(2)'/><label for='kinds_2'>용병경기</label>"
+						+"	            </div>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divTeamname'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputTeamname'>팀이름</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='team_name' id='team_name' maxlength='20'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divPlayBatter'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputPlayBatter'>타석</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='at_play' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divPlayBat'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputPlayBat'>타수</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='at_bat' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divPlayHit'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputPlayHit'>안타</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='hit' id='' maxlength='10'  placeholder='1루타 + 2루타 + 3루타 + 홈런'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divTwobase'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputTwobase'>2루타</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='hit2' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divThreebase'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputThreebase'>3루타</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='hit3' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divHomerun'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputHomerun'>홈런</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='hr' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divFourball'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputFourball'>볼넷</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='bb' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divDeadball'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputDeadball'>사사구</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='hbp' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divPlaypoint'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputPlaypoint'>타점</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='rbi' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divPlayrbi'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputPlayrbi'>득점</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='rs' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divPlayrbi'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputPlayrbi'>도루</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='sb' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divThreeout'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputThreeout'>삼진</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='so' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divSacrifice'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputSacrifice'>희생타</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='sf' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <hr>"
+						+"	    <div>"
+						+"	    	<input type='hidden' value='1' name='pos'>"	
+						+"	    	<input type='submit' class='btn btn-default' value='저장'>"
+						+"	    </div>"
+						+"	</form>"
+						+"</div>";		
+	}else{
+		append_content = "<div class='inputrecodeform' >"
+						+"	<div class='to_titlebar'>"
+						+"		연습 · 용병 기록 - 투수"
+						+"	</div>"
+						+"	<hr>"
+						+"	<form action='TestRecordInsertProc.php' method='post'>"
+						+"		<div class='form-group' id='divLeagueYear'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputLeagueYear'>날짜<span style='color:red'> *</span></label></div>"
+						+"	        <div class='col-xs-4 col-sm-3 col-md-3'>"
+						+"	            <select class='form-control' name='game_y' id='game_y'>"
+						+				selectbox	
+						+"	           	</select>" 
+						+"	        </div>"
+						+"	        <div class='col-xs-4 col-sm-3 col-md-3'>"
+						+"	            <select class='form-control' name='game_m' id='game_m' onchange='selectmonth(this.value)'>"
+						+				selectbox2	
+						+"	           	</select>" 
+						+"	        </div>"
+						+"	        <div class='col-xs-4 col-sm-3 col-md-3'>"
+						+"	            <select class='form-control' name='game_d' id='game_d'>"
+						+"					<option value=''>일</option>"	
+						+"	           	</select>" 
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divLeaguename'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputLeaguename'>경기구분</label></div>"
+						+"        	<div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <div class='col-xs-6 col-sm-6 col-md-6'>"
+						+"	            	<input type='radio' id='kinds_1' name='kind' value='1' checked onclick='check_kind(1)'/><label for='kinds_1'>연습경기</label>"
+						+"	            </div>"
+						+"	            <div class='col-xs-6 col-sm-6 col-md-6'>"
+						+"	            	<input type='radio' id='kinds_2' name='kind' value='2' onclick='check_kind(2)'/><label for='kinds_2'>용병경기</label>"
+						+"	            </div>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divTeamname'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputTeamname'>팀이름</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='team_name' id='team_name' maxlength='20'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divGameLesult'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='divGameLesult'>경기결과</label></div>"
+						+"        	<div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <div class='col-xs-1 col-sm-1 col-md-1'></div>"
+						+"	            <div class='col-xs-2 col-sm-2 col-md-2'>"
+						+"	            	<input type='radio' id='game_result_0' name='game_result' value='0' checked/><label for='game_result_0'>-</label>"
+						+"	            </div>"
+						+"	            <div class='col-xs-2 col-sm-2 col-md-2'>"
+						+"	            	<input type='radio' id='game_result_1' name='game_result' value='1'/><label for='game_result_1'>승</label>"
+						+"	            </div>"
+						+"	            <div class='col-xs-2 col-sm-2 col-md-2'>"
+						+"	            	<input type='radio' id='game_result_2' name='game_result' value='2'/><label for='game_result_2'>패</label>"
+						+"	            </div>"
+						+"	            <div class='col-xs-2 col-sm-2 col-md-2'>"
+						+"	            	<input type='radio' id='game_result_3' name='game_result' value='3'/><label for='game_result_3'>홀</label>"
+						+"	            </div>"
+						+"	            <div class='col-xs-2 col-sm-2 col-md-2'>"
+						+"	            	<input type='radio' id='game_result_4' name='game_result' value='4'/><label for='game_result_4'>세</label>"
+						+"	            </div>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divInning'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputInning'>이닝</label></div>"
+						+"	        <div class='col-xs-8 col-sm-6 col-md-6'>"
+						+"	            <input type='text' class='form-control' name='h_inning' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	        <div class='col-xs-4 col-sm-3 col-md-3'>"
+						+"	            <select class='form-control' name='f_inning'>"
+						+"	            	<option value='0'>0</option>"
+						+"	            	<option value='1' style='font-size:150%'>⅓</option>"
+						+"	            	<option value='2' style='font-size:150%'>⅔</option>"
+						+"	            </select>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divPitch'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputPitch'>투구수</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='pitcher_count' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divErpoint' >"
+						+"			<div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='divErpoint'>자책점</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='er' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divLosepoint' >"
+						+"			<div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputLosepoint'>실점</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='rs' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divHits'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputHits'>피안타</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='hit' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divHomeruns'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputHomeruns'>피홈런</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='hr' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divThreeouts'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputThreeouts'>탈삼진</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='so' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divFourballs'>"
+						+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputFourballs'>볼넷</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='bb' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <div class='form-group' id='divDeadballs' >"
+						+"			<div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputDeadballs'>사사구</label></div>"
+						+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+						+"	            <input type='text' class='form-control' name='hbp' id='' maxlength='10'>"
+						+"	        </div>"
+						+"	    </div>"
+						+"	    <hr>"
+						+"	    <div>"
+						+"	    	<input type='hidden' value='2' name='pos'>"	
+						+"	    	<input type='submit' class='btn btn-default' value='저장'>"
+						+"	    </div>"
+						+"	</form>"
+						+"</div>";	
+	}
+	
+	modal_body_inputrecode.append(append_content);		//<form>
+	defaultModal_inputrecode.modal('show');
+}
+function updaterecodeform(check,num) {
+	console.log("=======check : "+check);
+
+	$.ajax({
+		type: 'POST',
+		url: 'select_data.php',
+		data: {
+			no : num,
+			position : check
+		},
+		dataTpye: 'text',
+		success: function(data){
+			select_data = data.split('|');
+			var selectbox;
+			var selectbox2;
+			var selectbox3;
+			date_data = select_data[0].split('-');
+			for(var y=thisYear; y>thisYear-15 ; y--){	//기록표에 들어갈 년도 선택 (y:변수 / thisYear:올해년도 / 올해년도부터 15년 전 기록까지 반복 )
+				if(date_data[0] == y){
+					selectbox += "<option value='"+y+"' selected>"+y+"</option>"; 
+				}else{
+					selectbox += "<option value='"+y+"'>"+y+"</option>"; 
+				}
+			}
+			for(var m=1; m<13 ; m++){
+				if(date_data[1] == m){
+					selectbox2 += "<option value='"+m+"' selected>"+m+"</option>"; 
+				}else{
+					selectbox2 += "<option value='"+m+"'>"+m+"</option>"; 
+				}
+			}
+			if(date_data[1]==1 || date_data[1]==3 || date_data[1]==5 || date_data[1]==7 || date_data[1]==8 || date_data[1]==10 || date_data[1]==12){
+				day = 31;
+			}else if(date_data[1]==2){
+				if(date_data[0]%4 == 0){
+					day = 29;
+				}else{
+					day = 28;
+				}
+			}else{
+				day=30;
+			}
+			for(var d=1;d<=30;d++){
+				if(date_data[2] == d){
+					selectbox3 += "<option value='"+d+"' selected>"+d+"</option>";
+				}else{
+					selectbox3 += "<option value='"+d+"'>"+d+"</option>"; 
+				}
+			}
+			if(select_data[1] == 1){
+				kind_1 = "checked";
+				kind_2 = "";
+				disabled_t = "";
+			}else{
+				kind_1 = "";
+				kind_2 = "checked";
+				disabled_t = "disabled";
+			}
+			modal_body_inputrecode.empty();
+			modal_footer_inputrecode.empty();
+			if(check==2){
+				append_content = "<div class='inputrecodeform' >"
+								+"	<div class='to_titlebar'>"
+								+"		연습 · 용병 기록 - 타자"
+								+"	</div>"
+								+"	<hr>"
+								+"	<form action='TestRecordUpdateProc.php' method='post'>"
+								+"		<div class='form-group' id='divLeagueYear'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputLeagueYear'>날짜<span style='color:red'> *</span></label></div>"
+								+"	        <div class='col-xs-4 col-sm-3 col-md-3'>"
+								+"	            <select class='form-control' name='game_y' id='game_y'>"
+								+				selectbox	
+								+"	           	</select>" 
+								+"	        </div>"
+								+"	        <div class='col-xs-4 col-sm-3 col-md-3'>"
+								+"	            <select class='form-control' name='game_m' id='game_m' onchange='selectmonth(this.value)'>"
+								+				selectbox2	
+								+"	           	</select>" 
+								+"	        </div>"
+								+"	        <div class='col-xs-4 col-sm-3 col-md-3'>"
+								+"	            <select class='form-control' name='game_d' id='game_d'>"
+								+				selectbox3	
+								+"	           	</select>" 
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divLeaguename'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputLeaguename'>경기구분</label></div>"
+								+"        	<div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <div class='col-xs-6 col-sm-6 col-md-6'>"
+								+"	            	<input type='radio' id='kinds_1' name='kind' value='1' "+kind_1+" onclick='check_kind(1)'/><label for='kinds_1'>연습경기</label>"
+								+"	            </div>"
+								+"	            <div class='col-xs-6 col-sm-6 col-md-6'>"
+								+"	            	<input type='radio' id='kinds_2' name='kind' value='2' "+kind_2+" onclick='check_kind(2)'/><label for='kinds_2'>용병경기</label>"
+								+"	            </div>"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divTeamname'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputTeamname'>팀이름</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='team_name' id='team_name' maxlength='20' value="+select_data[2]+" "+disabled_t+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divPlayBatter'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputPlayBatter'>타석</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='at_play' id='' maxlength='10' value="+select_data[3]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divPlayBat'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputPlayBat'>타수</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='at_bat' id='' maxlength='10' value="+select_data[4]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divPlayHit'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputPlayHit'>안타</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='hit' id='' maxlength='10'  placeholder='1루타 + 2루타 + 3루타 + 홈런' value="+select_data[5]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divTwobase'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputTwobase'>2루타</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='hit2' id='' maxlength='10' value="+select_data[6]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divThreebase'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputThreebase'>3루타</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='hit3' id='' maxlength='10' value="+select_data[7]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divHomerun'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputHomerun'>홈런</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='hr' id='' maxlength='10' value="+select_data[8]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divFourball'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputFourball'>볼넷</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='bb' id='' maxlength='10' value="+select_data[9]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divDeadball'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputDeadball'>사사구</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='hbp' id='' maxlength='10' value="+select_data[10]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divPlaypoint'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputPlaypoint'>타점</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='rbi' id='' maxlength='10' value="+select_data[11]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divPlayrbi'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputPlayrbi'>득점</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='rs' id='' maxlength='10' value="+select_data[12]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divPlayrbi'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputPlayrbi'>도루</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='sb' id='' maxlength='10' value="+select_data[13]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divThreeout'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputThreeout'>삼진</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='so' id='' maxlength='10' value="+select_data[14]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divSacrifice'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputSacrifice'>희생타</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='sf' id='' maxlength='10' value="+select_data[15]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <hr>"
+								+"	    <div>"
+								+"	    	<input type='hidden' value='"+num+"' name='no'>"		
+								+"	    	<input type='hidden' value='1' name='pos'>"	
+								+"	    	<input type='submit' class='btn btn-default' value='저장'>"
+								+"	    </div>"
+								+"	</form>"
+								+"</div>";		
+			}else{
+				if(select_data[3] == 1){
+					game_result_checked_0 = "";
+					game_result_checked_1 = "checked";
+					game_result_checked_2 = "";
+					game_result_checked_3 = "";
+					game_result_checked_4 = "";
+				}else if(select_data[3] == 2){
+					game_result_checked_0 = "";
+					game_result_checked_1 = "";
+					game_result_checked_2 = "checked";
+					game_result_checked_3 = "";
+					game_result_checked_4 = "";
+				}else if(select_data[3] == 3){
+					game_result_checked_0 = "";
+					game_result_checked_1 = "";
+					game_result_checked_2 = "";
+					game_result_checked_3 = "checked";
+					game_result_checked_4 = "";
+				}else if(select_data[3] == 4){
+					game_result_checked_0 = "";
+					game_result_checked_1 = "";
+					game_result_checked_2 = "";
+					game_result_checked_3 = "";
+					game_result_checked_4 = "checked";
+				}else{
+					game_result_checked_0 = "checked";
+					game_result_checked_1 = "";
+					game_result_checked_2 = "";
+					game_result_checked_3 = "";
+					game_result_checked_4 = "";
+				}
+				if(select_data[4] == 1){
+					selected_0 = "";
+					selected_1 = "selected";
+					selected_2 = "";
+				}else if(select_data[4] == 2){
+					selected_0 = "";
+					selected_1 = "";
+					selected_2 = "selected";
+				}else{
+					selected_0 = "selected";
+					selected_1 = "";
+					selected_2 = "";
+				}
+				append_content = "<div class='inputrecodeform' >"
+								+"	<div class='to_titlebar'>"
+								+"		연습 · 용병 기록 - 투수"
+								+"	</div>"
+								+"	<hr>"
+								+"	<form action='TestRecordUpdateProc.php' method='post'>"
+								+"		<div class='form-group' id='divLeagueYear'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputLeagueYear'>날짜<span style='color:red'> *</span></label></div>"
+								+"	        <div class='col-xs-4 col-sm-3 col-md-3'>"
+								+"	            <select class='form-control' name='game_y' id='game_y'>"
+								+				selectbox	
+								+"	           	</select>" 
+								+"	        </div>"
+								+"	        <div class='col-xs-4 col-sm-3 col-md-3'>"
+								+"	            <select class='form-control' name='game_m' id='game_m' onchange='selectmonth(this.value)'>"
+								+				selectbox2	
+								+"	           	</select>" 
+								+"	        </div>"
+								+"	        <div class='col-xs-4 col-sm-3 col-md-3'>"
+								+"	            <select class='form-control' name='game_d' id='game_d'>"
+								+				selectbox3	
+								+"	           	</select>" 
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divLeaguename'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputLeaguename'>경기구분</label></div>"
+								+"        	<div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <div class='col-xs-6 col-sm-6 col-md-6'>"
+								+"	            	<input type='radio' id='kinds_1' name='kind' value='1' "+kind_1+" onclick='check_kind(1)'/><label for='kinds_1'>연습경기</label>"
+								+"	            </div>"
+								+"	            <div class='col-xs-6 col-sm-6 col-md-6'>"
+								+"	            	<input type='radio' id='kinds_2' name='kind' value='2' "+kind_2+" onclick='check_kind(2)'/><label for='kinds_2'>용병경기</label>"
+								+"	            </div>"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divTeamname'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputTeamname'>팀이름</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='team_name' id='team_name' maxlength='20' value="+select_data[2]+" "+disabled_t+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divGameLesult'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='divGameLesult'>경기결과</label></div>"
+								+"        	<div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <div class='col-xs-1 col-sm-1 col-md-1'></div>"
+								+"	            <div class='col-xs-2 col-sm-2 col-md-2'>"
+								+"	            	<input type='radio' id='game_result_0' name='game_result' "+game_result_checked_0+" value='0' checked/><label for='game_result_0'>-</label>"
+								+"	            </div>"
+								+"	            <div class='col-xs-2 col-sm-2 col-md-2'>"
+								+"	            	<input type='radio' id='game_result_1' name='game_result' "+game_result_checked_1+" value='1'/><label for='game_result_1'>승</label>"
+								+"	            </div>"
+								+"	            <div class='col-xs-2 col-sm-2 col-md-2'>"
+								+"	            	<input type='radio' id='game_result_2' name='game_result' "+game_result_checked_2+" value='2'/><label for='game_result_2'>패</label>"
+								+"	            </div>"
+								+"	            <div class='col-xs-2 col-sm-2 col-md-2'>"
+								+"	            	<input type='radio' id='game_result_3' name='game_result' "+game_result_checked_3+" value='3'/><label for='game_result_3'>홀</label>"
+								+"	            </div>"
+								+"	            <div class='col-xs-2 col-sm-2 col-md-2'>"
+								+"	            	<input type='radio' id='game_result_4' name='game_result' "+game_result_checked_4+" value='4'/><label for='game_result_4'>세</label>"
+								+"	            </div>"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divInning'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputInning'>이닝</label></div>"
+								+"	        <div class='col-xs-8 col-sm-6 col-md-6'>"
+								+"	            <input type='text' class='form-control' name='h_inning' id='' maxlength='10' value="+select_data[3]+">"
+								+"	        </div>"
+								+"	        <div class='col-xs-4 col-sm-3 col-md-3'>"
+								+"	            <select class='form-control' name='f_inning'>"
+								+"	            	<option value='0' "+selected_0+">0</option>"
+								+"	            	<option value='1' style='font-size:150%' "+selected_1+">⅓</option>"
+								+"	            	<option value='2' style='font-size:150%' "+selected_2+">⅔</option>"
+								+"	            </select>"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divPitch'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputPitch'>투구수</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='pitcher_count' id='' maxlength='10' value="+select_data[5]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divErpoint' >"
+								+"			<div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='divErpoint'>자책점</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='er' id='' maxlength='10' value="+select_data[6]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divLosepoint' >"
+								+"			<div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputLosepoint'>실점</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='rs' id='' maxlength='10' value="+select_data[7]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divHits'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputHits'>피안타</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='hit' id='' maxlength='10' value="+select_data[8]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divHomeruns'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputHomeruns'>피홈런</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='hr' id='' maxlength='10' value="+select_data[9]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divThreeouts'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputThreeouts'>탈삼진</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='so' id='' maxlength='10' value="+select_data[10]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divFourballs'>"
+								+"	        <div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputFourballs'>볼넷</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='bb' id='' maxlength='10' value="+select_data[11]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <div class='form-group' id='divDeadballs' >"
+								+"			<div class='col-xs-12 col-sm-3 col-md-3 control-label'><label for='inputDeadballs'>사사구</label></div>"
+								+"	        <div class='col-xs-12 col-sm-9 col-md-9'>"
+								+"	            <input type='text' class='form-control' name='hbp' id='' maxlength='10' value="+select_data[12]+">"
+								+"	        </div>"
+								+"	    </div>"
+								+"	    <hr>"
+								+"	    <div>"
+								+"	    	<input type='hidden' value='"+num+"' name='no'>"	
+								+"	    	<input type='hidden' value='2' name='pos'>"	
+								+"	    	<input type='submit' class='btn btn-default' value='저장'>"
+								+"	    </div>"
+								+"	</form>"
+								+"</div>";
+			}
+			
+			modal_body_inputrecode.append(append_content);		//<form>
+			if(data){
+				defaultModal_inputrecode.modal('show');
+			}
+		},
+		error: function() {
+			alert('Error');
+		}
+	});	
+}
+
+function selectmonth(obj) {		//생년월일 - 월 선택 후 일
+	console.log("obj : "+obj);
+	$("select#game_d option").remove();
+	years = $("#game_y option:selected").val();
+	var day;
+	if(obj=="1" || obj=="3" || obj=="5" || obj=="7" || obj=="8" || obj=="10" || obj=="12"){
+		day = 31;
+	}else if(obj=="2"){
+		if(years%4 == 0){
+			day = 29;
+		}else{
+			day = 28;
+		}
+	}else{
+		day=30;
+	}
+	
+	for(var i=1;i<=day;i++){
+		$("#game_d").append("<option value='"+i+"'>"+i+"</option>");
+	}
+}
+function check_kind(kind){
+	if(kind == 1){
+		document.getElementById("team_name").value = "";
+		document.getElementById("team_name").disabled = false;
+	}else{
+		document.getElementById("team_name").value = "용병";
+		document.getElementById("team_name").disabled = true;
+	}
+}
+function delete_event(no,pos){
+	if (confirm("정말 삭제하시겠습니까?") == true){
+		location.href="TestRecordDeleteProc.php?no="+no+"&pos="+pos;
+	}else{ 
+		return;
+	}
+}
+</script>
+<? include("footer/footer.html"); ?>
+</body>
+</html>

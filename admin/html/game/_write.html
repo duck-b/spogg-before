@@ -1,0 +1,318 @@
+<!DOCTYPE HTML>
+<?
+	if($kind == 'hgame'){
+		$kind_value = "1";
+		$game_header = "일반 경기";
+		$price_text = "구장비";
+	}else if($kind == 'agame'){
+		$kind_value = "2";
+		$game_header = "일반 경기 (원정)";
+		$price_text = "구장비";
+	}else if($kind == 'merc'){
+		$kind_value = "3";
+		$game_header = "용병 경기";
+		$price_text = "참가비";
+	}else if($kind == 'stadium'){
+		$kind_value = "4";
+		$game_header = "구장 양도";
+		$price_text = "구장비";
+	}
+?>
+<html>
+	<body>
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-2"></div>
+					<div class="col-lg-8 col-md-12 mb-5 element-animate">
+						<div class="row">
+							<div class="col-md-12">
+								<h3 class="mb-5" style="vertical-align: middle;"><? echo $game_header?></h3>
+							</div>
+						</div>
+						<form action="GameInsertProc.php" method="post" enctype="multipart/form-data">
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="user">글쓴이</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="user" class="form-control " value="<? echo $my_row['name'];?>" disabled>
+								</div>
+							</div>
+							<? if($kind == 'hgame' || $kind == 'agame'){?>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="team">팀 선택</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<select class="custom-select" id="team" name="team">
+								<? 	$player_no = $_SESSION['player_no'];
+									include "dbconn.php";
+									$team_result = mysqli_query($conn,"SELECT * FROM team_members where player='$player_no' AND (class='1' OR class='2')");
+									$team_row = mysqli_fetch_array($team_result);
+									if($team_row){?>
+									<option value="" selected>소속팀 선택</option>
+											<? $team_list_result = mysqli_query($conn,"SELECT * FROM team_members where player='$player_no' AND (class='1' OR class='2')");
+											while ($team_list_row = mysqli_fetch_array($team_list_result)){
+											$team_no = $team_list_row['team'];
+											$team_result = mysqli_query($conn,"SELECT * FROM team where no='$team_no'");
+											$team_row = mysqli_fetch_array($team_result);?>
+									<option value="<? echo $team_no; ?>"><? echo $team_row['name']; ?></option>
+											<? }
+									} else { ?>
+									<option value="" selected>감독, 코치로 소속된 팀이 없습니다</option>
+								<?  } 
+								mysqli_close($conn);
+								?>
+									</select>
+								</div>
+							</div>
+							<? } ?>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="kind">경기 타입</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="kind" class="form-control " value="<? echo $game_header;?>" disabled>
+								</div>
+								<input type="hidden" name="kind" value="<? echo $kind_value;?>">
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="title">제목</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" name="title" id="title" class="form-control " placeholder="제목 입력" required>
+								</div>
+							</div>
+							<? if($kind != 'agame'){?>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="game_datetime">경기날짜</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="datetime-local" name="game_date" id="game_datetime" class="form-control " min="1900-01-01T00:00" max="2200-12-31T00:00" required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="stadium_name">구장 명</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" name="stadium_name" id="stadium_name" class="form-control " placeholder="구장 명 입력" required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="stadium_price"><? echo $price_text;?></label>
+								</div>
+								<div class="col-md-9 form-group">
+									<input type="text" name="stadium_price" id="stadium_price" class="form-control " placeholder="단위(원)를 제외한 숫자만 입력해 주세요" pattern="\d{1,7}" required>
+								</div>
+								<div class="col-md-1" style="padding-left:0px">원</div>
+							</div>
+							<? } else { ?>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="game_date">경기날짜</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="date" name="game_date" id="game_date" class="form-control " min="1900-01-01" max="2200-12-31" required>
+								</div>
+							</div>
+							<? } ?>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="adrs">경기가능지역</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<select class="custom-select" id="adrs" name="adrs">
+										<option value="" selected>지역 선택</option>
+										<option value="1">서울</option>
+										<option value="2">경기</option>
+										<option value="3">강원</option>
+										<option value="4">충청</option>
+										<option value="5">전라</option>
+										<option value="6">경상</option>
+										<option value="7">제주</option>
+									</select>
+								</div>
+							</div>
+							<? if($kind == 'merc'){?>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label>포지션</label>
+								</div>
+								<div class="row col-md-5" style="padding-left:30px;vertical-align:middle">
+									<div class="col-md-12" style="text-align:center">Home</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_h_sp" name="position[]" value="1" class="custom-control-input" onclick="check_position('h','sp')">
+										<label class="custom-control-label" for="position_h_sp">선발투수</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_h_sp_text" class="form-control " value="" disabled>
+									</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_h_c" name="position[]" value="2" class="custom-control-input" onclick="check_position('h','c')">
+										<label class="custom-control-label" for="position_h_c">포수</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_h_c_text" class="form-control " value="" disabled>
+									</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_h_1b" name="position[]" value="3" class="custom-control-input" onclick="check_position('h','1b')">
+										<label class="custom-control-label" for="position_h_1b">1루수</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_h_1b_text" class="form-control " value="" disabled>
+									</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_h_2b" name="position[]" value="4" class="custom-control-input" onclick="check_position('h','2b')">
+										<label class="custom-control-label" for="position_h_2b">2루수</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_h_2b_text" class="form-control " value="" disabled>
+									</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_h_3b" name="position[]" value="5" class="custom-control-input" onclick="check_position('h','3b')">
+										<label class="custom-control-label" for="position_h_3b">3루수</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_h_3b_text" class="form-control " value="" disabled>
+									</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_h_ss" name="position[]" value="6" class="custom-control-input" onclick="check_position('h','ss')">
+										<label class="custom-control-label" for="position_h_ss">유격수</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_h_ss_text" class="form-control " value="" disabled>
+									</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_h_lf" name="position[]" value="7" class="custom-control-input" onclick="check_position('h','lf')">
+										<label class="custom-control-label" for="position_h_lf">좌익수</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_h_lf_text" class="form-control " value="" disabled>
+									</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_h_cf" name="position[]" value="8" class="custom-control-input" onclick="check_position('h','cf')">
+										<label class="custom-control-label" for="position_h_cf">중익수</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_h_cf_text" class="form-control " value="" disabled>
+									</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_h_rf" name="position[]" value="9" class="custom-control-input" onclick="check_position('h','rf')">
+										<label class="custom-control-label" for="position_h_rf">우익수</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_h_rf_text" class="form-control " value="" disabled>
+									</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_h_rp" name="position[]" value="10" class="custom-control-input" onclick="check_position('h','rp')">
+										<label class="custom-control-label" for="position_h_rp">구원/지명</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_h_rp_text" class="form-control " value="" disabled>
+									</div>										
+								</div>
+								<div class="row col-md-5" style="padding-left:30px;vertical-align:middle">
+									<div class="col-md-12" style="text-align:center">Away</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_a_sp" name="position[]" value="11" class="custom-control-input" onclick="check_position('a','sp')">
+										<label class="custom-control-label" for="position_a_sp">선발투수</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_a_sp_text" class="form-control " value="" disabled>
+									</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_a_c" name="position[]" value="12" class="custom-control-input" onclick="check_position('a','c')">
+										<label class="custom-control-label" for="position_a_c">포수</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_a_c_text" class="form-control " value="" disabled>
+									</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_a_1b" name="position[]" value="13" class="custom-control-input" onclick="check_position('a','1b')">
+										<label class="custom-control-label" for="position_a_1b">1루수</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_a_1b_text" class="form-control " value="" disabled>
+									</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_a_2b" name="position[]" value="14" class="custom-control-input" onclick="check_position('a','2b')">
+										<label class="custom-control-label" for="position_a_2b">2루수</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_a_2b_text" class="form-control " value="" disabled>
+									</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_a_3b" name="position[]" value="15" class="custom-control-input" onclick="check_position('a','3b')">
+										<label class="custom-control-label" for="position_a_3b">3루수</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_a_3b_text" class="form-control " value="" disabled>
+									</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_a_ss" name="position[]" value="16" class="custom-control-input" onclick="check_position('a','ss')">
+										<label class="custom-control-label" for="position_a_ss">유격수</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_a_ss_text" class="form-control " value="" disabled>
+									</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_a_lf" name="position[]" value="17" class="custom-control-input" onclick="check_position('a','lf')">
+										<label class="custom-control-label" for="position_a_lf">좌익수</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_a_lf_text" class="form-control " value="" disabled>
+									</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_a_cf" name="position[]" value="18" class="custom-control-input" onclick="check_position('a','cf')">
+										<label class="custom-control-label" for="position_a_cf">중익수</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_a_cf_text" class="form-control " value="" disabled>
+									</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_a_rf" name="position[]" value="19" class="custom-control-input" onclick="check_position('a','rf')">
+										<label class="custom-control-label" for="position_a_rf">우익수</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_a_rf_text" class="form-control " value="" disabled>
+									</div>
+									<div class="col-md-6 custom-control custom-checkbox">
+										<input type="checkbox" id="position_a_rp" name="position[]" value="20" class="custom-control-input" onclick="check_position('a','rp')">
+										<label class="custom-control-label" for="position_a_rp">구원/지명</label>
+									</div>
+									<div class="col-md-6">
+										<input type="text" id="pos_a_rp_text" class="form-control " value="" disabled>
+									</div>										
+								</div>
+							</div><br>
+							<? } ?>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="contents">자유 내용</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<textarea class="form-control" style="resize: none;" name="contents" rows="8" id="contents" aria-label="With textarea"></textarea>
+								</div>
+							</div>
+							<hr>						
+							<div class="row">
+								<div class="col-md-8"></div>
+								<div class="col-md-2 form-group">
+									<input type="submit" value="등&nbsp;&nbsp;&nbsp;록" class="btn btn-primary" onclick="insert()">
+								</div>
+								<div class="col-md-2">
+									<a class="btn btn-primary" href="game.html?game=<? echo $kind?>" role="button">목&nbsp;&nbsp;&nbsp;록</a>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</section>
+	</body>
+</html>

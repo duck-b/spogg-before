@@ -1,0 +1,90 @@
+<script>
+function not_ready(){
+	alert("준비중 입니다.");
+}
+function question_click(){
+	 window.open("question.html","question_form","left=50, top=50, width=900, height=630, scrollbars=no,resizable=yes");
+}
+</script>
+<script language="JavaScript">
+function onopen()
+{
+var url = "http://www.ftc.go.kr/bizCommPop.do?wrkr_no=8898701970";
+window.open(url, "bizCommPop", "width=750, height=700;");
+}
+</script>
+<div class="footer">
+	<div class="container">
+		<div class="footer_bottom">
+            <div class="footer_content footer_info footer_info_1st">
+                <ul>
+                    <li><a href="https://www.notion.so/9f3b6a5d50ec4827a26f0df7716aca8b">회사소개</a></li>
+                    <li><a href="info.html?info=terms">이용약관</a></li>
+                    <li><a href="info.html?info=notice">공지사항</a></li>
+                    <li><a href="info.html?info=info">개인정보취급방침</a></li>
+                    <li><a href="info.html?info=help">도움말</a></li>
+                    <li><a href="info.html?info=question">문의하기</a></li>
+                    <?if($admin){?>
+                    <li><a href="admin.html">관리자</a></li>
+                    <?}?>
+                </ul>
+            </div>
+            <div class="footer_content footer_info footer_info_n1st">
+                <ul>
+                    <li>상호명 : (주)핏데이터</li>
+                    <li>대표이사 : 김경민</li>
+                    <li>소재지 : 부산광역시 해운대구 센텀동로 41 센텀벤처타운 3층 308호 스포지지</li>
+                    <li>사업자등록번호 : 889-87-01970</li>
+                    <li>통신판매번호 : <a href="javascript:;" onclick="onopen()">2020-부산해운대-1311</a></li>
+                    <li>Tel : 010-2239-6702</li>
+                    <li>E-mail : info@spo.gg</li>
+                </ul>
+            </div>
+            <p style="color:lightgray;margin-left: 5px">Copyright &copy; FITDATA Inc. All Rights Reserved.</p>
+            <!--
+			<div class="col-xs-12 col-sm-6 col-md-3">
+				<div class="footer_title">
+					SPOGG SNS
+				</div>
+				<div class="footer_content footer_sns">
+					<ul>
+						<li><a href="https://www.facebook.com/spoggcom" target="_blank"><img src="img/icon/TRYOUT_SNS-34.png"></a></li>
+						<li><a href="https://www.instagram.com/spo.gg/" target="_blank"><img src="img/icon/TRYOUT_SNS-36.png"></a></li>
+						<li><a href="javascript:;" onclick="not_ready()"><img src="img/icon/TRYOUT_SNS-35.png"></a></li>
+						<li><a href="https://blog.naver.com/totryout" target="_blank"><img src="img/icon/TRYOUT_SNS-33.png"></a></li>
+						<li><a href="https://band.us/band/77080253" target="_blank"><img src="img/icon/band_2.png"></a></li>
+						<li><a href="javascript:;"><img src="img/icon/TRYOUT_SNS-37.png" onclick="not_ready()"></a></li>
+					</ul>
+				</div>
+			</div>
+            -->
+			<div class="col-xs-12" style="margin-top:10px;">
+				<div class="footer_content" style="padding:0px">
+                    <!-- KB에스크로 이체 인증마크 적용 시작 -->
+	   	    <!--<script>
+                    function onPopKBAuthMark()
+                    {
+                    window.open('','KB_AUTHMARK','height=604, width=700, status=yes, toolbar=no, menubar=no, location=no');
+                    document.KB_AUTHMARK_FORM.action='http://escrow1.kbstar.com/quics';
+                    document.KB_AUTHMARK_FORM.target='KB_AUTHMARK';
+                    document.KB_AUTHMARK_FORM.submit();
+                    }
+                    </script>
+                    <form name="KB_AUTHMARK_FORM" method="get">
+                        <input type="hidden" name="page" value="B009111"/>
+                        <input type="hidden" name="cc" value="b010807:b008491"/>
+                        <input type="hidden" name="mHValue" value='14f0865113bdbca0c7b0a0a55c96e508202008311622782'/>
+                    </form>
+                    <a href="#" onclick="javascript:onPopKBAuthMark();return false;">
+                        <img src="http://img1.kbstar.com/img/escrow/escrowcmark.gif" border="0" style="width: auto;max-height: 50px">
+		    </a>-->
+                    <!-- KB에스크로 이체 인증마크 적용 종료 -->
+				</div>
+			</div>
+		</div>	
+	</div>
+</div>
+
+
+</body>
+</html>

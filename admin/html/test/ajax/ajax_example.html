@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML>
+	<HEAD>
+		<TITLE>Develop note</TITLE>
+		<script src= "http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+		<script>
+			function Ajax_Execute(){
+				$.ajax({
+					type: "POST",
+					url: "data.html",
+					data: "",
+					success: function(resultText){
+						$('#Data_Div').html(resultText);
+					},
+					error: function() {
+						alert("Error");
+					}
+				});
+			}
+			$(document).ready(function($){
+					var imege = $('#Loading_Image');
+					imege.css('background',$('#Data_Div').css('background'));
+					imege.css('position', 'absolute');
+					imege.css('left', $('#Data_Div').offset().left);
+					imege.css('top', $('#Data_Div').offset().top);
+					imege.css('width', $('#Data_Div').css('width'));
+					imege.css('height', $('#Data_Div').css('height'));
+			$('#Loading_Image')
+				.ajaxStart(function(){
+						$(this).show();
+					})
+				.ajaxStop(function(){
+						$(this).fadeOut(1000);
+					});
+				});
+		</script>
+		<style>
+			input{
+				border-style:solid;
+				width:100px;
+				height:20px;
+				font-size:10pt;
+				font-family:µ¸¿ò;
+				font-weight:bold;
+				color:white;
+				border-color:blue;
+				background-color:blue;
+			}
+			
+			div#Loading_Image{
+			background: #FFFFF0;
+			}
+		</style>
+	</HEAD>
+	<BODY>
+		<div id="Loading_Image" style="text-align:center;display:none;height:16px;width:16px"><img src="ajax_loding.gif"/></div>
+		<table cellpadding=0 border=0 cellspacing=1 style="background-color:#000000" align=center>
+			<tr>    
+				<td bgcolor="#FFFFFF">
+					<div id="Data_Div" align='center' style="width:500px; height: 50px; background:#FFFF0F;" ></div>
+				</td>
+			</tr>
+			<tr>
+				<td bgcolor="#FFFFFF" align="center">
+					<input type="button" value="½ÇÇà" onClick="Ajax_Execute()"/>
+				</td>
+			</tr>
+		</table>
+	</BODY>
+</HTML>

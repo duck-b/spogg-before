@@ -1,0 +1,67 @@
+<!DOCTYPE HTML>
+<?
+	include "dbconn.php";
+	$league_result = mysqli_query($conn,"SELECT * FROM league ORDER BY created_at DESC");
+?>
+<html>
+	<body>
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-10">
+						<h3 style="vertical-align: middle;">리그 관리</h3>
+					</div>
+					<div class="col-md-2">
+						<a class="btn btn-primary" href="admin.html?admin=league&create=1" role="button">리그 개설</a>
+					</div>
+				</div><br>
+				<table class="table">
+					<thead>
+						<tr>
+							<th scope="col-2" style="weight:1">#</th>
+							<th scope="col-2" style="weight:1">Name</th>
+							<th scope="col-2" style="weight:1">User</th>
+							<th scope="col-2" style="weight:1">Info & Edit</th>
+							<th scope="col-2" style="weight:1">Manage</th>
+						</tr>
+					</thead>
+					<tbody>
+						<? while($league_row = mysqli_fetch_array($league_result)){
+							$pro_no = $league_row['pro'];
+							$pro_result = mysqli_query($conn,"SELECT * FROM user where no='$pro_no'");
+							$pro_row = mysqli_fetch_array($pro_result);
+							if($league_row['state'] == 1){
+								$bt_c1 = 'secondary disabled';
+								$bt_c2 = 'success';
+								$bt_c3 = 'danger';
+							}else if($league_row['state'] == 2){
+								$bt_c1 = 'primary';
+								$bt_c2 = 'secondary disabled';
+								$bt_c3 = 'danger';
+							}else if($league_row['state'] == 3){
+								$bt_c1 = 'primary';
+								$bt_c2 = 'success';
+								$bt_c3 = 'secondary disabled';
+							}
+							?>
+						<tr>
+							<th scope="row" style="vertical-align: middle;"><? echo $league_row['no'] ;?></th>
+							<td style="vertical-align: middle;"><? echo $league_row['name'];?></td>
+							<td style="vertical-align: middle;"><a href="user.html?user=info&no=<? echo $pro_row['no'];?>"><? echo $pro_row['name'];?>(<? echo $pro_row['id'];?>)</a></td>
+							<td style="vertical-align: middle;">
+								<a class="btn btn-primary" href="admin.html?admin=league&no=<? echo $league_row['no'];?>" role="button">상세 보기</a>
+							</td>
+							<td style="vertical-align: middle;">
+								<a class="btn btn-<?=$bt_c1?>" href="LeagueUpdateProc.php?no=<? echo $league_row['no'];?>&com=acc" role="button">확인</a>
+								<a class="btn btn-<?=$bt_c2?>" href="LeagueUpdateProc.php?no=<? echo $league_row['no'];?>&com=stp" role="button">대기</a>
+								<a class="btn btn-<?=$bt_c3?>" href="LeagueUpdateProc.php?no=<? echo $league_row['no'];?>&com=ref" role="button">거절</a>
+							</td>
+						</tr>
+						<? } ?>
+					</tbody>
+				</table>
+				<? 	mysqli_close($conn); ?>
+			</div>
+		</section>
+	</body>
+</html>

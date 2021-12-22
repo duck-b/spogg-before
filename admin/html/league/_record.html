@@ -1,0 +1,429 @@
+<!DOCTYPE HTML>
+<?
+	include "dbconn.php";
+	$record_count_result = mysqli_query($conn, "SELECT COUNT(*) as count FROM play_end JOIN play WHERE play_end.play = play.no AND play.league = $no");
+	$record_count = mysqli_fetch_array($record_count_result);
+	if($record_count['count'] >= 1){
+		if($league_row['kinds'] == 2){
+			// 토너먼트 기록실
+			if($_GET['record'] == 1 || $_GET['record'] == null){
+				// 팀 랭킹
+				$query_record = "SELECT team.name as name, 
+				 team_record.* 
+				 FROM team JOIN 
+					(SELECT play_result.team as team_no, 
+					 COUNT(CASE WHEN play_result.playresult = 1 THEN 1 END) as win, 
+					 COUNT(CASE WHEN play_result.playresult = 2 THEN 1 END) as lose, 
+					 ROUND(COUNT(CASE WHEN play_result.playresult = 1 THEN 1 END)/(COUNT(CASE WHEN play_result.playresult = 1 THEN 1 END)+COUNT(CASE WHEN play_result.playresult = 2 THEN 1 END)),3) as wpct 
+					 FROM league JOIN play JOIN play_result 
+					 WHERE league.no = '1' AND league.no = play.league AND play_result.play = play.no GROUP BY play_result.team) as team_record 
+				 WHERE team_record.team_no = team.no ORDER BY team_record.wpct DESC";
+				$record_result = mysqli_query($conn, $query_record);
+			}else if($_GET['record'] == 2){
+				// 타자 랭킹
+				$query_record = "SELECT user.no as userno, 
+				 user.name as name, 
+				 team.name as team_name, 
+				 ROUND((hitter_record.hit1 + hitter_record.hit2 + hitter_record.hit3 + hitter_record.hr)/hitter_record.at_bat,3) as ba, 
+				 hitter_record.* 
+				 FROM user JOIN player JOIN team_members JOIN team JOIN
+					 (SELECT team_members.no as no, 
+					 sum(player_hit.at_game) as at_game, 
+					 sum(player_hit.at_play) as at_play, 
+					 sum(player_hit.at_bat) as at_bat, 
+					 sum(player_hit.hit1) as hit1, 
+					 sum(player_hit.hit2) as hit2, 
+					 sum(player_hit.hit3) as hit3, 
+					 sum(player_hit.hr) as hr, 
+					 sum(player_hit.sb) as sb, 
+					 sum(player_hit.b4) as b4, 
+					 sum(player_hit.hbp) as hbp, 
+					 sum(player_hit.so) as so, 
+					 sum(player_hit.rbi) as rbi, 
+					 sum(player_hit.rs) as rs 
+					 FROM team_members JOIN player_hit 
+					 WHERE team_members.no = player_hit.team_member AND player_hit.league = '$no' GROUP BY team_members.no) as hitter_record 
+				 WHERE user.no = player.user AND player.no = team_members.player AND team_members.no = hitter_record.no AND team_members.team = team.no ORDER BY ba DESC";
+				$record_result = mysqli_query($conn, $query_record);
+			}else if($_GET['record'] == 3){
+				// 투수 랭킹
+				$query_record = "SELECT user.no as userno, 
+				 user.name as name, 
+				 team.name as team_name, 
+				 ROUND((pitcher_record.er * 7)/(pitcher_record.inning/3),2) as era, 
+				 ROUND((pitcher_record.play_win)/(pitcher_record.play_win + pitcher_record.play_lose),3) as wpct, 
+				 pitcher_record.* 
+				 FROM user JOIN player JOIN team_members JOIN team JOIN 
+					 (SELECT team_members.no as no, 
+					 sum(player_pic.at_game) as at_game, 
+					 sum(player_pic.inning) as inning, 
+					 sum(player_pic.play_win) as play_win, 
+					 sum(player_pic.play_lose) as play_lose, 
+					 sum(player_pic.play_save) as play_save, 
+					 sum(player_pic.play_hold) as play_hold, 
+					 sum(player_pic.pitcher_count) as pitcher_count, 
+					 sum(player_pic.hit1) as hit1, 
+					 sum(player_pic.hit2) as hit2, 
+					 sum(player_pic.hit3) as hit3, 
+					 sum(player_pic.hr) as hr, 
+					 sum(player_pic.er) as er, 
+					 sum(player_pic.uer) as uer, 
+					 sum(player_pic.b4) as b4, 
+					 sum(player_pic.hbp) as hbp, 
+					 sum(player_pic.so) as so 
+					 FROM team_members JOIN player_pic  
+					 WHERE team_members.no = player_pic.team_member AND player_pic.league = '$no' GROUP BY team_members.no) as pitcher_record 
+				 WHERE user.no = player.user AND player.no = team_members.player AND team_members.no = pitcher_record.no AND team_members.team = team.no ORDER BY era ASC";
+				$record_result = mysqli_query($conn, $query_record);
+			}
+		}else{
+			// 리그경기
+			if($_GET['record'] == 1){
+
+			}else if($_GET['record'] == 2){
+
+			}else if($_GET['record'] == 3){
+
+			}
+		}
+		
+		if($_GET['record'] == 1 || $_GET['record'] == null){
+			$checked_team = "selected";
+			$record_thead = "<tr>
+							<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>팀명</th>
+							<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>경기수</th>
+							<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>승률</th>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>승</td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>패</td>
+						</tr>";
+			$record_tbody = "";
+			while($record_row = mysqli_fetch_array($record_result)){
+				$record_tbody = $record_tbody."<tr>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['name']."</td>
+							<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($record_row['win'] + $record_row['lose'] + $record_row['darw'])."</th>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['wpct']."</td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['win']."</td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['lose']."</td>
+							</tr>";
+			}
+		}else if($_GET['record'] == 2){
+			$checked_hit = "selected";
+			$record_thead = "<tr>
+							<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>선수</th>
+							<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>팀</th>
+							<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>AVG <a href='javascript:;' class='fa fa-sort' id='sort_up_2' onclick='sortTD ( 2 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_2' style='display:none' onclick='reverseTD ( 2 )'></a></th>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>G <a href='javascript:;' class='fa fa-sort' id='sort_up_3' onclick='sortTD ( 3 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_3' style='display:none' onclick='reverseTD ( 3 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>PA <a href='javascript:;' class='fa fa-sort' id='sort_up_4' onclick='sortTD ( 4 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_4' style='display:none' onclick='reverseTD ( 4 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>AB <a href='javascript:;' class='fa fa-sort' id='sort_up_5' onclick='sortTD ( 5 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_5' style='display:none' onclick='reverseTD ( 5 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>H <a href='javascript:;' class='fa fa-sort' id='sort_up_6' onclick='sortTD ( 6 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_6' style='display:none' onclick='reverseTD ( 6 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>2B <a href='javascript:;' class='fa fa-sort' id='sort_up_7' onclick='sortTD ( 7 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_7' style='display:none' onclick='reverseTD ( 7 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>3B <a href='javascript:;' class='fa fa-sort' id='sort_up_8' onclick='sortTD ( 8 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_8' style='display:none' onclick='reverseTD ( 8 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>HR <a href='javascript:;' class='fa fa-sort' id='sort_up_9' onclick='sortTD ( 9 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_9' style='display:none' onclick='reverseTD ( 9 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>SB <a href='javascript:;' class='fa fa-sort' id='sort_up_10' onclick='sortTD ( 10 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_10' style='display:none' onclick='reverseTD ( 10 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>BB <a href='javascript:;' class='fa fa-sort' id='sort_up_11' onclick='sortTD ( 11 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_11' style='display:none' onclick='reverseTD ( 11 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>HBP <a href='javascript:;' class='fa fa-sort' id='sort_up_12' onclick='sortTD ( 12 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_12' style='display:none' onclick='reverseTD ( 12 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>SO <a href='javascript:;' class='fa fa-sort' id='sort_up_13' onclick='sortTD ( 13 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_13' style='display:none' onclick='reverseTD ( 13 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>RBI <a href='javascript:;' class='fa fa-sort' id='sort_up_14' onclick='sortTD ( 14 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_14' style='display:none' onclick='reverseTD ( 14 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>R <a href='javascript:;' class='fa fa-sort' id='sort_up_15' onclick='sortTD ( 15 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_15' style='display:none' onclick='reverseTD ( 15 )'></a></td>
+						</tr>";
+			$record_tbody = "";
+			while($record_row = mysqli_fetch_array($record_result)){
+				if(!$record_row['ba']){
+					$record_ba = "-";
+				}else{
+					$record_ba = $record_row['ba'];
+				}
+				$record_tbody = $record_tbody."<tr>
+								<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle'><a href='javascript:;'>".$record_row['name']."</a></th>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'><a href='javascript:;'>".$record_row['team_name']."</a></td>
+								<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_ba."</th>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['at_game']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['at_play']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['at_bat']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['hit1']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['hit2']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['hit3']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['hr']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['sb']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['b4']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['hbp']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['so']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['rbi']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['rs']."</td>
+								</tr>";
+			}
+		}else if($_GET['record'] == 3){
+			$checked_pic = "selected";
+			$record_thead = "<tr>
+							<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>선수</th>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>팀</td>
+							<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>ERA <a href='javascript:;' class='fa fa-sort' id='sort_up_2' onclick='sortTD ( 2 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_2' style='display:none' onclick='reverseTD ( 2 )'></a></th>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>G <a href='javascript:;' class='fa fa-sort' id='sort_up_3' onclick='sortTD ( 3 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_3' style='display:none' onclick='reverseTD ( 3 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>W <a href='javascript:;' class='fa fa-sort' id='sort_up_4' onclick='sortTD ( 4 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_4' style='display:none' onclick='reverseTD ( 4 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>L <a href='javascript:;' class='fa fa-sort' id='sort_up_5' onclick='sortTD ( 5 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_5' style='display:none' onclick='reverseTD ( 5 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>SV <a href='javascript:;' class='fa fa-sort' id='sort_up_6' onclick='sortTD ( 6 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_6' style='display:none' onclick='reverseTD ( 6 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>HLD <a href='javascript:;' class='fa fa-sort' id='sort_up_7' onclick='sortTD ( 7 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_7' style='display:none' onclick='reverseTD ( 7 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>WPCT <a href='javascript:;' class='fa fa-sort' id='sort_up_8' onclick='sortTD ( 8 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_8' style='display:none' onclick='reverseTD ( 8 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>IP <a href='javascript:;' class='fa fa-sort' id='sort_up_9' onclick='sortTD ( 9 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_9' style='display:none' onclick='reverseTD ( 9 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>H <a href='javascript:;' class='fa fa-sort' id='sort_up_10' onclick='sortTD ( 10 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_10' style='display:none' onclick='reverseTD ( 10 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>HR <a href='javascript:;' class='fa fa-sort' id='sort_up_11' onclick='sortTD ( 11 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_11' style='display:none' onclick='reverseTD ( 11 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>BB <a href='javascript:;' class='fa fa-sort' id='sort_up_12' onclick='sortTD ( 12 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_12' style='display:none' onclick='reverseTD ( 12 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>HBP <a href='javascript:;' class='fa fa-sort' id='sort_up_13' onclick='sortTD ( 13 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_13' style='display:none' onclick='reverseTD ( 13 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>SO <a href='javascript:;' class='fa fa-sort' id='sort_up_14' onclick='sortTD ( 14 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_14' style='display:none' onclick='reverseTD ( 14 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>R <a href='javascript:;' class='fa fa-sort' id='sort_up_15' onclick='sortTD ( 15 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_15' style='display:none' onclick='reverseTD ( 15 )'></a></td>
+							<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>ER <a href='javascript:;' class='fa fa-sort' id='sort_up_16' onclick='sortTD ( 16 )'></a><a href='javascript:;' class='fa fa-sort' id='sort_down_16' style='display:none' onclick='reverseTD ( 16 )'></a></td>
+						</tr>";
+			$record_tbody = "";
+			while($record_row = mysqli_fetch_array($record_result)){
+				$h_inning = ($record_row['inning'] - ($record_row['inning'] % 3)) / 3;
+				if($record_row['inning'] % 3 == 0){
+					$f_inning = "";
+				}else if($record_row['inning'] % 3 == 1){
+					$f_inning = "⅓";
+				}else if($record_row['inning'] % 3 == 2){
+					$f_inning = "⅔";
+				}
+				if(!$record_row['wpct']){
+					$wpct = "-";
+				}else{
+					$wpct = $record_row['wpct'];
+				}
+				$record_tbody = $record_tbody."<tr>
+								<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle'><a href='javascript:;'>".$record_row['name']."</a></th>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'><a href='javascript:;'>".$record_row['team_name']."</a></td>
+								<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['era']."</th>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['at_game']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['play_win']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['play_lose']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['play_save']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['play_hold']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$wpct."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$h_inning."".$f_inning."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($record_row['hit1'] + $record_row['hit2'] + $record_row['hit3'] + $record_row['hr'])."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['hr']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['b4']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['hbp']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['so']."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($record_row['er'] + $record_row['uer'])."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$record_row['er']."</td>
+								</tr>";
+			}
+		}
+	}
+?>
+<html>
+	<body>
+		<script type="text/javascript">
+		/* sortingNumber() : 숫자인 실수만으로 되어있을 때, 적용될 함수 */ 
+		function sortingNumber( a , b ){  
+			if ( typeof a == "number" && typeof b == "number" ) return a - b; 
+
+			// 천단위 쉼표와 공백문자만 삭제하기.  
+			var a = ( a + "" ).replace( /[,\s\xA0]+/g , "" ); 
+			var b = ( b + "" ).replace( /[,\s\xA0]+/g , "" ); 
+
+			var numA = parseFloat( a ) + ""; 
+			var numB = parseFloat( b ) + ""; 
+
+			if ( numA == "NaN" || numB == "NaN" || a != numA || b != numB ) return false; 
+
+			return parseFloat( a ) - parseFloat( b ); 
+		} 
+		/* changeForSorting() : 문자열 바꾸기. */ 
+		function changeForSorting( first , second ){  
+
+			// 문자열의 복사본 만들기. 
+			var a = first.toString().replace( /[\s\xA0]+/g , " " ); 
+			var b = second.toString().replace( /[\s\xA0]+/g , " " ); 
+
+			var change = { first : a, second : b }; 
+
+			if ( a.search( /\d/ ) < 0 || b.search( /\d/ ) < 0 || a.length == 0 || b.length == 0 ) return change; 
+
+			var regExp = /(\d),(\d)/g; // 천단위 쉼표를 찾기 위한 정규식. 
+
+			a = a.replace( regExp , "$1" + "$2" ); 
+			b = b.replace( regExp , "$1" + "$2" ); 
+
+			var unit = 0; 
+			var aNb = a + " " + b; 
+			var numbers = aNb.match( /\d+/g ); // 문자열에 들어있는 숫자 찾기 
+
+			for ( var x = 0; x < numbers.length; x++ ){ 
+
+					var length = numbers[ x ].length; 
+					if ( unit < length ) unit = length; 
+			} 
+
+			var addZero = function( string ){ // 숫자들의 단위 맞추기 
+
+					var match = string.match( /^0+/ ); 
+
+					if ( string.length == unit ) return ( match == null ) ? string : match + string; 
+
+					var zero = "0"; 
+
+					for ( var x = string.length; x < unit; x++ ) string = zero + string; 
+
+					return ( match == null ) ? string : match + string; 
+			}; 
+
+			change.first = a.replace( /\d+/g, addZero ); 
+			change.second = b.replace( /\d+/g, addZero ); 
+
+			return change; 
+		} 
+		/* byLocale() */ 
+
+		function byLocale(){ 
+
+			var compare = function( a , b ){ 
+
+					var sorting = sortingNumber( a , b ); 
+
+					if ( typeof sorting == "number" ) return sorting; 
+
+					var change = changeForSorting( a , b ); 
+
+					var a = change.first; 
+					var b = change.second; 
+
+					return a.localeCompare( b ); 
+			}; 
+
+			var ascendingOrder = function( a , b ){  return compare( a , b );  }; 
+			var descendingOrder = function( a , b ){  return compare( b , a );  }; 
+
+			return { ascending : ascendingOrder, descending : descendingOrder }; 
+		} 
+		/* replacement() */ 
+		 
+		function replacement( parent ){  
+			var tagName = parent.tagName.toLowerCase(); 
+			if ( tagName == "table" ) parent = parent.tBodies[ 0 ]; 
+			tagName = parent.tagName.toLowerCase(); 
+			if ( tagName == "tbody" ) var children = parent.rows; 
+			else var children = parent.getElementsByTagName( "li" ); 
+
+			var replace = { 
+					order : byLocale(), 
+					index : false, 
+					array : function(){ 
+							var array = [ ]; 
+							for ( var x = 0; x < children.length; x++ ) array[ x ] = children[ x ]; 
+							return array; 
+					}(), 
+					checkIndex : function( index ){ 
+							if ( index ) this.index = parseInt( index, 10 ); 
+							var tagName = parent.tagName.toLowerCase(); 
+							if ( tagName == "tbody" && ! index ) this.index = 0; 
+					}, 
+					getText : function( child ){ 
+							if ( this.index ) child = child.cells[ this.index ]; 
+							return getTextByClone( child ); 
+					}, 
+					setChildren : function(){ 
+							var array = this.array; 
+							while ( parent.hasChildNodes() ) parent.removeChild( parent.firstChild ); 
+							for ( var x = 0; x < array.length; x++ ) parent.appendChild( array[ x ] ); 
+					}, 
+					ascending : function( index ){ // 오름차순 
+							this.checkIndex( index ); 
+							var _self = this; 
+							var order = this.order; 
+							var ascending = function( a, b ){ 
+									var a = _self.getText( a ); 
+									var b = _self.getText( b ); 
+									return order.ascending( a, b ); 
+							}; 
+							this.array.sort( ascending ); 
+							this.setChildren(); 
+					}, 
+					descending : function( index ){ // 내림차순
+							this.checkIndex( index ); 
+							var _self = this; 
+							var order = this.order; 
+							var descending = function( a, b ){ 
+									var a = _self.getText( a ); 
+									var b = _self.getText( b ); 
+									return order.descending( a, b ); 
+							}; 
+							this.array.sort( descending ); 
+							this.setChildren(); 
+					} 
+			}; 
+			return replace; 
+		} 
+
+		function getTextByClone( tag ){  
+			var clone = tag.cloneNode( true ); // 태그의 복사본 만들기. 
+			var br = clone.getElementsByTagName( "br" ); 
+			while ( br[0] ){ 
+					var blank = document.createTextNode( " " ); 
+					clone.insertBefore( blank , br[0] ); 
+					clone.removeChild( br[0] ); 
+			} 
+			var isBlock = function( tag ){ 
+					var display = ""; 
+					if ( window.getComputedStyle ) display = window.getComputedStyle ( tag, "" )[ "display" ]; 
+					else display = tag.currentStyle[ "display" ]; 
+					return ( display == "block" ) ? true : false; 
+			}; 
+			var children = clone.getElementsByTagName( "*" ); 
+			for ( var x = 0; x < children.length; x++){ 
+					var child = children[ x ]; 
+					if ( ! ("value" in child) && isBlock(child) ) child.innerHTML = child.innerHTML + " "; 
+			} 
+			var textContent = ( "textContent" in clone ) ? clone.textContent : clone.innerText; 
+			return textContent; 
+		} 
+		</script>
+		<form action="league.html" method="get">
+			<input type="hidden" name="league" value="page">
+			<input type="hidden" name="no" value="<? echo $no?>">
+			<input type="hidden" name="page" value="record">
+			<div class="row form-group">
+				<div class="col-md-10">
+					<select class="custom-select" id="record" name="record">
+						<option value="1" <?=$checked_team?>>팀 랭킹</option>
+						<option value="2" <?=$checked_hit?>>타자 랭킹</option>
+						<option value="3" <?=$checked_pic?>>투수 랭킹</option>
+					</select>
+				</div>
+				<div class="col-md-2">
+					<input type="submit" class="btn btn-sm btn-primary" style="padding: 8px 30px" value="검색">
+				</div>
+			</div>
+		</form>
+		<hr>
+		<? if($record_count['count'] >= 1){?>
+		<table class="table table-striped table-bordered" id="team_ranking" style="font-size:80%">
+			<thead>
+				<?=$record_thead?>
+			</thead>
+			<tbody>
+				<?=$record_tbody?>
+			</tbody>
+		</table>
+		<? } else {?>
+			<p style="text-align:center">경기가 없습니다</p>
+		<? } ?>
+		<!--
+		<hr>
+		<h6>세부 기록</h6>-->
+		<script type="text/javascript">
+		var myTable = document.getElementById( "team_ranking" ); 
+		var replace = replacement( myTable ); 
+		function sortTD( index ){
+			replace.ascending( index );
+			document.getElementById('sort_up_' + index).style.display = "none";
+			document.getElementById('sort_down_' + index).style.display = "inline-block";
+		} 
+		function reverseTD( index ){
+			replace.descending( index );
+			document.getElementById('sort_up_' + index).style.display = "inline-block";
+			document.getElementById('sort_down_' + index).style.display = "none";
+		} 
+		</script>
+	</body>
+</html>

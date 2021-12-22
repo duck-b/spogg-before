@@ -1,0 +1,258 @@
+<? include("header/header.html");?>
+<? include("header/menu.html"); ?>
+<?
+if(!$user_no){
+	echo "<script>alert('로그인이 필요한 기능입니다.');";
+	echo "window.location.replace('login.html');</script>";
+}else{
+	if($user_row['status'] == 1){
+		$stau = "선수";
+		include "dbconn.php";
+		$player_result = mysqli_query($conn,"SELECT * FROM user_player WHERE user='$user_no'");
+		$player_row = mysqli_fetch_array($player_result);
+		mysqli_close($conn);
+		if($player_row['playercheck'] == 1){
+			$playercheck = "선출";
+		}else if($player_row['playercheck'] == 2){
+			$playercheck = "비선출";
+		}else{
+			$playercheck = "-";
+		}
+		if($player_row['playerclass'] == 1){
+			$playerclass = "사회인 1부";
+		}else if($player_row['playerclass'] == 2){
+			$playerclass = "사회인 2부";
+		}else if($player_row['playerclass'] == 3){
+			$playerclass = "사회인 3부";
+		}else if($player_row['playerclass'] == 4){
+			$playerclass = "사회인 4부";
+		}else{
+			$playerclass = "-";
+		}
+		if($player_row['position'] == 1){
+			$position = "내야수";
+		}else if($player_row['position'] == 2){
+			$position = "외야수";
+		}else if($player_row['position'] == 3){
+			$position = "투수";
+		}else{
+			$position = "-";
+		}
+		if($player_row['hitpitch'] == 1){
+			$hitpitch = "우투우타";
+		}else if($player_row['hitpitch'] == 2){
+			$hitpitch = "우투좌타";
+		}else if($player_row['hitpitch'] == 3){
+			$hitpitch = "좌투우타";
+		}else if($player_row['hitpitch'] == 4){
+			$hitpitch = "좌투좌타";
+		}else{
+			$hitpitch = "-";
+		}
+		if($player_row['address']){
+			$address = $player_row['address'];
+		}else{
+			$address = "-";
+		}
+		if($player_row['back_num'] && $player_row['back_num'] != '00'){
+			$back_num = "No.".$player_row['back_num'];
+		}else{
+			$back_num = "-";
+		}
+		if($player_row['playertall']){
+			$playertall = $player_row['playertall']."cm";
+		}else{
+			$playertall = "-";
+		}
+		if($player_row['playerweight']){
+			$playerweight = $player_row['playerweight']."kg";
+		}else{
+			$playerweight = "-";
+		}
+		$team_list = "-";
+		if($player_row['team']){
+			$team = explode('|' , $player_row['team']);
+			for($i = 0 ; $i < count($team); $i++){
+				if($team_list == "-"){
+					$team_list = $team[$i];
+				}else{
+					$team_list .= "<br>".$team[$i];
+				}
+			}
+		}
+	}else if($user_row['status'] == 2){
+		$stau = "강사";
+	}
+	if($user_row['gender'] == 1){
+		$gender = "남자";
+	}else if($user_row['gender'] == 2){
+		$gender = "여자";
+	}else{
+		$gender = "-";
+	}
+	if($user_row['birth'] == "0000-00-00"){
+		$birth = "-";
+	}else{
+		$birth = $user_row['birth'];
+	}
+	if($user_row['phone']){
+		$phone = $user_row['phone'];
+	}else{
+		$phone = "-";
+	}
+}
+?>
+<div class="ro_subpage page_player">
+	<div class="container ro_subpage_accountDocument ro_subpage_content" style="margin-top:80px;margin-bottom:40px">
+	
+		<div class="row to_mb_40">
+			<div class="col-xs-12 col-sm-3 col-md-3">
+				<img src="<?=$user_img?>">
+			</div>
+			<div class="col-xs-12 col-sm-9 col-md-9 ro_subpage_accountedit_right">
+				<div class="to_mb_40">
+					<div class="row to_mb_10">
+						<div class="col-xs-12 col-sm-12 col-md-12">
+							<div class="to_page_part_title">
+								내 정보
+							</div>
+							<hr>
+						</div>
+					</div>
+					<div class="row ro_doucument_h">
+						<div class="col-xs-12 col-sm-3 col-md-3 control-label"><label for="inputStatus">구분</label></div>
+				        <div class="col-xs-12 col-sm-9 col-md-9">
+				        	<span><?=$stau?></span>
+				        </div>
+				    </div>
+				    <div class="row ro_doucument_h">
+				    	<div class="col-xs-12 col-sm-3 col-md-3 control-label"><label for="inputEmail">이메일(ID)</label></div>
+				        <div class="col-xs-12 col-sm-9 col-md-9">
+				            <span><?=$user_row['email']?></span>
+				        </div>
+				    </div>
+				    <div class="row ro_doucument_h">
+				    	<div class="col-xs-12 col-sm-3 col-md-3 control-label"><label for="inputName">이름</label></div>
+				        <div class="col-xs-12 col-sm-9 col-md-9">
+				            <span><?=$user_row['name']?></span>
+				        </div>
+				    </div>
+				     	     
+				    <div class="row ro_doucument_h">
+				    	<div class="col-xs-12 col-sm-3 col-md-3 control-label"><label for="inputPhoneNumber">연락처</label></div>
+				        <div class="col-xs-12 col-sm-9 col-md-9">
+				            <span><?=$phone?></span>
+				        </div>
+				    </div>
+				    
+				    <div class="row ro_doucument_h">
+				    	<div class="col-xs-12 col-sm-3 col-md-3 control-label"><label for="inputGender">성별</label></div>
+				        <div class="col-xs-12 col-sm-9 col-md-9">
+				        	<span><?=$gender?></span>          
+				        </div>
+				    </div>
+				    
+				    <div class="row ro_doucument_h">
+				    	<div class="col-xs-12 col-sm-3 col-md-3 control-label"><label for="inputBirth">생년월일</label></div>
+				        <div class="col-xs-12 col-sm-9 col-md-9">
+				           <span><?=$birth?></span> 
+				        </div>
+				    </div>
+				    
+				    <!--<div class="row ro_doucument_h">
+				    	<div class="col-xs-12 col-sm-3 col-md-3 control-label"><label for="inputFindPW_q">비밀번호 찾기 질문</label></div>
+				        <div class="col-xs-12 col-sm-9 col-md-9">
+				            <span>나의 어릴적 별명은?</span>
+				        </div>
+				    </div>
+				    
+				    <div class="to_mb_60" >
+				    	<div class="col-xs-12 col-sm-3 col-md-3 control-label"><label for="inputFindPW_a">비밀번호 찾기 답</label></div>
+				        <div class="col-xs-12 col-sm-9 col-md-9">
+				            <span>홍길동</span>
+				        </div>
+				    </div>-->
+				</div>
+				 <div class="row to_mb_10">
+					<div class="col-xs-12 col-sm-12 col-md-12">
+						<div class="to_page_part_title">
+							추가정보
+						</div>
+						<hr>
+					</div>		
+				</div>
+				
+				<div class="row ro_doucument_h">
+					<div class="col-xs-12 col-sm-3 col-md-3 control-label"><label for="inputPlayerCheck">선출여부</label></div>
+			        <div class="col-xs-12 col-sm-9 col-md-9">
+			        	<span><?=$playercheck?></span>       
+			        </div>
+			    </div>
+				
+				<div class="row ro_doucument_h">
+					<div class="col-xs-12 col-sm-3 col-md-3 control-label"><label for="inputPlayerCheck">투/타</label></div>
+			        <div class="col-xs-12 col-sm-9 col-md-9">
+			        	<span><?=$hitpitch?></span>       
+			        </div>
+			    </div>
+			    
+			    <div class="row ro_doucument_h" >
+			    	<div class="col-xs-12 col-sm-3 col-md-3 control-label"><label for="inputPosition">주 포지션</label></div>
+			        <div class="col-xs-12 col-sm-9 col-md-9">
+			        	<span><?=$position?></span>          
+			        </div>
+			    </div>
+			    
+			    <div class="row ro_doucument_h">
+			    	<div class="col-xs-12 col-sm-3 col-md-3 control-label"><label for="inputHitPitch" class="control-label">주 활동 리그</label></div>
+			        <div class="col-xs-12 col-sm-9 col-md-9">
+			        	<span><?=$playerclass?></span>        
+			        </div>
+			    </div>
+				
+				<div class="row ro_doucument_h">
+			    	<div class="col-xs-12 col-sm-3 col-md-3 control-label"><label for="inputAddress" class="control-label">주 활동 지역</label></div>
+			        <div class="col-xs-12 col-sm-9 col-md-9">
+			        	<span><?=$address?></span>        
+			        </div>
+			    </div>
+			    
+			    <div class="row ro_doucument_h">
+			    	<div class="col-xs-12 col-sm-3 col-md-3 control-label"><label for="inputTall" class=" control-label">신장</label></div>
+			        <div class="col-xs-12 col-sm-9 col-md-6">
+			            <span><?=$playertall?></span>
+			        </div>
+			    </div>
+			    
+			    <div class="row ro_doucument_h">
+			    	<div class="col-xs-12 col-sm-3 col-md-3 control-label"><label for="inputWeight" class=" control-label">체중</label></div>
+			        <div class="col-xs-12 col-sm-9 col-md-6">
+			            <span><?=$playerweight?></span>
+			        </div>
+			    </div>
+
+				<div class="row ro_doucument_h">
+			    	<div class="col-xs-12 col-sm-3 col-md-3 control-label"><label for="inputBackNum" class=" control-label">등번</label></div>
+			        <div class="col-xs-12 col-sm-9 col-md-6">
+			            <span><?=$back_num?></span>
+			        </div>
+			    </div>
+				
+				<div class="row ro_doucument_h">
+			    	<div class="col-xs-12 col-sm-3 col-md-3 control-label"><label for="team" class=" control-label">소속팀</label></div>
+			        <div class="col-xs-12 col-sm-9 col-md-6">
+			            <span><?=$team_list?></span>
+			        </div>
+			    </div>
+			</div>
+		</div>
+		<div class="row ro_doucument_h">
+	        <div class="col-xs-12 col-sm-12 col-md-12 text-center">
+	            <input type="button" class="btn btn-default" value="수정하기" onclick="location.href='user_info_edit.html'">
+	        </div>
+	    </div>
+	</div>
+</div>
+<? include("footer/footer.html"); ?>
+</body>
+</html>

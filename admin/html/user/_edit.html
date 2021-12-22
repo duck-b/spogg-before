@@ -1,0 +1,294 @@
+<!DOCTYPE HTML>
+<html>
+	<body>
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-lg-2"></div>
+					<div class="col-lg-8 col-md-12 mb-5 element-animate">
+						<h3 class="mb-5">회원 정보</h3>
+						<form name="user_edit_form" action="UserUpdateProc.php" method="post" enctype="multipart/form-data">
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="id">ID</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="id" class="form-control" value="<? echo $my_row['id'];?>" disabled>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="name">이름</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="name" class="form-control " value="<? echo $my_row['name'];?>" disabled>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="phone">연락처</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="tel" name="phone" id="phone" class="form-control " placeholder="ex)010-1234-5678" pattern="(010)-\d{3,4}-\d{4}" required value="<? echo $my_row['phone'];?>">
+								</div>
+							</div>	
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="email">E-main</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="email" name="email" id="email" class="form-control " placeholder="test@example.com" pattern="[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a-zA-Z]{2,3}$" required value="<? echo $my_row['email'];?>">
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="birth">생년월일</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="date" id="birth" class="form-control " value="<? echo $my_row['birth'];?>" disabled>
+								</div>
+							</div>
+							<? if($my_row['sex'] == 1){
+								$checked_m = "checked";
+							}else if($my_row['sex'] == 2){
+								$checked_f = "checked";
+							}?>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="sex">성별</label>
+								</div>
+								<div class="row col-md-10" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="sex_m" name="sex" value="1" class="custom-control-input" <?=$checked_m?> disabled>
+										<label class="custom-control-label" for="sex_m">남자</label>
+									</div>
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="sex_f" name="sex" value="2" class="custom-control-input" <?=$checked_f?> disabled>
+										<label class="custom-control-label" for="sex_f">여자</label>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="pw">PW 변경</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input style="line-height:0.6;font-size:18px;" type="button" value="비밀번호 변경" onClick="edit_password()" class="btn btn-primary">
+								</div>
+							</div>
+							<? if($my_row['states'] == "1" || $my_row['states'] == "3"){
+								include "dbconn.php";
+								$edit_result = mysqli_query($conn,"SELECT * FROM player where user='$user_no'");
+								$edit_row = mysqli_fetch_array($edit_result);
+								mysqli_close($conn);
+								if($edit_row['none_player'] == 1){
+									$none_payler_nc = "checked";
+								}else if($edit_row['none_player'] == 2){
+									$none_payler_yc = "checked";
+								}
+								if($edit_row['position'] == 1){
+									$postion_pc = "checked";
+								}else if($edit_row['position'] == 2){
+									$postion_ic = "checked";
+								}else if($edit_row['position'] == 3){
+									$postion_oc = "checked";
+								}
+								if($edit_row['leri_pic'] == 1){
+									$leri_pic_lc = "checked";
+								}else if($edit_row['leri_pic'] == 2){
+									$leri_pic_rc = "checked";
+								}									
+								if($edit_row['leri_hit'] == 1){
+									$leri_hit_lc = "checked";
+								}else if($edit_row['leri_hit'] == 2){
+									$leri_hit_rc = "checked";
+								}							
+								if($edit_row['class'] == 1){
+									$class_1c = "checked";
+								}else if($edit_row['class'] == 2){
+									$class_2c = "checked";
+								}else if($edit_row['class'] == 3){
+									$class_3c = "checked";
+								}else if($edit_row['class'] == 4){
+									$class_4c = "checked";
+								}
+							?>
+							<hr><h3 class="mb-5">선수 정보</h3>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="none_payler">선출 여부</label>
+								</div>
+								<div class="row col-md-10" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="none_payler_n" name="none_payler" value="1" class="custom-control-input" <?=$none_payler_nc?> disabled>
+										<label class="custom-control-label" for="none_payler_n">비선출</label>
+									</div>
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="none_payler_y" name="none_payler" value="2" class="custom-control-input" <?=$none_payler_yc?> disabled>
+										<label class="custom-control-label" for="none_payler_y">선출</label>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="position">주 포지션</label>
+								</div>
+								<div class="row col-md-10" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="position_pic" name="position" value="1" class="custom-control-input" <?=$postion_pc?>>
+										<label class="custom-control-label" for="position_pic">투수</label>
+									</div>
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="position_in" name="position" value="2" class="custom-control-input" <?=$postion_ic?>>
+										<label class="custom-control-label" for="position_in">내야수</label>
+									</div>
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="position_out" name="position" value="3" class="custom-control-input" <?=$postion_oc?>>
+										<label class="custom-control-label" for="position_out">외야수</label>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="leri_pic">투</label>
+								</div>
+								<div class="row col-md-10" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="leri_pic_le" name="leri_pic" value="1" class="custom-control-input" <?=$leri_pic_lc?>>
+										<label class="custom-control-label" for="leri_pic_le">좌투</label>
+									</div>
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="leri_pic_ri" name="leri_pic" value="2" class="custom-control-input" <?=$leri_pic_rc?>>
+										<label class="custom-control-label" for="leri_pic_ri">우투</label>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="leri_hit">타</label>
+								</div>
+								<div class="row col-md-10" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="leri_hit_le" name="leri_hit" value="1" class="custom-control-input" <?=$leri_hit_lc?>>
+										<label class="custom-control-label" for="leri_hit_le">좌타</label>
+									</div>
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="leri_hit_ri" name="leri_hit" value="2" class="custom-control-input" <?=$leri_hit_rc?>>
+										<label class="custom-control-label" for="leri_hit_ri">우타</label>
+									</div>
+								</div>
+							</div>
+							<div class="row" style="margin-bottom:10px">
+								<div class="col-md-2 form-group">
+									<label for="player_class">소속 리그</label>
+								</div>
+								<div class="row col-md-10" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="player_class_1" name="player_class" value="1" class="custom-control-input" <?=$class_1c?>>
+										<label class="custom-control-label" for="player_class_1">사회인 1부</label>
+									</div>
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="player_class_2" name="player_class" value="2" class="custom-control-input" <?=$class_2c?>>
+										<label class="custom-control-label" for="player_class_2">사회인 2부</label>
+									</div>
+								</div>
+								<div class="col-md-2"></div>
+								<div class="row col-md-10" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="player_class_3" name="player_class" value="3" class="custom-control-input" <?=$class_3c?>>
+										<label class="custom-control-label" for="player_class_3">사회인 3부</label>
+									</div>
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="player_class_4" name="player_class" value="4" class="custom-control-input" <?=$class_4c?>>
+										<label class="custom-control-label" for="player_class_4">사회인 4부</label>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="player_height">신장</label>
+								</div>
+								<div class="col-md-9 form-group">
+									<input type="text" name="player_height" id="player_height" class="form-control " placeholder="단위(cm)를 제외한 숫자만 입력해 주세요" pattern="\d{2,3}" required value="<? echo $edit_row['height'];?>">
+								</div>
+								<div class="col-md-1" style="padding-left:0px">cm</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="player_weight">체중</label>
+								</div>
+								<div class="col-md-9 form-group">
+									<input type="text" name="player_weight" id="player_weight" class="form-control " placeholder="단위(kg)를 제외한 숫자만 입력해 주세요" pattern="\d{2,3}" required value="<? echo $edit_row['weight'];?>">
+								</div>
+								<div class="col-md-1" style="padding-left:0px">kg</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="team">대표팀</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<select class="custom-select" id="team" name="team">
+								<? 	$player_no = $_SESSION['player_no'];
+									include "dbconn.php";
+									$team_result = mysqli_query($conn,"SELECT * FROM team_members where player='$player_no' AND states='1'");
+									$team_row = mysqli_fetch_array($team_result);
+									if($team_row){
+										if($edit_row['team']){?>
+									<option value="0">대표팀 취소</option>
+											<? $team_list_result = mysqli_query($conn,"SELECT * FROM team_members where player='$player_no' AND states='1'");
+											while ($team_list_row = mysqli_fetch_array($team_list_result)){
+											$team_no = $team_list_row['team'];
+											$team_result = mysqli_query($conn,"SELECT * FROM team where no='$team_no'");
+											$team_row = mysqli_fetch_array($team_result);
+											if($edit_row['team'] == $team_no){?>
+									<option value="<? echo $team_no; ?>" selected><? echo $team_row['name']; ?></option>
+											<? }else{ ?>
+									<option value="<? echo $team_no; ?>"><? echo $team_row['name']; ?></option>
+											<? }
+											}
+										} else{ ?>
+									<option value="0" selected>대표팀이 없습니다</option>
+										<? $team_list_result = mysqli_query($conn,"SELECT * FROM team_members where player='$player_no' AND states='1'");
+										while ($team_list_row = mysqli_fetch_array($team_list_result)){
+										$team_no = $team_list_row['team'];
+										$team_result = mysqli_query($conn,"SELECT * FROM team where no='$team_no'");
+										$team_row = mysqli_fetch_array($team_result);?>
+									<option value="<? echo $team_no; ?>"><? echo $team_row['name']; ?></option>
+										<? } ?>
+									<? } ?>
+								<?	}else{ ?>
+									<option value="0" selected>소속된 팀이 없습니다</option>
+								<?  } 
+								mysqli_close($conn);
+								?>
+									</select>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="img">사진 변경</label>
+								</div>
+								<div class="col-md-5 form-group">
+								<? if ($edit_row['img']){?>
+								<img src="<? echo $edit_row['img'];?>" id="replaceMe" style="width:100%" class="img-thumbnail" alt="<? echo $edit_row['name']?>">
+								<? } ?>
+								</div>
+								<div class="col-md-5 form-group">
+									<input type="file" id="img" name="img" onchange="imageURL(this)" multiple accept='image/*'>
+								</div>
+							</div>
+							<? } ?>
+							<hr>
+							<div class="row">
+								<div class="col-md-6 form-group">
+									<input type="submit" value="수정" class="btn btn-primary">
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+				<div class="col-lg-2"></div>
+			</div>
+		</section>
+	</body>
+</html>

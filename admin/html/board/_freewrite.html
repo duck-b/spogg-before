@@ -1,0 +1,72 @@
+<!DOCTYPE HTML>
+<html>
+	<body>
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-2"></div>
+					<div class="col-lg-8 col-md-12 mb-5 element-animate">
+						<div class="row">
+							<div class="col-md-12">
+								<h3 class="mb-5" style="vertical-align: middle;">자유게시판 글쓰기</h3>
+							</div>
+						</div>
+						<form action="BoardInsertProc.php" method="post" enctype="multipart/form-data">
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="manager">글쓴이</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="manager" class="form-control " value="<? echo $my_row['name'];?>" disabled>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="title">제목</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" name="title" id="title" class="form-control " required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="contents">내용</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<textarea class="form-control" style="resize: none;" name="contents" rows="8" id="contents" aria-label="With textarea"></textarea>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="tag">태그</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" name="tag" id="tag" class="form-control " placeholder="쉼표(,)로 구분 후 최대 10개">
+								</div>
+							</div>
+							<div class="row" style="margin-bottom:10px">
+								<div class="col-md-2">
+									<label for="img">이미지</label>
+								</div>
+								<div class="col-md-10">
+									<input type="file" id="img" name="img" multiple accept='image/*'>
+								</div>
+							</div>
+							<input type="hidden" value="free" name="kind">
+							<hr>						
+							<div class="row">
+								<div class="col-md-8"></div>
+								<div class="col-md-2 form-group">
+									<input type="submit" value="등&nbsp;&nbsp;&nbsp;록" class="btn btn-primary" onclick="insert()">
+								</div>
+								<div class="col-md-2">
+									<a class="btn btn-primary" href="board.html?board=free" role="button">목&nbsp;&nbsp;&nbsp;록</a>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</section>
+	</body>
+</html>

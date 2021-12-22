@@ -1,0 +1,31 @@
+<!DOCTYPE HTML>
+<html>
+<?
+ 	$nav = "join";
+	$join = $_GET['join'];
+	$search = $_GET['search'];
+	include("inc/_head.html");
+?>
+<body>
+	<? include("inc/_header.html");?>
+
+	<?	if($join == 'team'){
+			include("join/_team.html");
+		}else if($join == 'league'){
+			include("join/_league.html");
+		}else if($join == 'user'){
+			include("join/_user.html");
+		}
+	?>
+
+    <!-- END section -->
+	<? include("inc/_footer.html");?>
+    <script>
+		function chang_option(text, option){
+			document.getElementById("search_option").textContent = text;
+			document.getElementById("option").value = option;
+		}
+	</script>
+	<? include("inc/_script.html");?>
+  </body>
+</html>

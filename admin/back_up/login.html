@@ -1,0 +1,390 @@
+<? include("header/header.html");?>
+<? include("header/menu.html"); ?>
+<?
+if($user_no){
+	if(!$admin){
+		echo "<script>alert('이미 로그인이 되어있습니다.');";
+		echo "window.location.replace('index.html');</script>";
+	}
+}
+?>
+<div class="container to_login ro_subpage_content" style="margin-top:40px;margin-bottom:40px">
+	<div class="ro_loginbox to_page_part_content rounded shadow">
+		<div class="ro_loginbox_title">
+			<h3>회원 로그인</h3>
+			<center>SPOGG 홈페이지에 오신 것을 환영합니다.</center>
+		</div>
+		
+		<!-- 아이디 찾기 모달창 -->
+		<div class="modal fade" id="defaultModal_findaccount">
+		    <div class="modal-dialog">
+		        <div class="modal-content">
+		            <div class="modal-header">
+		                <div class="to_page_part_title">
+							아이디 찾기
+						</div>
+						<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+						<hr>
+		            </div>
+		            <div class="modal-body" id="modalbody_account">
+		                
+		            </div>
+		            <div class="modal-footer" id="modal-footer_findaccount">
+
+		            </div>
+		        </div><!-- /.modal-content -->
+		    </div><!-- /.modal-dialog -->
+		</div><!-- /.modal -->
+		<!--// 아이디 찾기 모달창 -->
+		
+		
+		<!-- 비밀번호 찾기 모달창 -->
+		<div class="modal fade" id="defaultModal_findpw">
+		    <div class="modal-dialog">
+		        <div class="modal-content">
+		            <div class="modal-header">
+						<div class="to_page_part_title">
+							비밀번호 찾기
+						</div>
+		                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+						<hr>
+		            </div>
+		            <div class="modal-body" id="modalbody_pw">
+
+		            </div>
+		            <div class="modal-footer" id="modal-footer_findpw">
+					
+		            </div>
+		        </div><!-- /.modal-content -->
+		    </div><!-- /.modal-dialog -->
+		</div><!-- /.modal -->
+		<!--// 비밀번호 찾기 모달창 -->
+	
+	
+		<div class="ro_loginbox_content">
+			<form action="LoginProc.php" method="post">
+				<input type="text" class="ro_input_f" name="email" placeholder="이메일">
+				<input type="password" class="ro_input_f" name="password" placeholder="비밀번호">
+				
+				<input type="checkbox" class="to_check" id="auto_login" name="auto_login" value='t'/>
+   				<label for="auto_login" style="margin-top:5px"><span></span>자동 로그인</label>
+   				
+   				<button class="ro_submit_btn" style="margin:5px 0px">로그인</button>
+				<hr>
+				<!--<div class="g-signin2" data-onsuccess="onSignIn" data-theme="dark" data-width="460" data-height="50" data-longtitle="true"></div>-->
+				<!--<div class="fb-login-button" data-width="" data-size="large" data-button-type="continue_with" data-auto-logout-link="false" data-use-continue-as="false"></div>-->
+					<div id="gSignInWrapper" style="margin-bottom:3px">
+						<span class="label"><!--Sign in with:--></span>
+						<div id="customBtn" class="customGPlusSignIn">
+							<span class="icon"><img src="img/google_logo.png" style="width:100%"></span>
+							<span class="buttonText">구글 아이디로 로그인</span>
+						</div>
+					 </div>
+					 <div id="name"></div>
+					 <script>startApp();</script>
+					 <div onclick="document.getElementById('naver_id_login_anchor').click();">
+						<span class="label"><!--Sign in with:--></span>
+						<div id="customBtn2" class="customGPlusSignIn">
+							<span class="icon2"><img src="img/naver_logo.png" style="width:100%"></span>
+							<span class="buttonText2">네이버 아이디로 로그인</span>
+						</div>
+					 </div>
+					 <!--<div id="name"></div>-->
+					 <script>startApp();</script>
+					 <div id="naver_id_login" style="display:none">네이버 로그인</div>
+			<hr>
+   				<ul>
+   					<li><a href="join_agree.html">회원가입</a></li>
+   					<li><a href="javascript:;" onclick="findid();">아이디찾기</a></li>
+   					<li><a href="javascript:;" onclick="findpw();">비밀번호찾기</a></li>
+   				</ul>
+			</form>
+		</div>
+	</div>
+</div>
+<!-- 네이버 로그인 -->
+<script type="text/javascript">
+  	var naver_id_login = new naver_id_login("YxD7HKQsx5SslP1h4zau", "https://spo.gg/naver_login_callback.html");
+  	var state = naver_id_login.getUniqState();
+  	naver_id_login.setButton("green", 10,50);
+  	naver_id_login.setDomain("https://spo.gg");
+  	naver_id_login.setState(state);
+  	naver_id_login.setPopup();
+  	naver_id_login.init_naver_id_login();
+</script>
+<!-- 페이스북 로그인 -->
+<!--<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/ko_KR/sdk.js#xfbml=1&version=v6.0&appId=494071951284013&autoLogAppEvents=1"></script>-->
+<!-- 구글 로그인 -->
+<!--<script>
+      function onSignIn(googleUser) {
+        // Useful data for your client-side scripts:
+        var profile = googleUser.getBasicProfile();
+        console.log("ID: " + profile.getId()); // Don't send this directly to your server!
+        console.log('Full Name: ' + profile.getName());
+        console.log('Given Name: ' + profile.getGivenName());
+        console.log('Family Name: ' + profile.getFamilyName());
+        console.log("Image URL: " + profile.getImageUrl());
+        console.log("Email: " + profile.getEmail());
+
+        // The ID token you need to pass to your backend:
+        var id_token = googleUser.getAuthResponse().id_token;
+        console.log("ID Token: " + id_token);
+      }
+</script>-->
+<!-- 구글 로그아웃 -->
+<!-- https://woojjang.tistory.com/15?category=842914 -->
+<script>
+	function signOut(){
+		var auth2 = gapu.auth2.getAuthInstance();
+		auth2.signOut().then(function(){
+				console.log('User signed OUT.');
+			}
+		);
+		auth2.disconnect();
+	}
+</script>
+<script type="text/javascript">
+
+$(function(){
+	$(".onlyHangul").keyup(function(event){
+        if (!(event.keyCode >=37 && event.keyCode<=40)) {
+            var inputVal = $(this).val();
+            $(this).val(inputVal.replace(/[a-z0-9]/gi,''));
+        }
+    });
+ 
+    $(".onlyNumber").keyup(function(event){
+        if (!(event.keyCode >=37 && event.keyCode<=40)) {
+            var inputVal = $(this).val();
+            $(this).val(inputVal.replace(/[^0-9]/gi,''));
+        }
+    });
+});
+
+
+var modalContents_findaccount = $("#modalbody_account");
+var modal_findaccount = $("#defaultModal_findaccount");
+var modal_footer_findaccount = $("#modal-footer_findaccount");
+function findid() {		//ID 찾기 스크립트
+	modalContents_findaccount.empty();
+	
+	var findid_form = "<div>"
+		+"	<table>"
+		+"		<tr>"
+		+"			<th><label>이름</label></th>"
+		+"			<td><input type='text' class='form-control onlyHangul' id='searchidName' name='searchidName' data-rule-required='true' placeholder='' maxlength='15'></td>"
+		+"		</tr>"
+		+"		<tr>"
+		+"			<th><label>연락처</label></th>"
+		+"			<td><input type='tel' class='form-control onlyNumber' id='searchidPhoneNumber' name='searchidPhoneNumber' data-rule-required='true' placeholder='-를 제외하고 숫자만 입력하세요.' maxlength='11'></td>"
+		+"		</tr>"
+		+"	</table>"
+		+"</div>";
+	
+	modalContents_findaccount.append(findid_form);
+	
+	var findaccount_footer = "<input type='button' class='btn btn-default'  value='확인'  onclick='findid_result(searchidName.value,searchidPhoneNumber.value)'>";
+	modal_footer_findaccount.empty();
+	modal_footer_findaccount.append(findaccount_footer);
+    
+	modal_findaccount.modal('show');
+}
+
+function findid_result(searchidName, searchidPhoneNumber) {		//ID 찾기 결과 스크립트
+	$.ajax({
+			type: 'POST',
+			url: 'select_id.php',
+			data: {
+				name : searchidName,
+				phone : searchidPhoneNumber
+			},
+			dataTpye: 'text',
+			success: function(data){
+				modalContents_findaccount.empty();
+				if(data){
+					modalContents_findaccount.text("이메일(ID)은 : '"+data+"' 입니다.");
+				}else{
+					modalContents_findaccount.text("일치하는 정보가 없습니다.");
+				}
+				modal_footer_findaccount.empty();
+				modal_footer_findaccount.append("<input type='button' class='btn btn-default'  value='확인' data-dismiss='modal'>");
+				modal_findaccount.modal('show');
+			},
+			error: function(data) {
+			
+			}
+		});
+	
+}
+var modalContents_findpw = $("#modalbody_pw");
+var modal_findpw = $("#defaultModal_findpw");
+var modal_footer_findpw = $("#modal-footer_findpw");
+function findpw() {		//PW 찾기 스크립트
+	modalContents_findpw.empty();
+	
+	var findpw_form = "<div>"
+		+"	<table>"
+		+"		<tr>"
+		+"			<th><label>이메일</label></th>"
+		+"			<td><input type='email' class='form-control' id='searchpwEmail' name='searchpwEmail' data-rule-required='true' placeholder='' maxlength='30'></td>"
+		+"		</tr>"
+		+"		<tr>"
+		+"			<th><label>이름</label></th>"
+		+"			<td><input type='text' class='form-control onlyHangul' id='searchpwName' name='searchpwName' data-rule-required='true' placeholder='' maxlength='15'></td>"
+		+"		</tr>"
+		+"		<tr>"
+		+"			<th><label>연락처</label></th>"
+		+"			<td><input type='tel' class='form-control onlyNumber' id='searchpwPhone' name='searchpwPhone' data-rule-required='true' placeholder='-를 제외하고 숫자만 입력하세요.' maxlength='11'></td>"
+		+"		</tr>"
+		+"	</table>"
+		+"</div>";
+	
+	modalContents_findpw.append(findpw_form);
+	
+	var findpw_footer = "<input type='button' class='btn btn-default'  value='확인'  onclick='findpw_result(searchpwEmail.value,searchpwName.value,searchpwPhone.value)'>";
+	modal_footer_findpw.empty();
+	modal_footer_findpw.append(findpw_footer);
+    
+	modal_findpw.modal('show');
+}
+
+function findpw_result(searchpwEmail,searchpwName,searchpwPhone) {		//PW 찾기 결과 스크립트
+	$.ajax({
+			type: 'POST',
+			url: 'select_pw.php',
+			data: {
+				email : searchpwEmail,
+				name : searchpwName,
+				phone : searchpwPhone,
+				status : 2
+			},
+			dataTpye: 'text',
+			success: function(data){
+				modalContents_findpw.empty();				
+				if(data){
+					var findpw_form = "<div>"
+						+"	<table>"
+						+"		<tr>"
+						+"			<th><label>질문</label></th>"
+						+"			<td>"
+						+"				<select class='form-control' id='searchpFindpw_q' name='searchpFindpw_q'>"
+						+"					<option value='1'>가장 좋아하는 야구 선수 이름은?</option>"
+						+"					<option value='2'>가장 좋아하는 야구 선수 팀은?</option>"
+						+"					<option value='3'>가장 아끼는 야구 장비는?</option>"
+						+"					<option value='4'>처음 야구를 접한 시기는?</option>"
+						+"					<option value='5'>처음 야구를 가르쳐준 사람은?</option>"
+						+"					<option value='6'>처음 야구 경기를 한 구장은?</option>"
+						+"				</select>"
+						+"			</td>"
+						+"		</tr>"
+						+"		<tr>"
+						+"			<th><label>답</label></th>"
+						+"			<td><input type='text' class='form-control onlyHangul' id='searchpFindpw_a' name='searchpFindpw_a' data-rule-required='true' placeholder='한글만 입력 가능합니다.' maxlength='30'></td>"
+						+"		</tr>"
+						+"	</table>"
+						+"</div>";
+					
+					modalContents_findpw.append(findpw_form);
+					
+					var findpw_footer = "<input type='button' class='btn btn-default'  value='확인'  onclick='changepw_result(searchpFindpw_q.value,searchpFindpw_a.value,"+data+")'>";
+					modal_footer_findpw.empty();
+					modal_footer_findpw.append(findpw_footer);
+					modal_findpw.modal('show');
+				}else{
+					modalContents_findpw.text("일치하는 정보가 없습니다.");
+					modal_footer_findpw.empty();
+					modal_footer_findpw.append("<input type='button' class='btn btn-default'  value='확인' data-dismiss='modal'>");
+					modal_findpw.modal('show');
+				}
+			},
+			error: function(data) {
+			
+			}
+		});
+}
+function changepw_result(searchpFindpw_q,searchpFindpw_a,searchUser_no) {
+	$.ajax({
+		type: 'POST',
+		url: 'select_pw.php',
+		data: {
+			findpw_q : searchpFindpw_q,
+			findpw_a : searchpFindpw_a,
+			user_no : searchUser_no,
+			status : 3
+		},
+		dataTpye: 'text',
+		success: function(data){
+			modalContents_findpw.empty();
+			if(data){
+				var findpw_form = "<div>"
+					+"	<table>"
+					+"		<tr>"
+					+"			<th><label>이름</label></th>"
+					+"			<td><input type='password' class='form-control' id='passwordChange' name='passwordChange' data-rule-required='true' placeholder='특수문자 / 문자 / 숫자 모두 포함 형태의 8~15자리 이내' maxlength='30'></td>"
+					+"		</tr>"
+					+"		<tr>"
+					+"			<th><label>연락처</label></th>"
+					+"			<td><input type='password' class='form-control' id='passwordCheck' name='passwordCheck' data-rule-required='true' placeholder='비밀번호 확인' maxlength='30'></td>"
+					+"		</tr>"
+					+"	</table>"
+					+"</div>";
+				
+				modalContents_findpw.append(findpw_form);
+					
+				var findpw_footer = "<input type='button' class='btn btn-default'  value='확인'  onclick='editpw_result(passwordChange.value,passwordCheck.value,"+data+")'>";
+				modal_footer_findpw.empty();
+				modal_footer_findpw.append(findpw_footer);
+				modal_findpw.modal('show');
+			}else{
+				modalContents_findpw.text("일치하는 정보가 없습니다.");
+				modal_footer_findpw.empty();
+				modal_footer_findpw.append("<input type='button' class='btn btn-default'  value='확인' data-dismiss='modal'>");
+				modal_findpw.modal('show');
+			}
+		},
+		error: function(data) {
+		
+		}
+	});
+}
+function editpw_result(pwchange, pwcheck, searchUser_no) {
+	modalContents_findpw.empty();
+	var pw_pattern= /^.*(?=^.{8,15}$)(?=.*\d)(?=.*[a-zA-Z])(?=.*[!@#$%^&+=]).*$/;
+	if(pw_pattern.test(pwchange) == true){
+		if(pwchange == pwcheck){
+			$.ajax({
+				type: 'POST',
+				url: 'edit_pw.php',
+				data: {
+					user_no : searchUser_no,
+					password : pwchange
+				},
+				dataTpye: 'text',
+				success: function(data){
+					modalContents_findpw.text("비밀번호가 변경되었습니다.");
+					modal_footer_findpw.empty();
+					modal_footer_findpw.append("<input type='button' class='btn btn-default'  value='확인' data-dismiss='modal'>");
+					modal_findpw.modal('show');
+				},
+				error: function(data) {
+				
+				}
+			});
+		}else{
+			modalContents_findpw.text("비밀번호가 일치하지 않습니다.");
+			modal_footer_findpw.empty();
+			modal_footer_findpw.append("<input type='button' class='btn btn-default'  value='확인' data-dismiss='modal'>");
+			modal_findpw.modal('show');
+		}
+	}else{
+		modalContents_findpw.text("요청한 형식과 일치하지 않습니다.");
+		modal_footer_findpw.empty();
+		modal_footer_findpw.append("<input type='button' class='btn btn-default'  value='확인' data-dismiss='modal'>");
+		modal_findpw.modal('show');
+	}
+}
+</script>
+<? include("footer/footer.html"); ?>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.3/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+</head>
+<body>
+    <?
+    include "dbconn.php";
+    $user_result = mysqli_query($conn,"SELECT user.*, playercheck, position, hitpitch, playertall, playerweight, playerclass, back_num, team, address FROM user JOIN user_player WHERE user.no = user_player.user ORDER BY user.created_at DESC");
+    mysqli_close($conn);
+    ?>
+    <table class="table table-sm table-striped">
+        <thead>
+            <tr>
+                <th>no</th><th>name</th><th>birth</th><th>gender</th><th>playercheck</th><th>position</th><th>hitpitch</th><th>playertall</th><th>playerweight</th><th>playerclass</th><th>back_num</th><th>team</th><th>address</th><th>data</th><th>sample</th>
+            </tr>
+        </thead>
+        <?
+        while($user_row = mysqli_fetch_array($user_result)){
+            echo "<tr>";
+            echo "<td>".$user_row['no']."</td><td>".$user_row['name']."</td><td>".$user_row['birth']."</td><td>".$user_row['gender']."</td><td>".$user_row['playercheck']."</td><td>".$user_row['position']."</td><td>".$user_row['hitpitch']."</td><td>".$user_row['playertall']."</td><td>".$user_row['playerweight']."</td><td>".$user_row['playerclass']."</td><td>".$user_row['back_num']."</td><td>".$user_row['team']."</td><td>".$user_row['address']."</td><td><a href='data_api.php?user=".$user_row['no']."'>view</a></td><td><a href='test.php?user=".$user_row['no']."'>view</a></td>";
+            echo "</tr>";
+        }
+        ?>
+    </table>
+</body>
+</html>

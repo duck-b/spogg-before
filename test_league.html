@@ -1,0 +1,532 @@
+<? include("header/header.html");?>
+<? include("header/menu.html"); ?>
+
+<script type="text/javascript">
+function changinfo(obj) {		//클릭시 리그이미지가 리그정보로 바뀌는 스크립트
+
+	var div_id = "#"+obj;
+	var check = $(div_id+" .league_box_sec").hasClass('ro_dp_n');
+	
+	var div_parent = $(div_id).parent().parent().parent().attr('id');
+	
+	var div_parent_check = $(".ro_subpage_league_box .league_box_first").hasClass('ro_dp_n');
+
+	if(div_parent_check){
+		$(".ro_subpage_league_box .league_box_first").removeClass('ro_dp_n')
+		$(".ro_subpage_league_box .league_box_sec").addClass("ro_dp_n");
+	}
+	
+	if(check){
+		$(div_id+" .league_box_first").addClass("ro_dp_n");
+		$(div_id+" .league_box_sec").removeClass("ro_dp_n");
+	}else{
+		$(div_id+" .league_box_first").removeClass("ro_dp_n");
+		$(div_id+" .league_box_sec").addClass("ro_dp_n");	
+	}
+}
+</script>
+<div class="ro_subpage">
+	<div class="container-fluid ro_subpage_title_img ro_posi_r">
+		<img src="img/subpage_title/2019league_titleimg.jpg">
+		<div class="ro_subpage_nav">
+			<p>2020 League</p>
+			<ul>
+				<li>Home</li>
+				<li>2020 League</li>
+			</ul>
+		</div>
+	</div>
+	<div class="container ro_subpage_content ro_subpage_league" id="ro_subpage_league">
+		<div class="row">
+			<div class="col-xs-6 col-sm-3 col-md-3 ro_subpage_league_box to_f_10">
+	  			<div class="league_box ro_mb_n " id="league_box1" onclick="changinfo(this.id)">
+	  				<div class="league_box_first">
+	  					<img src="img/spogg_icon.png">
+	  					<p>테스트리그</p>
+	  				</div>
+	  				<div class="league_box_sec ro_dp_n text-center">
+	  					<table>
+	  						<tr>
+	  							<th colspan="2"><b>테스트리그</b></th>
+	  						</tr>
+		  					<tr>
+		  						<th>팀수</th><td>10</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립자</th><td>SPOGG</td>
+		  					</tr>
+		  					<tr>
+		  						<th>최근우승팀</th><td>베어스</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립년도</th><td>2019</td>
+		  					</tr>
+		  				</table>
+		  				<span class="text-center"><button class="ro_more" onclick="location.href='test_league_detail.html'" >상세보기</button></span>
+	  				</div>
+	  			</div>
+	  		</div>
+	  		
+	  		<div class="col-xs-6 col-sm-3 col-md-3 ro_subpage_league_box">
+	  			<div class="league_box" id="league_box2" onclick="changinfo(this.id)">
+	  				<div class="league_box_first">
+	  					<img src="img/sampleimg/league_smaple_logo2.jpg">
+	  					<p>퓨처스리그</p>
+	  				</div>
+	  				<div class="league_box_sec ro_dp_n text-center">
+	  					<table>
+	  						<tr>
+	  							<th colspan="2"><b>퓨쳐스리그</b></th>
+	  						</tr>
+		  					<tr>
+		  						<th>팀수</th><td>12</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립자</th><td>한국야구위원회</td>
+		  					</tr>
+		  					<tr>
+		  						<th>최근우승팀</th><td>경찰</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립년도</th><td>1997</td>
+		  					</tr>
+		  				</table>
+		  				<span class="text-center"><button class="ro_more">상세보기</button></span>
+	  				</div>
+	  			</div>
+	  		</div>
+	  		
+	  		<div class="col-xs-6 col-sm-3 col-md-3 ro_subpage_league_box">
+	  			<div class="league_box" id="league_box3" onclick="changinfo(this.id)">
+	  				<div class="league_box_first">
+	  					<img src="img/sampleimg/league_smaple_logo3.jpg">
+	  					<p>퓨처스리그</p>
+	  				</div>
+	  				<div class="league_box_sec ro_dp_n text-center">
+	  					<table>
+	  						<tr>
+	  							<th colspan="2"><b>퓨쳐스리그</b></th>
+	  						</tr>
+		  					<tr>
+		  						<th>팀수</th><td>12</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립자</th><td>한국야구위원회</td>
+		  					</tr>
+		  					<tr>
+		  						<th>최근우승팀</th><td>경찰</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립년도</th><td>1997</td>
+		  					</tr>
+		  				</table>
+		  				<span class="text-center"><button class="ro_more">상세보기</button></span>
+	  				</div>
+	  			</div>
+	  		</div>
+	  		
+	  		<div class="col-xs-6 col-sm-3 col-md-3 ro_subpage_league_box">
+	  			<div class="league_box" id="league_box4" onclick="changinfo(this.id)">
+	  				<div class="league_box_first">
+	  					<img src="img/sampleimg/league_smaple_logo4.jpg">
+	  					<p>퓨처스리그</p>
+	  				</div>
+	  				<div class="league_box_sec ro_dp_n text-center">
+	  					<table>
+	  						<tr>
+	  							<th colspan="2"><b>퓨쳐스리그</b></th>
+	  						</tr>
+		  					<tr>
+		  						<th>팀수</th><td>12</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립자</th><td>한국야구위원회</td>
+		  					</tr>
+		  					<tr>
+		  						<th>최근우승팀</th><td>경찰</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립년도</th><td>1997</td>
+		  					</tr>
+		  				</table>
+		  				<span class="text-center"><button class="ro_more">상세보기</button></span>
+	  				</div>
+	  			</div>
+	  		</div>
+	  	</div>
+	  	
+	  	<div class="row">
+			<div class="col-xs-6 col-sm-3 col-md-3 ro_subpage_league_box to_f_10">
+	  			<div class="league_box ro_mb_n" id="league_box5" onclick="changinfo(this.id)">
+	  				<div class="league_box_first">
+	  					<img src="img/sampleimg/league_smaple_logo.jpg">
+	  					<p>퓨처스리그</p>
+	  				</div>
+	  				<div class="league_box_sec ro_dp_n text-center">
+	  					<table>
+	  						<tr>
+	  							<th colspan="2"><b>퓨쳐스리그</b></th>
+	  						</tr>
+		  					<tr>
+		  						<th>팀수</th><td>12</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립자</th><td>한국야구위원회</td>
+		  					</tr>
+		  					<tr>
+		  						<th>최근우승팀</th><td>경찰</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립년도</th><td>1997</td>
+		  					</tr>
+		  				</table>
+		  				<span class="text-center"><button class="ro_more">상세보기</button></span>
+	  				</div>
+	  			</div>
+	  		</div>
+	  		
+	  		<div class="col-xs-6 col-sm-3 col-md-3 ro_subpage_league_box">
+	  			<div class="league_box" id="league_box6" onclick="changinfo(this.id)">
+	  				<div class="league_box_first">
+	  					<img src="img/sampleimg/league_smaple_logo2.jpg">
+	  					<p>퓨처스리그</p>
+	  				</div>
+	  				<div class="league_box_sec ro_dp_n text-center">
+	  					<table>
+	  						<tr>
+	  							<th colspan="2"><b>퓨쳐스리그</b></th>
+	  						</tr>
+		  					<tr>
+		  						<th>팀수</th><td>12</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립자</th><td>한국야구위원회</td>
+		  					</tr>
+		  					<tr>
+		  						<th>최근우승팀</th><td>경찰</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립년도</th><td>1997</td>
+		  					</tr>
+		  				</table>
+		  				<span class="text-center"><button class="ro_more">상세보기</button></span>
+	  				</div>
+	  			</div>
+	  		</div>
+	  		
+	  		<div class="col-xs-6 col-sm-3 col-md-3 ro_subpage_league_box">
+	  			<div class="league_box" id="league_box7" onclick="changinfo(this.id)">
+	  				<div class="league_box_first">
+	  					<img src="img/sampleimg/league_smaple_logo3.jpg">
+	  					<p>퓨처스리그</p>
+	  				</div>
+	  				<div class="league_box_sec ro_dp_n text-center">
+	  					<table>
+	  						<tr>
+	  							<th colspan="2"><b>퓨쳐스리그</b></th>
+	  						</tr>
+		  					<tr>
+		  						<th>팀수</th><td>12</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립자</th><td>한국야구위원회</td>
+		  					</tr>
+		  					<tr>
+		  						<th>최근우승팀</th><td>경찰</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립년도</th><td>1997</td>
+		  					</tr>
+		  				</table>
+		  				<span class="text-center"><button class="ro_more">상세보기</button></span>
+	  				</div>
+	  			</div>
+	  		</div>
+	  		
+	  		<div class="col-xs-6 col-sm-3 col-md-3 ro_subpage_league_box">
+	  			<div class="league_box" id="league_box8" onclick="changinfo(this.id)">
+	  				<div class="league_box_first">
+	  					<img src="img/sampleimg/league_smaple_logo4.jpg">
+	  					<p>퓨처스리그</p>
+	  				</div>
+	  				<div class="league_box_sec ro_dp_n text-center">
+	  					<table>
+	  						<tr>
+	  							<th colspan="2"><b>퓨쳐스리그</b></th>
+	  						</tr>
+		  					<tr>
+		  						<th>팀수</th><td>12</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립자</th><td>한국야구위원회</td>
+		  					</tr>
+		  					<tr>
+		  						<th>최근우승팀</th><td>경찰</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립년도</th><td>1997</td>
+		  					</tr>
+		  				</table>
+		  				<span class="text-center"><button class="ro_more">상세보기</button></span>
+	  				</div>
+	  			</div>
+	  		</div>
+	  	</div>
+	  	
+	  	<div class="row">
+			<div class="col-xs-6 col-sm-3 col-md-3 ro_subpage_league_box to_f_10">
+	  			<div class="league_box ro_mb_n" id="league_box9" onclick="changinfo(this.id)">
+	  				<div class="league_box_first">
+	  					<img src="img/sampleimg/league_smaple_logo.jpg">
+	  					<p>퓨처스리그</p>
+	  				</div>
+	  				<div class="league_box_sec ro_dp_n text-center">
+	  					<table>
+	  						<tr>
+	  							<th colspan="2"><b>퓨쳐스리그</b></th>
+	  						</tr>
+		  					<tr>
+		  						<th>팀수</th><td>12</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립자</th><td>한국야구위원회</td>
+		  					</tr>
+		  					<tr>
+		  						<th>최근우승팀</th><td>경찰</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립년도</th><td>1997</td>
+		  					</tr>
+		  				</table>
+		  				<span class="text-center"><button class="ro_more">상세보기</button></span>
+	  				</div>
+	  			</div>
+	  		</div>
+	  		
+	  		<div class="col-xs-6 col-sm-3 col-md-3 ro_subpage_league_box">
+	  			<div class="league_box" id="league_box10" onclick="changinfo(this.id)">
+	  				<div class="league_box_first">
+	  					<img src="img/sampleimg/league_smaple_logo2.jpg">
+	  					<p>퓨처스리그</p>
+	  				</div>
+	  				<div class="league_box_sec ro_dp_n text-center">
+	  					<table>
+	  						<tr>
+	  							<th colspan="2"><b>퓨쳐스리그</b></th>
+	  						</tr>
+		  					<tr>
+		  						<th>팀수</th><td>12</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립자</th><td>한국야구위원회</td>
+		  					</tr>
+		  					<tr>
+		  						<th>최근우승팀</th><td>경찰</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립년도</th><td>1997</td>
+		  					</tr>
+		  				</table>
+		  				<span class="text-center"><button class="ro_more">상세보기</button></span>
+	  				</div>
+	  			</div>
+	  		</div>
+	  		
+	  		<div class="col-xs-6 col-sm-3 col-md-3 ro_subpage_league_box">
+	  			<div class="league_box" id="league_box11" onclick="changinfo(this.id)">
+	  				<div class="league_box_first">
+	  					<img src="img/sampleimg/league_smaple_logo3.jpg">
+	  					<p>퓨처스리그</p>
+	  				</div>
+	  				<div class="league_box_sec ro_dp_n text-center">
+	  					<table>
+	  						<tr>
+	  							<th colspan="2"><b>퓨쳐스리그</b></th>
+	  						</tr>
+		  					<tr>
+		  						<th>팀수</th><td>12</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립자</th><td>한국야구위원회</td>
+		  					</tr>
+		  					<tr>
+		  						<th>최근우승팀</th><td>경찰</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립년도</th><td>1997</td>
+		  					</tr>
+		  				</table>
+		  				<span class="text-center"><button class="ro_more">상세보기</button></span>
+	  				</div>
+	  			</div>
+	  		</div>
+	  		
+	  		<div class="col-xs-6 col-sm-3 col-md-3 ro_subpage_league_box">
+	  			<div class="league_box" id="league_box12" onclick="changinfo(this.id)">
+	  				<div class="league_box_first">
+	  					<img src="img/sampleimg/league_smaple_logo4.jpg">
+	  					<p>퓨처스리그</p>
+	  				</div>
+	  				<div class="league_box_sec ro_dp_n text-center">
+	  					<table>
+	  						<tr>
+	  							<th colspan="2"><b>퓨쳐스리그</b></th>
+	  						</tr>
+		  					<tr>
+		  						<th>팀수</th><td>12</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립자</th><td>한국야구위원회</td>
+		  					</tr>
+		  					<tr>
+		  						<th>최근우승팀</th><td>경찰</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립년도</th><td>1997</td>
+		  					</tr>
+		  				</table>
+		  				<span class="text-center"><button class="ro_more">상세보기</button></span>
+	  				</div>
+	  			</div>
+	  		</div>
+	  	</div>
+	  	
+	  	<div class="row">
+			<div class="col-xs-6 col-sm-3 col-md-3 ro_subpage_league_box to_f_10">
+	  			<div class="league_box ro_mb_n" id="league_box13" onclick="changinfo(this.id)">
+	  				<div class="league_box_first">
+	  					<img src="img/sampleimg/league_smaple_logo.jpg">
+	  					<p>퓨처스리그</p>
+	  				</div>
+	  				<div class="league_box_sec ro_dp_n text-center">
+	  					<table>
+	  						<tr>
+	  							<th colspan="2"><b>퓨쳐스리그</b></th>
+	  						</tr>
+		  					<tr>
+		  						<th>팀수</th><td>12</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립자</th><td>한국야구위원회</td>
+		  					</tr>
+		  					<tr>
+		  						<th>최근우승팀</th><td>경찰</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립년도</th><td>1997</td>
+		  					</tr>
+		  				</table>
+		  				<span class="text-center"><button class="ro_more">상세보기</button></span>
+	  				</div>
+	  			</div>
+	  		</div>
+	  		
+	  		<div class="col-xs-6 col-sm-3 col-md-3 ro_subpage_league_box">
+	  			<div class="league_box" id="league_box14" onclick="changinfo(this.id)">
+	  				<div class="league_box_first">
+	  					<img src="img/sampleimg/league_smaple_logo2.jpg">
+	  					<p>퓨처스리그</p>
+	  				</div>
+	  				<div class="league_box_sec ro_dp_n text-center">
+	  					<table>
+	  						<tr>
+	  							<th colspan="2"><b>퓨쳐스리그</b></th>
+	  						</tr>
+		  					<tr>
+		  						<th>팀수</th><td>12</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립자</th><td>한국야구위원회</td>
+		  					</tr>
+		  					<tr>
+		  						<th>최근우승팀</th><td>경찰</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립년도</th><td>1997</td>
+		  					</tr>
+		  				</table>
+		  				<span class="text-center"><button class="ro_more">상세보기</button></span>
+	  				</div>
+	  			</div>
+	  		</div>
+	  		
+	  		<div class="col-xs-6 col-sm-3 col-md-3 ro_subpage_league_box">
+	  			<div class="league_box" id="league_box15" onclick="changinfo(this.id)">
+	  				<div class="league_box_first">
+	  					<img src="img/sampleimg/league_smaple_logo3.jpg">
+	  					<p>퓨처스리그</p>
+	  				</div>
+	  				<div class="league_box_sec ro_dp_n text-center">
+	  					<table>
+	  						<tr>
+	  							<th colspan="2"><b>퓨쳐스리그</b></th>
+	  						</tr>
+		  					<tr>
+		  						<th>팀수</th><td>12</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립자</th><td>한국야구위원회</td>
+		  					</tr>
+		  					<tr>
+		  						<th>최근우승팀</th><td>경찰</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립년도</th><td>1997</td>
+		  					</tr>
+		  				</table>
+		  				<span class="text-center"><button class="ro_more">상세보기</button></span>
+	  				</div>
+	  			</div>
+	  		</div>
+	  		
+	  		<div class="col-xs-6 col-sm-3 col-md-3 ro_subpage_league_box">
+	  			<div class="league_box" id="league_box16" onclick="changinfo(this.id)">
+	  				<div class="league_box_first">
+	  					<img src="img/sampleimg/league_smaple_logo4.jpg">
+	  					<p>퓨처스리그</p>
+	  				</div>
+	  				<div class="league_box_sec ro_dp_n text-center">
+	  					<table>
+	  						<tr>
+	  							<th colspan="2"><b>퓨쳐스리그</b></th>
+	  						</tr>
+		  					<tr>
+		  						<th>팀수</th><td>12</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립자</th><td>한국야구위원회</td>
+		  					</tr>
+		  					<tr>
+		  						<th>최근우승팀</th><td>경찰</td>
+		  					</tr>
+		  					<tr>
+		  						<th>창립년도</th><td>1997</td>
+		  					</tr>
+		  				</table>
+		  				<span class="text-center"><button class="ro_more">상세보기</button></span>
+	  				</div>
+	  			</div>
+	  		</div>
+	  	</div>
+	  	
+	  	
+	  	<div class="ro_page_nation">
+	  		<ul>
+	  			<li class="pn_active"><a href="#">1</a></li>
+	  			<li><a href="#">2</a></li>
+	  			<li><a href="#">3</a></li>
+	  			<li><a href="#">4</a></li>
+	  			<li><a href="#">5</a></li>
+	  			<li><a href="#">6</a></li>
+	  			<li><a href="#">7</a></li>
+	  			<li><a href="#">8</a></li>
+	  			<li><a href="#">9</a></li>
+	  			<li><a href="#">10</a></li>
+	  		</ul>
+	  	</div>
+	  	
+	</div>
+</div>
+<? include("footer/footer.html"); ?>	
+</body>
+</html>

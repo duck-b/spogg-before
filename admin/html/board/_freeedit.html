@@ -1,0 +1,86 @@
+<!DOCTYPE HTML>
+<html>
+<?
+	if($writer_row['deleted_at']){
+		echo "<script>alert('삭제된 게시글 입니다');";
+		echo "window.location.replace('board.html?board=free');</script>";
+	}
+?>
+	<body onload="edit_contents()">
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-lg-2"></div>
+					<div class="col-lg-8 col-md-12 mb-5 element-animate">
+						<div class="row">
+							<div class="col-md-12">
+								<h3 class="mb-5" style="vertical-align: middle;">자유 게시판 글 수정</h3>
+							</div>
+						</div>
+						<form action="BoardUpdateProc.php" method="post" enctype="multipart/form-data">
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="manager">글쓴이</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="manager" class="form-control " value="<? echo $my_row['name'];?>" disabled>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="title">제목</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" name="title" id="title" class="form-control " value="<? echo $writer_row['title']?>" required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="contents">내용</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<textarea class="form-control" style="resize: none;" name="contents" rows="8" id="contents"><? echo $writer_row['contents']?></textarea>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="tag">태그</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" name="tag" id="tag" class="form-control " value="<? echo $writer_row['tag']?>">
+								</div>
+							</div>
+							<div class="row" style="margin-bottom:10px">
+								<div class="col-md-2 form-group">
+									<label for="img">이미지</label>
+								</div>
+								<div class="col-md-5 form-group">
+								<? if ($writer_row['img']){?>
+								<img src="<? echo $writer_row['img'];?>" id="replaceMe" style="width:100%" class="img-thumbnail" alt="<? echo $writer_row['name']?>">
+								<input type="hidden" value="<? echo $writer_row['img'];?>" name="proimg">
+								<? } ?>
+								</div>
+								<div class="col-md-5 form-group">
+									<input type="file" id="img" name="img" onchange="imageURL(this)" multiple accept='image/*'>
+								</div>
+							</div>	
+							<input type="hidden" value="free" name="kind">
+							<input type="hidden" value="<? echo $no;?>" name="no">
+							<hr>						
+							<div class="row">
+								<div class="col-md-8"></div>
+								<div class="col-md-2 form-group">
+									<input type="submit" value="수&nbsp;&nbsp;&nbsp;정" class="btn btn-primary" onclick="insert()">
+								</div>
+								<div class="col-md-2">
+									<a class="btn btn-primary" href="board.html?board=free" role="button">목&nbsp;&nbsp;&nbsp;록</a>
+								</div>
+							</div>
+						</form>
+					</div>
+					<div class="col-lg-2"></div>
+				</div>
+			</div>
+		</section>
+	</body>
+</html>

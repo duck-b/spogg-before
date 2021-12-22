@@ -1,0 +1,3895 @@
+<!DOCTYPE HTML>
+<html>
+<?php
+	//선수정보
+	session_start();
+
+	if($_SESSION['admin'] == 1){
+		include "dbconn.php";
+		$no = $_GET['no'];
+		$start_time = date("Y-m-d H:i:s");
+		$entry_result = mysqli_query($conn, "SELECT play_entry.*, user.name AS name, team_members.back_num FROM play_entry JOIN team_members JOIN player JOIN user WHERE play='$no' AND play_entry.team_member = team_members.no AND team_members.player = player.no AND player.user = user.no");
+		while($entry_row = mysqli_fetch_array($entry_result)){
+			if(mb_strlen($entry_row['back_num'], 'UTF-8') == 2){
+				$back_num = $entry_row['back_num'].". ";
+			}else if($entry_row['back_num'] != null){
+				$back_num = "0".$entry_row['back_num'].". ";
+			}else{
+				$back_num = "00. ";
+			}
+			$player_name = mb_substr($entry_row['name'], 0, 3, 'UTF-8');
+			if($entry_row['turn'] != 0){
+				if($entry_row['hoaw'] == 1){
+					$turn = $entry_row['turn'] - 1;
+					$ho_hit_array[$turn] = $back_num.$player_name;
+					$ho_hitter_no[$turn] = $entry_row['no'];
+					if($entry_row['position'] == 1){
+						$ho_p = $back_num.$player_name;
+						$ho_p_no = $entry_row['no'];
+					}
+				}else if($entry_row['hoaw'] == 0){
+					$turn = $entry_row['turn'] - 1;
+					$aw_hit_array[$turn] =  $back_num.$player_name;
+					$aw_hitter_no[$turn] = $entry_row['no'];
+					if($entry_row['position'] == 1){
+						$aw_p = $back_num.$player_name;
+						$aw_p_no = $entry_row['no'];
+					}
+				}
+			}else if($entry_row['turn'] == 0){
+				if($entry_row['hoaw'] == 1){
+					$ho_p = $back_num.$player_name;
+					$ho_p_no = $entry_row['no'];
+				}else if($entry_row['hoaw'] == 0){
+					$aw_p = $back_num.$player_name;
+					$aw_p_no = $entry_row['no'];
+				}
+			}
+		}
+		$play_result = mysqli_query($conn,"SELECT * FROM play WHERE no='$no'");
+		$play_row = mysqli_fetch_array($play_result);
+		$home_team_no = $play_row['home_team'];
+		$home_member_list = "<form name='home_team_members'><select class='form-control' id='home_player_change' name='home_player_change' style='margin-bottom:6px' onchange='finish_members_list()'><option value='' selected>교체 선수 선택</option>";
+		$home_members_result = mysqli_query($conn,"SELECT * FROM team_members WHERE team='$home_team_no' AND states = '1'");
+		while($home_members_row = mysqli_fetch_array($home_members_result)){
+			$members_player_no = $home_members_row['player'];
+			$members_player_result = mysqli_query($conn,"SELECT user.name as name FROM player JOIN user where player.no='$members_player_no' AND player.user = user.no");
+			$members_player_row = mysqli_fetch_array($members_player_result);
+			if(mb_strlen($home_members_row['back_num'], 'UTF-8') == 2){
+				$back_num = $home_members_row['back_num'].". ";
+			}else{
+				$back_num = "0".$home_members_row['back_num'].". ";
+			}
+			$home_member_list = $home_member_list."<option value='".$home_members_row['no']."'>".$back_num.$members_player_row['name']."</option>";
+		}
+		$home_member_list = $home_member_list."</select></form>";
+		
+		$away_team_no = $play_row['away_team'];
+		$away_member_list = "<form name='away_team_members'><select class='form-control' id='away_player_change' name='away_player_change' style='margin-bottom:6px' onchange='finish_members_list()'><option value='' selected>교체 선수 선택</option>";
+		$away_members_result = mysqli_query($conn,"SELECT * FROM team_members WHERE team='$away_team_no' AND states = '1'");
+		while($away_members_row = mysqli_fetch_array($away_members_result)){
+			$members_player_no = $away_members_row['player'];
+			$members_player_result = mysqli_query($conn,"SELECT user.name as name FROM player JOIN user where player.no='$members_player_no' AND player.user = user.no");
+			$members_player_row = mysqli_fetch_array($members_player_result);
+			if(mb_strlen($away_members_row['back_num'], 'UTF-8') == 2){
+				$back_num = $away_members_row['back_num'].". ";
+			}else{
+				$back_num = "0".$away_members_row['back_num'].". ";
+			}
+			$away_member_list = $away_member_list."<option value='".$away_members_row['no']."'>".$back_num.$members_player_row['name']."</option>";
+		}
+		$away_member_list = $away_member_list."</select></form>";
+	}
+?>
+<head>
+	<title>TRYOUT :: 사회인 야구 기록 관리 서비스</title>
+	<meta charset="utf-8">
+	<link rel="shortcut icon" href="http://tryout.kr/images/icon2.png" type="image/x-icon" />
+	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+	<script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
+	<link rel="stylesheet" href="../fonts/ionicons/css/ionicons.min.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+	<link rel="stylesheet" href="main.css">
+	<script>
+	history.pushState(null, null, location.href);
+    window.onpopstate = function () {
+        history.go(1);
+	};
+	</script>
+	<script type="text/javascript">
+		// 게임 번호
+		var play_no = "<? echo $no?>";
+		// 타순
+		var ho_hit_array = new Array('<? echo $ho_hit_array[0]?>','<? echo $ho_hit_array[1]?>','<? echo $ho_hit_array[2]?>','<? echo $ho_hit_array[3]?>','<? echo $ho_hit_array[4]?>','<? echo $ho_hit_array[5]?>','<? echo $ho_hit_array[6]?>','<? echo $ho_hit_array[7]?>','<? echo $ho_hit_array[8]?>');
+		var aw_hit_array = new Array('<? echo $aw_hit_array[0]?>','<? echo $aw_hit_array[1]?>','<? echo $aw_hit_array[2]?>','<? echo $aw_hit_array[3]?>','<? echo $aw_hit_array[4]?>','<? echo $aw_hit_array[5]?>','<? echo $aw_hit_array[6]?>','<? echo $aw_hit_array[7]?>','<? echo $aw_hit_array[8]?>');
+		var ho_hitter_no = new Array('<? echo $ho_hitter_no[0]?>','<? echo $ho_hitter_no[1]?>','<? echo $ho_hitter_no[2]?>','<? echo $ho_hitter_no[3]?>','<? echo $ho_hitter_no[4]?>','<? echo $ho_hitter_no[5]?>','<? echo $ho_hitter_no[6]?>','<? echo $ho_hitter_no[7]?>','<? echo $ho_hitter_no[8]?>');
+		var aw_hitter_no = new Array('<? echo $aw_hitter_no[0]?>','<? echo $aw_hitter_no[1]?>','<? echo $aw_hitter_no[2]?>','<? echo $aw_hitter_no[3]?>','<? echo $aw_hitter_no[4]?>','<? echo $aw_hitter_no[5]?>','<? echo $aw_hitter_no[6]?>','<? echo $aw_hitter_no[7]?>','<? echo $aw_hitter_no[8]?>');
+		// postion
+		var ho_p = "<? echo $ho_p?>";
+		var aw_p = "<? echo $aw_p?>";
+		
+		var ho_p_no = "<? echo $ho_p_no?>";
+		var aw_p_no = "<? echo $aw_p_no?>";
+		
+		var strike_count = 0; //스트라이크 카운터
+		var ball_count = 0; // 볼 카운터
+		var out_count = 0; // 아웃 카운터
+		var hitter_ball_count = "";
+		var pitcher_count_h = 0; //홈 투구 수
+		var pitcher_count_a = 0; //어웨이 투구 수
+		var pitcher_inning_h = 0; //홈 투구 이닝 수
+		var pitcher_inning_a = 0; //어웨이 이닝 수
+		var inning = 1; // 이닝
+		var inning_point = 0; // 현재 이닝 점수
+		var tot_inning_point = [[],[]]; // 이닝 별 득점
+		var homerun_point = 0; // 홈런 득점
+		var hit_point = 0; // 연속 득점
+		var hit_out = 0; // 연속 아웃
+		var hit_out_0 = ""; //현재 타자 아웃
+		var hit_out_1 = ""; //현재 1루 주자 아웃
+		var hit_out_2 = ""; //현재 2루 주자 아웃
+		var hit_out_3 = ""; //현재 3루 주자 아웃
+		var hit_out_action = ""; //아웃 종류
+		var hoaw = 0; // 홈 / 어웨이
+		var ho_ht = 0; // 홈 타순
+		var ho_r = 0; // 홈 점수
+		var ho_h = 0; // 홈 안타
+		var ho_e = 0; // 홈 에러
+		var ho_b = 0; // 홈 볼넷
+		var aw_ht = 0; // 어웨이 타순
+		var aw_r = 0; // 어웨이 점수
+		var aw_h = 0; // 어웨이 안타
+		var aw_e = 0; // 어웨이 에러
+		var aw_b = 0; // 어웨이 볼넷
+		var now_hitter = ""; //현재 타자
+		var now_1base = ""; // 현재 1루 주자
+		var now_2base = ""; // 현재 2루 주자
+		var now_3base = ""; // 현재 3루 주자
+		var now_hitter_no = ""; //현재 타자 no
+		var now_1base_no = ""; // 현재 1루 주자 no
+		var now_2base_no = ""; // 현재 2루 주자 no
+		var now_3base_no = ""; // 현재 3루 주자 no
+		var hit_action = 0; // 타격 상황 계속
+		var after_1base = ""; // 후 1루 주자
+		var after_2base = ""; // 후 2루 주자
+		var after_3base = ""; // 후 3루 주자
+		var after_1base_no = ""; // 후 1루 주자 no
+		var after_2base_no = ""; // 후 2루 주자 no
+		var after_3base_no = ""; // 후 3루 주자 no
+		var text_contents = ""; // 설명
+		var save_timing = 0; // 뒤로가기 저장
+		var save_data = [[1,0,0]];
+		var before_data = [];
+		var who_change = "";
+		var change_posi = "";
+		var change_turn = "";
+		var save_hoaw = "";
+		var in_player = "";
+		var out_player = "";
+		var change_entry_no = "";
+		var change_back_num_name = "";
+		
+		function save_hitter(situation){
+			if(hoaw == 0){
+				save_hitters = aw_hitter_no[aw_ht];
+				player_pic = ho_p_no;
+			}else if(hoaw == 1){
+				save_hitters = ho_hitter_no[ho_ht];
+				player_pic = aw_p_no;
+			}
+			$.ajax({
+				type: 'POST',
+				url: 'save_hitter.php',
+				data: {
+					play: play_no,
+					entry : save_hitters,
+					player_pic : player_pic,
+					inning: inning,
+					ball_count: hitter_ball_count,
+					out_count: out_count,
+					situations: situation
+				},
+				dataTpye: 'text',
+				success: function(data){
+				
+				},
+				error: function(data) {
+				
+				}
+			});
+		
+		}
+		function update_hitter(situation){
+			if(hoaw == 0){
+				save_hitters = aw_hitter_no[aw_ht];
+			}else if(hoaw == 1){
+				save_hitters = ho_hitter_no[ho_ht];
+			}
+			$.ajax({
+				type: 'POST',
+				url: 'update_hitter.php',
+				data: {
+					play: play_no,
+					entry : save_hitters,
+					inning: inning,
+					situations: situation
+				},
+				dataTpye: 'text',
+				success: function(data){
+				
+				},
+				error: function(data) {
+				
+				}
+			});
+		
+		}
+		function save_runner(runner, base, situation){
+			if(hoaw == 0){
+				save_runner_hitter = aw_hitter_no[aw_ht];
+			}else if(hoaw == 1){
+				save_runner_hitter = ho_hitter_no[ho_ht];
+			}
+			$.ajax({
+				type: 'POST',
+				url: 'save_runner.php',
+				data: {
+					play_hitter: save_runner_hitter,
+					entry_runner : runner,
+					result_base: base,
+					situations: situation
+				},
+				dataTpye: 'text',
+				success: function(data){
+					
+				},
+				error: function(data) {
+				
+				}
+			});			
+		}
+		function save_pitcher(hpap){
+			if(hpap == 0){
+				play_pitcher = ho_p_no;
+				pitcher_count = pitcher_count_h;
+				pitcher_inning = pitcher_inning_h;
+			}else if(hpap == 1){
+				play_pitcher = aw_p_no;
+				pitcher_count = pitcher_count_a;
+				pitcher_inning = pitcher_inning_a;
+			}
+			$.ajax({
+				type: 'POST',
+				url: 'save_pitcher.php',
+				data: {
+					pitcher: play_pitcher,
+					inning : pitcher_inning,
+					count : pitcher_count
+				},
+				dataTpye: 'text',
+				success: function(data){
+
+				},
+				error: function(data) {
+				
+				}
+			});			
+		}
+		// 실행 취소
+		function back_data(){
+				// 투구 되돌리기
+			if(save_data[save_timing][0] == 1 && save_data[save_timing].length > 3){
+				// 이전 상황 없음 볼카운터 있음
+				var last_text = save_data[save_timing][save_data[save_timing].length - 1];
+				if(save_data[save_timing][1] == 0){
+					text_contents = save_data[save_timing][2]+1 +"번 타자 "+now_hitter+" :";
+					pitcher_count_h = pitcher_count_h - 1;
+					document.getElementById("pitcher_count").textContent = pitcher_count_h;
+				}else if(save_data[save_timing][1] == 1){
+					text_contents = save_data[save_timing][2]+1 +"번 타자 "+now_hitter+" :";
+					pitcher_count_a = pitcher_count_a - 1;
+					document.getElementById("pitcher_count").textContent =  pitcher_count_a;
+				}
+				if(last_text == "S"){
+					strike_count = strike_count - 1;
+					if(strike_count == 0){
+						document.getElementById('fscount').style.display = "none";
+					}else if(strike_count == 1){
+						document.getElementById('sscount').style.display = "none";
+						document.getElementById("strike_btn").textContent = "Strike";
+					}
+				}else if(last_text == "B"){
+					ball_count = ball_count - 1;
+					if(ball_count == 0){
+						document.getElementById('fbcount').style.display = "none";
+					}else if(ball_count == 1){
+						document.getElementById('sbcount').style.display = "none";
+					}else if(ball_count == 2){
+						document.getElementById('tbcount').style.display = "none";
+						document.getElementById("ball_btn").textContent = "Ball";
+					}
+				}else if(last_text == "FS"){
+					strike_count = strike_count - 1;
+					if(strike_count == 0){
+						document.getElementById('fscount').style.display = "none";
+					}else if(strike_count == 1){
+						document.getElementById('sscount').style.display = "none";
+						document.getElementById("strike_btn").textContent = "Strike";
+					}
+				}
+				save_data[save_timing].pop();
+				hitter_ball_count = hitter_ball_count.slice(0, -2);
+				for(var i=3; i<save_data[save_timing].length; i++) {
+					if(save_data[save_timing][i] == "FS"){
+						text_contents = text_contents + " F";
+					}else{
+						text_contents = text_contents + " " + save_data[save_timing][i];
+					}
+				}
+			}else if(save_data[save_timing][0] == 1 && save_data[save_timing].length == 3){
+				// 이전 상황 없음 볼카운터 없음
+				if(save_timing != 0){
+					save_timing = save_timing - 1;
+				}else{
+					save_timing = 0;
+					document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+					return;
+				}
+				if(save_data[save_timing][save_data[save_timing].length - 1] == "change"){
+					now_hitter = save_data[save_timing][2];
+					now_1base = save_data[save_timing][3];
+					now_2base = save_data[save_timing][4];
+					now_3base = save_data[save_timing][5];
+					document.getElementById("hita").textContent = now_hitter;
+					if(now_1base == ""){
+						document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>1루</a>";
+					}else{
+						document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_1base +"</a>";
+					}
+					if(now_2base == ""){
+						document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>2루</a>";
+					}else{
+						document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_2base +"</a>";
+					}
+					if(now_3base == ""){
+						document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>3루</a>";
+					}else{
+						document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_3base +"</a>";
+					}
+					if(save_data[save_timing - 1][save_data[save_timing - 1].length - 1].match(/to/)){
+						out_count = 0;
+						document.getElementById('focount').style.display = "none";
+						document.getElementById('socount').style.display = "none";
+					}else if(save_data[save_timing - 1][save_data[save_timing - 1].length - 1].match(/do/)){
+						out_count = 1;
+						document.getElementById('focount').style.display = "inline-block";
+						document.getElementById('socount').style.display = "none";
+					}else{
+						out_count = 2;
+						document.getElementById('focount').style.display = "inline-block";
+						document.getElementById('socount').style.display = "inline-block";
+					}
+					if(save_data[save_timing][1] == 0){
+						document.getElementById("inning_" + inning + "_ho").textContent = "";
+						inning_point = tot_inning_point[0][inning-1];
+						tot_inning_point[0].pop();
+					}else{
+						document.getElementById("inning_" + inning + "_aw").textContent = "";
+						if(inning > 1){
+							inning = inning - 1;
+							inning_point = tot_inning_point[1][inning-1];
+							tot_inning_point[1].pop();
+						}else{
+							inning = 1;
+							inning_point = tot_inning_point[1][inning-1];
+							tot_inning_point[1].pop();
+						}
+					}
+					if(save_timing != 0){
+						save_timing = save_timing - 1;
+					}else{
+						save_timing = 0;
+						return;
+					}
+				}else if(save_data[save_timing][0] == 1){
+					if(out_count == 1){
+						document.getElementById('focount').style.display = "none";
+						out_count = out_count - 1;
+					}else if(out_count == 2){
+						document.getElementById('socount').style.display = "none";
+						out_count = out_count - 1;
+					}else if(out_count == 0){
+						document.getElementById('focount').style.display = "inline-block";
+						document.getElementById('socount').style.display = "inline-block";
+						out_count = 2;
+						if(save_data[save_timing][1] == 0){
+							document.getElementById("inning_" + inning + "_ho").textContent = "";
+						}else{
+							document.getElementById("inning_" + inning + "_aw").textContent = "";
+							if(inning > 1){
+								inning = inning - 1;
+							}else{
+								inning = 1;
+							}
+						}
+					}
+				}else if(save_data[save_timing][0] == 3){
+					// 진루 상황
+					now_hitter = save_data[save_timing][2];
+					now_1base = save_data[save_timing][3];
+					now_2base = save_data[save_timing][4];
+					now_3base = save_data[save_timing][5];
+					document.getElementById("hita").textContent = now_hitter;
+					if(now_1base == ""){
+						document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>1루</a>";
+					}else{
+						document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_1base +"</a>";
+					}
+					if(now_2base == ""){
+						document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>2루</a>";
+					}else{
+						document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_2base +"</a>";
+					}
+					if(now_3base == ""){
+						document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>3루</a>";
+					}else{
+						document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_3base +"</a>";
+					}
+					
+					if(save_data[save_timing][6] == "4b" || save_data[save_timing][6] == "hbp"){
+						if(hoaw == 0){
+							ho_b = ho_b - 1;
+							document.getElementById("ho_b").textContent = ho_b;
+						}else if(hoaw == 1){
+							aw_b = aw_b - 1;
+							document.getElementById("aw_b").textContent = aw_b;
+						}
+					}else if(save_data[save_timing][6] == "hr"){
+						if(save_data[save_timing][1] == 0){
+							aw_h = aw_h - 1;
+							document.getElementById("aw_h").textContent = aw_h;
+						}else{
+							ho_h = ho_h - 1;
+							document.getElementById("ho_h").textContent = ho_h;
+						}
+					}else if(save_data[save_timing][6] == "1h" || save_data[save_timing][6] == "2h" || save_data[save_timing][6] == "3h"){
+						if(save_data[save_timing][1] == 0){
+							aw_h = aw_h - 1;
+							document.getElementById("aw_h").textContent = aw_h;
+						}else{
+							ho_h = ho_h - 1;
+							document.getElementById("ho_h").textContent = ho_h;
+						}
+					}else if(save_data[save_timing][6] == "bnt"){
+						if(out_count == 1){
+							document.getElementById('focount').style.display = "none";
+							out_count = out_count - 1;
+						}else if(out_count == 2){
+							document.getElementById('socount').style.display = "none";
+							out_count = out_count - 1;
+						}
+					}else if(save_data[save_timing][6].match(/go/)){
+						out_count = out_count - 1;
+						if(out_count == 0){
+							document.getElementById('focount').style.display = "none";
+							document.getElementById('socount').style.display = "none";
+						}else if(out_count == 1){
+							document.getElementById('focount').style.display = "inline-block";
+							document.getElementById('socount').style.display = "none";
+						}
+					}else if(save_data[save_timing][6].match(/do/)){
+						out_count = 0;
+						document.getElementById('focount').style.display = "none";
+						document.getElementById('socount').style.display = "none";
+					}else if(save_data[save_timing][6].match(/fo/) || save_data[save_timing][6].match(/fpo/) || save_data[save_timing][6].match(/sh/) || save_data[save_timing][6].match(/or/)){
+						out_count = out_count - 1;
+						if(out_count == 0){
+							document.getElementById('focount').style.display = "none";
+							document.getElementById('socount').style.display = "none";
+						}else if(out_count == 1){
+							document.getElementById('focount').style.display = "inline-block";
+							document.getElementById('socount').style.display = "none";
+						}
+					}
+					
+					if(save_data[save_timing][7] != 0){
+						if(save_data[save_timing][1] == 0){
+							aw_r = aw_r - save_data[save_timing][7];
+							document.getElementById("aw_r").textContent = aw_r;
+							inning_point = inning_point - save_data[save_timing][7];
+							document.getElementById("inning_" + inning + "_aw").textContent = inning_point;
+						}else{
+							ho_r = ho_r - save_data[save_timing][7];
+							document.getElementById("ho_r").textContent = ho_r;
+							inning_point = inning_point - save_data[save_timing][7];
+							document.getElementById("inning_" + inning + "_ho").textContent = inning_point;
+						}
+					}
+					if(save_timing != 0){
+						save_timing = save_timing - 1;
+					}else{
+						save_timing = 0;
+						return;
+					}
+				}
+				before_data = save_data[save_timing];
+				if(save_data[save_timing].length > 3){
+					// 이전 볼카운터 있음 /2 일 수 도 잇음
+					before_data.pop();
+					save_data[save_timing] = [before_data[0],before_data[1],before_data[2]];
+					hoaw = before_data[1];
+					if(hoaw == 0){
+						pitcher_count_h = pitcher_count_h - 1;
+						aw_ht = before_data[2];
+					}else{
+						pitcher_count_a = pitcher_count_a - 1;
+						ho_ht = before_data[2];
+					}
+				}else{
+					save_data[save_timing] = [before_data[0],before_data[1],before_data[2]];
+					hoaw = before_data[1];
+					if(hoaw == 0){
+						aw_ht = before_data[2];
+					}else{
+						ho_ht = before_data[2];
+					}
+				}
+				start_game();
+				for(var i=3; i<before_data.length; i++) {
+					if(before_data[1] == 0){
+						pitcher_count_h = pitcher_count_h - 1;
+					}else if(before_data[1] == 1){
+						pitcher_count_a = pitcher_count_a - 1;
+					}
+					if(before_data[i] == "S"){
+						strike_p();
+					}else if(before_data[i] == "B"){
+						ball_p();
+					}else if(before_data[i] == "FS" || before_data[i] == "F"){
+						foul_p();
+					}
+				}
+				before_data = [];
+			}else if(save_data[save_timing][0] == 2 && save_data[save_timing].length > 3){
+				// 이전 상황 있음 볼카운터 있음
+				// 전 상황 변경 2, save_timing, ballcount, ...
+				var last_text = save_data[save_timing][save_data[save_timing].length - 1];
+				if(save_data[save_timing][1] == 0){
+					text_contents = save_data[save_timing-2][2]+1 +"번 타자 "+now_hitter+" :";
+					pitcher_count_h = pitcher_count_h - 1;
+					document.getElementById("pitcher_count").textContent = pitcher_count_h;
+				}else if(save_data[save_timing][1] == 1){
+					text_contents = save_data[save_timing-2][2]+1 +"번 타자 "+now_hitter+" :";
+					pitcher_count_a = pitcher_count_a - 1;
+					document.getElementById("pitcher_count").textContent =  pitcher_count_a;
+				}
+				if(last_text == "S"){
+					strike_count = strike_count - 1;
+					if(strike_count == 0){
+						document.getElementById('fscount').style.display = "none";
+					}else if(strike_count == 1){
+						document.getElementById('sscount').style.display = "none";
+						document.getElementById("strike_btn").textContent = "Strike";
+					}
+				}else if(last_text == "B"){
+					ball_count = ball_count - 1;
+					if(ball_count == 0){
+						document.getElementById('fbcount').style.display = "none";
+					}else if(ball_count == 1){
+						document.getElementById('sbcount').style.display = "none";
+					}else if(ball_count == 2){
+						document.getElementById('tbcount').style.display = "none";
+						document.getElementById("ball_btn").textContent = "Ball";
+					}
+				}else if(last_text == "FS"){
+					strike_count = strike_count - 1;
+					if(strike_count == 0){
+						document.getElementById('fscount').style.display = "none";
+					}else if(strike_count == 1){
+						document.getElementById('sscount').style.display = "none";
+						document.getElementById("strike_btn").textContent = "Strike";
+					}
+				}
+				save_data[save_timing].pop();
+				hitter_ball_count = hitter_ball_count.slice(0, -2);
+				for(var i=3; i<save_data[save_timing].length; i++) {
+					if(i == 3){
+						befor_ball_count = save_data[save_timing][3].split('|');
+						for(var j=0; j<befor_ball_count.length; j++) {
+							if(befor_ball_count == "FS"){
+								text_contents = text_contents + " F";
+							}else{
+								text_contents = text_contents + " " + befor_ball_count[j];
+							}
+						}
+					}else{
+						if(save_data[save_timing][i] == "FS"){
+							text_contents = text_contents + " F";
+						}else{
+							text_contents = text_contents + " " + save_data[save_timing][i];
+						}
+					}
+				}
+			}else if(save_data[save_timing][0] == 2 && save_data[save_timing].length == 3){
+				// 이전 상황 있음 볼카운터 없음
+				if(save_timing != 0){
+					save_timing = save_timing - 1;
+				}else{
+					save_timing = 0;
+					return;
+				}
+				if(save_data[save_timing][0] == 3 || save_data[save_timing][0] == 5){
+					// 진루 상황
+					now_hitter = save_data[save_timing][2];
+					now_1base = save_data[save_timing][3];
+					now_2base = save_data[save_timing][4];
+					now_3base = save_data[save_timing][5];
+					document.getElementById("hita").textContent = now_hitter;
+					if(now_1base == ""){
+						document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>1루</a>";
+					}else{
+						document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_1base +"</a>";
+					}
+					if(now_2base == ""){
+						document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>2루</a>";
+					}else{
+						document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_2base +"</a>";
+					}
+					if(now_3base == ""){
+						document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>3루</a>";
+					}else{
+						document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_3base +"</a>";
+					}
+					
+					if(save_data[save_timing][6] == "1sb" || save_data[save_timing][6] == "2sb" || save_data[save_timing][6] == "3sb"){
+						// 도루 성공
+					}else if(save_data[save_timing][6] == "balk"){
+						// 보크
+					}else if(save_data[save_timing][6] == "error"){
+						if(save_data[save_timing][1] == 0){
+							ho_e = ho_e - 1;
+							document.getElementById("ho_e").textContent = ho_e;
+						}else{
+							aw_e = aw_e - 1;
+							document.getElementById("aw_e").textContent = aw_e;
+						}
+						if(save_timing != 0){
+							save_timing = save_timing - 1;
+						}else{
+							save_timing = 0;
+							return;
+						}
+					}else{
+						//도루 실패
+						if(out_count == 1){
+							document.getElementById('focount').style.display = "none";
+							out_count = out_count - 1;
+						}else if(out_count == 2){
+							document.getElementById('socount').style.display = "none";
+							out_count = out_count - 1;
+						}
+					}
+					
+					if(save_data[save_timing][7] != 0){
+						if(save_data[save_timing][1] == 0){
+							aw_r = aw_r - save_data[save_timing][7];
+							document.getElementById("aw_r").textContent = aw_r;
+							inning_point = inning_point - save_data[save_timing][7];
+							document.getElementById("inning_" + inning + "_aw").textContent = inning_point;
+						}else{
+							ho_r = ho_r - save_data[save_timing][7];
+							document.getElementById("ho_r").textContent = ho_r;
+							inning_point = inning_point - save_data[save_timing][7];
+							document.getElementById("inning_" + inning + "_ho").textContent = inning_point;
+						}
+					}
+					
+					if(save_timing != 0){
+						save_timing = save_timing - 1;
+					}else{
+						save_timing = 0;
+						return;
+					}
+				}else if(save_data[save_timing][0] == 4){
+					if(save_data[save_timing][1] == 0){
+						if(save_data[save_timing][2] < 0){
+							ho_hit_array[save_data[save_timing][2]] = save_data[save_timing][6];
+							ho_hitter_no[save_data[save_timing][2]] = save_data[save_timing][5];
+						}
+						if(save_data[save_timing][3] == 1){
+							ho_p = save_data[save_timing][6];
+							ho_p_no = save_data[save_timing][5];
+						}
+					}else{
+						if(save_data[save_timing][2] < 0){
+							aw_hit_array[save_data[save_timing][2]] = save_data[save_timing][6];
+							aw_hitter_no[save_data[save_timing][2]] = save_data[save_timing][5];
+						}
+						if(save_data[save_timing][3] == 1){
+							aw_p = save_data[save_timing][6];
+							aw_p_no = save_data[save_timing][5];
+						}
+					}
+					if(save_data[save_timing][4] == 'hitter'){
+						now_hitter = save_data[save_timing][6];
+						now_hitter_no = save_data[save_timing][5];
+					}else if(save_data[save_timing][4] == '1runner'){
+						now_1base = save_data[save_timing][6];
+						now_1base_no = save_data[save_timing][5];
+					}else if(save_data[save_timing][4] == '2runner'){
+						now_2base = save_data[save_timing][6];
+						now_2base_no = save_data[save_timing][5];
+					}else if(save_data[save_timing][4] == '3runner'){
+						now_3base = save_data[save_timing][6];
+						now_3base_no = save_data[save_timing][5];
+					}
+					map_btn_change();
+					if(save_timing != 0){
+						save_timing = save_timing - 1;
+					}else{
+						save_timing = 0;
+						return;
+					}
+				}
+			}
+			main_text(text_contents);
+		}
+		
+		/*function cancle(){
+			hit_action = 0;
+			map_btn_change();
+			change_text();
+		}*/
+		function main_text(contents){
+			test_contents = save_timing;
+			test_contentsf = save_timing - 1;
+			save_timingf = save_timing - 1;
+			test_contentsb = save_timing - 2;
+			save_timingb = save_timing - 2;
+			for(var i=0; i<save_data[save_timing].length; i++) {
+				test_contents = test_contents + " | " + save_data[save_timing][i];
+			}
+			if(save_timingf >= 0){
+				for(var x=0; x<save_data[save_timingf].length; x++) {
+					test_contentsf = test_contentsf + " | " + save_data[save_timingf][x];
+				}
+			}
+			if(save_timingb >= 0){
+				for(var j=0; j<save_data[save_timingb].length; j++) {
+					test_contentsb = test_contentsb + " | " + save_data[save_timingb][j];
+				}
+			}
+			document.getElementById("now").textContent = test_contents;
+			document.getElementById("nowf").textContent = test_contentsf;
+			document.getElementById("nowb").textContent = test_contentsb;
+			if(save_timing == 0 && save_data[save_timing].length == 3){
+				document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+			}else{
+				document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='back_data()'>실행취소</a>";
+			}
+			//document.getElementById("now").textContent = contents;
+		}
+		function start_game(){
+			// 홈 수비
+			map_btn_change();
+			if(hoaw == 0){
+				document.getElementById("pitcher_count").textContent = pitcher_count_h;
+				// 타자 정보
+				now_hitter = aw_hit_array[aw_ht];
+				now_hitter_no = aw_hitter_no[aw_ht];
+				document.getElementById("hita").textContent = now_hitter;
+				text_contents = aw_ht+1 +"번 타자 "+now_hitter+" :";
+			}else if(hoaw == 1){
+				document.getElementById("pitcher_count").textContent = pitcher_count_a;
+				// 타자 정보
+				now_hitter = ho_hit_array[ho_ht];
+				now_hitter_no = ho_hitter_no[ho_ht];
+				document.getElementById("hita").textContent = now_hitter;
+				text_contents = ho_ht+1 +"번 타자 "+now_hitter+" :";
+			}
+			main_text(text_contents);
+		}
+		// next_hitter
+		function next_hitter(){
+			save_timing = save_timing + 1;
+			if(hoaw == 0){
+				if(aw_ht < 8){
+					aw_ht = aw_ht + 1;
+				}else{
+					aw_ht = 0;
+				}
+				now_hitter = aw_hit_array[aw_ht];
+				now_hitter_no = aw_hitter_no[aw_ht];
+				document.getElementById("hita").textContent = aw_hit_array[aw_ht];
+				save_data[save_timing] = [1, 0, aw_ht];
+				text_contents = aw_ht+1 +"번 타자 "+now_hitter+" :";
+			}else if(hoaw == 1){
+				if(ho_ht < 8){
+					ho_ht = ho_ht + 1;
+				}else{
+					ho_ht = 0;
+				}
+				now_hitter = ho_hit_array[ho_ht];
+				now_hitter_no = ho_hitter_no[ho_ht];
+				document.getElementById("hita").textContent = ho_hit_array[ho_ht];
+				save_data[save_timing] = [1, 1, ho_ht];
+				text_contents = ho_ht+1 +"번 타자 "+now_hitter+" :";
+			}
+			main_text(text_contents);
+		}
+		// 4ball_base
+		function ball_4(){
+			if(now_1base == ""){
+				save_data[save_timing].push("0");
+				document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_hitter +"</a>";
+				now_1base = now_hitter;
+				now_1base_no = now_hitter_no;
+				save_runner(now_1base_no, '1', '0');
+			}else{
+				if(now_2base == ""){
+					save_data[save_timing].push("0");
+					document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_1base +"</a>";
+					now_2base = now_1base;
+					now_2base_no = now_1base_no;
+					save_runner(now_2base_no, '2', '0');
+					document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_hitter +"</a>";
+					now_1base = now_hitter;
+					now_1base_no = now_hitter_no;
+					save_runner(now_1base_no, '2', '0');
+				}else{
+					if(now_3base == ""){
+						save_data[save_timing].push("0");
+						document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_2base +"</a>";
+						now_3base = now_2base;
+						now_3base_no = now_2base_no;
+						save_runner(now_3base_no, '3', '0');
+						document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_1base +"</a>";
+						now_2base = now_1base;
+						now_2base_no = now_1base_no;
+						save_runner(now_2base_no, '2', '0');
+						document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_hitter +"</a>";
+						now_1base = now_hitter;
+						now_1base_no = now_hitter_no;
+						save_runner(now_1base_no, '1', '0');
+					}else{
+						go_homebase('ball4');
+						save_data[save_timing].push("1");
+						document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_2base +"</a>";
+						now_3base = now_2base;
+						now_3base_no = now_2base_no;
+						save_runner(now_3base_no, '3', '0');
+						document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_1base +"</a>";
+						now_2base = now_1base;
+						now_2base_no = now_1base_no;
+						save_runner(now_2base_no, '2', '0');
+						document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_hitter +"</a>";
+						now_1base = now_hitter;
+						now_1base_no = now_hitter_no;
+						save_runner(now_1base_no, '1', '0');
+					}
+				}
+			}
+		}
+		function go_homebase(how, base){
+			if(how == 'ball4'){
+				if(hoaw == 0){
+					aw_r = aw_r + 1;
+					document.getElementById("aw_r").textContent = aw_r;
+					inning_point = inning_point + 1;
+					document.getElementById("inning_" + inning + "_aw").textContent = inning_point;
+				}else if(hoaw == 1){
+					ho_r = ho_r + 1;
+					document.getElementById("ho_r").textContent = ho_r;
+					inning_point = inning_point + 1;
+					document.getElementById("inning_" + inning + "_ho").textContent = inning_point;
+				}
+				//선수 득점 정보 저장
+				save_runner(now_3base_no, '4', '0');
+				now_3base = "";
+				now_3base_no = "";
+			}else if(how == 'homerun'){
+				save_runner(now_hitter_no, '4', '0');
+				homerun_point = homerun_point +1;
+				if(now_1base != ""){
+					homerun_point = homerun_point +1;
+					save_runner(now_1base_no, '4', '0');
+					now_1base = "";
+					now_1base_no = "";
+					document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>1루</a>";
+				}
+				if(now_2base != ""){
+					homerun_point = homerun_point +1;
+					save_runner(now_2base_no, '4', '0');
+					now_2base = "";
+					now_2base_no = "";
+					document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>2루</a>";
+				}
+				if(now_3base != ""){
+					homerun_point = homerun_point +1;
+					save_runner(now_3base_no, '4', '0');
+					now_3base = "";
+					now_3base_no = "";
+					document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>3루</a>";
+				}
+				if(hoaw == 0){
+					aw_r = aw_r + homerun_point;
+					document.getElementById("aw_r").textContent = aw_r;
+					inning_point = inning_point + homerun_point;
+					document.getElementById("inning_" + inning + "_aw").textContent = inning_point;
+				}else if(hoaw == 1){
+					ho_r = ho_r + homerun_point;
+					document.getElementById("ho_r").textContent = ho_r;
+					inning_point = inning_point + homerun_point;
+					document.getElementById("inning_" + inning + "_ho").textContent = inning_point;
+				}
+				save_data[save_timing].push(homerun_point);
+				homerun_point = 0;
+			}else if(how == 'hit'){
+				if(hit_action == 2){
+					document.getElementById('hita').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='end_error()'>상황종료</a>";
+					save_data[save_timing - 1][7] = save_data[save_timing - 1][7] + 1;
+				}
+				if(hit_action == 1){
+					if(base == 1 && now_1base != ""){
+						hit_point = hit_point +1;
+						save_runner(now_1base_no, '4', '0');
+						now_1base = "";
+						now_1base_no = "";
+					}else if(base == 2 && now_2base != ""){
+						hit_point = hit_point +1;
+						save_runner(now_2base_no, '4', '0');
+						now_2base = "";
+						now_2base_no = "";
+					}else if(base == 3 && now_3base != ""){
+						hit_point = hit_point +1;
+						save_runner(now_3base_no, '4', '0');
+						now_3base = "";
+						now_3base_no = "";
+					}
+					document.getElementById('second_contents').innerHTML = "";
+					document.getElementById('end_contents').innerHTML = "";
+				}
+			}else if(how == 'sb'){
+				if(hoaw == 0){
+					aw_r = aw_r + 1;
+					document.getElementById("aw_r").textContent = aw_r;
+					inning_point = inning_point + 1;
+					document.getElementById("inning_" + inning + "_aw").textContent = inning_point;
+				}else if(hoaw == 1){
+					ho_r = ho_r + 1;
+					document.getElementById("ho_r").textContent = ho_r;
+					inning_point = inning_point + 1;
+					document.getElementById("inning_" + inning + "_ho").textContent = inning_point;
+				}
+			}else if(how == 'balk'){
+				if(hoaw == 0){
+					aw_r = aw_r + 1;
+					document.getElementById("aw_r").textContent = aw_r;
+					inning_point = inning_point + 1;
+					document.getElementById("inning_" + inning + "_aw").textContent = inning_point;
+				}else if(hoaw == 1){
+					ho_r = ho_r + 1;
+					document.getElementById("ho_r").textContent = ho_r;
+					inning_point = inning_point + 1;
+					document.getElementById("inning_" + inning + "_ho").textContent = inning_point;
+				}
+			}
+		}
+
+		// change text
+		function change_text(option){
+			if(option != 'runner'){
+				document.getElementById('first_contents').innerHTML = "<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" + 
+					"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='strike_p()' id='strike_btn'>Strike</a>" +
+				"</div>" +
+				"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+					"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='ball_p()' id='ball_btn'>Ball</a>" +
+				"</div>" +
+				"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+					"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='foul_p()'>Foul</a>" +
+				"</div>" +
+				"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+					"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_player(\"hitter\")'>교체</a>" +
+				"</div>";
+				document.getElementById('second_contents').innerHTML = "<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+					"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"hit\")'>안타</a>" +
+				"</div>" +
+				"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+					"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"out\")'>아웃</a>" +
+				"</div>" +
+				"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+					"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='error_p(\"check\")'>Error</a>" +
+				"</div>" +
+				"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+					"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"etc\")'>기타</a>" +
+				"</div>";
+				document.getElementById('end_contents').innerHTML = "";
+			}else{
+				document.getElementById('first_contents').innerHTML = "<div class='col-xs-4 col-sm-4 col-md-4' style='padding:1px'>" + 
+					"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"base\",\"1\")' id='base1_btn'>1루주자</a>" +
+				"</div>" +
+				"<div class='col-xs-4 col-sm-4 col-md-4' style='padding:1px'>" +
+					"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"base\",\"2\")' id='base2_btn'>2루주자</a>" +
+				"</div>" +
+				"<div class='col-xs-4 col-sm-4 col-md-4' style='padding:1px'>" +
+					"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"base\",\"3\")' id='base3_btn'>3루주자</a>" +
+				"</div>";
+				document.getElementById('second_contents').innerHTML = "";
+				document.getElementById('end_contents').innerHTML = "";
+				if(now_1base == ""){
+					document.getElementById("base1_btn").textContent = "-";
+				}
+				if(now_2base == ""){
+					document.getElementById("base2_btn").textContent = "-";
+				}
+				if(now_3base == ""){
+					document.getElementById("base3_btn").textContent = "-";
+				}
+			}
+		}
+		// change_contents
+		function change_contents(main, action, num){
+			if(main == 'end'){
+				if(action == 'hit'){
+					document.getElementById('end_contents').innerHTML = "<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>"+
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='where_hit(\"hit\",\"1\")'>1루타</a>" +
+					"</div>" +
+					"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='where_hit(\"hit\",\"2\")'>2루타</a>" + 
+					"</div>" +
+					"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='where_hit(\"hit\",\"3\")'>3루타</a>" +
+					"</div>" +
+					"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='where_hit(\"homerun\")'>홈런</a>" +
+					"</div>";
+					document.documentElement.scrollTop = document.body.scrollHeight;
+				}else if(action == 'error'){
+					document.getElementById('end_contents').innerHTML = "<div class='col-xs-4 col-sm-4 col-md-4' style='padding:1px'>"+
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='error_hit(1)'>1루 출루</a>" +
+					"</div>" +
+					"<div class='col-xs-4 col-sm-4 col-md-4' style='padding:1px'>" +
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='error_hit(2)'>2루 출루</a>" + 
+					"</div>" +
+					"<div class='col-xs-4 col-sm-4 col-md-4' style='padding:1px'>" +
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='error_hit(3)'>3루 출루</a>" +
+					"</div>";
+					document.documentElement.scrollTop = document.body.scrollHeight;
+				}else if(action == 'out'){
+					document.getElementById('end_contents').innerHTML = "<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"go\")'>땅볼</a>" +
+					"</div>" +
+					"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='where_hit(\"fly_out\")'>플라이</a>" + 
+					"</div>" +
+					"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='where_hit(\"foul_fly_out\")'>파울플라이</a>" +
+					"</div>" +
+					"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='where_hit(\"s_hit\")'>희생타</a>" +
+					"</div>";
+					 document.documentElement.scrollTop = document.body.scrollHeight;
+				}else if(action == 'etc'){
+					document.getElementById('end_contents').innerHTML = "<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>"+
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='bnt()'>번트</a>" +
+					"</div>" +
+					"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='hbp()'>사사구</a>" + 
+					"</div>" +
+					"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='not_out()'>낫아웃</a>" +
+					"</div>" +
+					"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"hor\")'>오버런</a>" +
+					"</div>";
+					document.documentElement.scrollTop = document.body.scrollHeight;
+				}else if(action == 'rungo'){
+					if(num == 1){
+						document.getElementById('end_contents').innerHTML = "<div class='col-xs-4 col-sm-4 col-md-4' style='padding:1px'>"+
+							"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='go_2base()'>2루 진루</a>" +
+						"</div>" +
+						"<div class='col-xs-4 col-sm-4 col-md-4' style='padding:1px'>" +
+							"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='go_3base(\"1\")'>3루 진루</a>" + 
+						"</div>" +
+						"<div class='col-xs-4 col-sm-4 col-md-4' style='padding:1px'>" +
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='go_homebase(\"hit\",\"1\")'>홈 진루</a>" +
+						"</div>";
+						document.documentElement.scrollTop = document.body.scrollHeight;
+					}else if(num == 2){
+						document.getElementById('end_contents').innerHTML = "<div class='col-xs-6 col-sm-6 col-md-6' style='padding:1px'>" +
+							"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='go_3base(\"2\")'>3루 진루</a>" + 
+						"</div>" +
+						"<div class='col-xs-6 col-sm-6 col-md-6' style='padding:1px'>" +
+							"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='go_homebase(\"hit\",\"2\")'>홈 진루</a>" +
+						"</div>";
+					}
+					document.documentElement.scrollTop = document.body.scrollHeight;
+				}else if(action == 'runsteal'){
+					if(num == 1){
+						if(now_2base == ""){
+							document.getElementById('end_contents').innerHTML = "<div class='col-xs-6 col-sm-6 col-md-6' style='padding:1px'>"+
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='steal_base(\"1\",\"s\")'>성공</a>" +
+							"</div>" +
+							"<div class='col-xs-6 col-sm-6 col-md-6' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='steal_base(\"1\",\"f\")'>실패</a>" + 
+							"</div>";
+							document.documentElement.scrollTop = document.body.scrollHeight;
+						}else{
+							document.getElementById('end_contents').innerHTML = "<div class='col-xs-12 col-sm-12 col-md-12' style='padding:1px'>"+
+								"<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%' onclick='change_text(\"runner\")'>2루에 주자가 있습니다</a>" +
+							"</div>";
+							document.documentElement.scrollTop = document.body.scrollHeight;
+						}
+					}else if(num == 2){
+						if(now_3base == ""){
+							document.getElementById('end_contents').innerHTML = "<div class='col-xs-6 col-sm-6 col-md-6' style='padding:1px'>"+
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='steal_base(\"2\",\"s\")'>성공</a>" +
+							"</div>" +
+							"<div class='col-xs-6 col-sm-6 col-md-6' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='steal_base(\"2\",\"f\")'>실패</a>" + 
+							"</div>";
+							document.documentElement.scrollTop = document.body.scrollHeight;
+						}else{
+							document.getElementById('end_contents').innerHTML = "<div class='col-xs-12 col-sm-12 col-md-12' style='padding:1px'>"+
+								"<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%' onclick='change_text(\"runner\")'>3루에 주자가 있습니다</a>" +
+							"</div>";
+							document.documentElement.scrollTop = document.body.scrollHeight;
+						}
+					}else if(num == 3){
+						document.getElementById('end_contents').innerHTML = "<div class='col-xs-6 col-sm-6 col-md-6' style='padding:1px'>"+
+							"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='steal_base(\"3\",\"s\")'>성공</a>" +
+						"</div>" +
+						"<div class='col-xs-6 col-sm-6 col-md-6' style='padding:1px'>" +
+							"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='steal_base(\"3\",\"f\")'>실패</a>" + 
+						"</div>";
+						document.documentElement.scrollTop = document.body.scrollHeight;
+					}
+				}else if(action == 'runout'){
+					document.getElementById('end_contents').innerHTML = "<div class='col-xs-4 col-sm-4 col-md-4' style='padding:1px'>"+
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='running_out(\""+ num +"\")'>아웃</a>" +
+					"</div>" +
+					"<div class='col-xs-4 col-sm-4 col-md-4' style='padding:1px'>" +
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='running_out(\""+ num +"\",\"ror\")'>오버런</a>" + 
+					"</div>" +
+					"<div class='col-xs-4 col-sm-4 col-md-4' style='padding:1px'>" +
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='running_out(\""+ num +"\",\"rco\")'>견제사</a>" +
+					"</div>";
+					document.documentElement.scrollTop = document.body.scrollHeight;
+				}else if(action == 'go'){
+					if(now_1base == "" && now_2base == "" && now_3base == ""){
+						document.getElementById('end_contents').innerHTML = "<div class='col-xs-6 col-sm-6 col-md-6' style='padding:1px'>"+
+							"<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>타자 Safe</a>" +
+						"</div>" +
+						"<div class='col-xs-6 col-sm-6 col-md-6' style='padding:1px'>" +
+							"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='where_hit(\"ground_out\",\"o\")'>타자 Out</a>" + 
+						"</div>";
+						document.documentElement.scrollTop = document.body.scrollHeight;
+					}else{
+						document.getElementById('end_contents').innerHTML = "<div class='col-xs-6 col-sm-6 col-md-6' style='padding:1px'>"+
+							"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='where_hit(\"ground_out\",\"s\")'>타자 Safe</a>" +
+						"</div>" +
+						"<div class='col-xs-6 col-sm-6 col-md-6' style='padding:1px'>" +
+							"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='where_hit(\"ground_out\",\"o\")'>타자 Out</a>" + 
+						"</div>";
+						document.documentElement.scrollTop = document.body.scrollHeight;
+					}
+				}else if(action == 'hor'){
+					document.getElementById('end_contents').innerHTML = "<div class='col-xs-4 col-sm-4 col-md-4' style='padding:1px'>"+
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='hitter_over_run(\"1\")'>1 - 2</a>" +
+					"</div>" +
+					"<div class='col-xs-4 col-sm-4 col-md-4' style='padding:1px'>" +
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='hitter_over_run(\"2\")'>2 - 3</a>" + 
+					"</div>" +
+					"<div class='col-xs-4 col-sm-4 col-md-4' style='padding:1px'>" +
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='hitter_over_run(\"3\")'>3 - H</a>" +
+					"</div>";
+					document.documentElement.scrollTop = document.body.scrollHeight;
+				}else if(action == 'norun'){
+					document.getElementById('end_contents').innerHTML = "<div class='col-xs-12 col-sm-12 col-md-12' style='padding:1px'>"+
+						"<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%' onclick='change_text()'>안타 또는 에러 상황에만 진루가 가능합니다</a>" +
+					"</div>";
+				}
+			}else if(main == 'base'){
+				if(action == 1){
+					if(now_1base != ""){
+						if(hit_action == 1 || hit_action == 2){
+							document.getElementById('second_contents').innerHTML = "<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>"+
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"rungo\",\"1\")'>진루</a>" +
+							"</div>" +
+							"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"runout\",\"1\")'>아웃</a>" + 
+							"</div>" +
+							"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"runsteal\",\"1\")'>도루</a>" +
+							"</div>" +
+							"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_player(\"1runner\")'>교체</a>" +
+							"</div>";
+						}else{
+							document.getElementById('second_contents').innerHTML = "<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>"+
+								"<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%' onClick='change_contents(\"end\",\"norun\")'>진루</a>" +
+							"</div>" +
+							"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"runout\",\"1\")'>아웃</a>" + 
+							"</div>" +
+							"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"runsteal\",\"1\")'>도루</a>" +
+							"</div>" +
+							"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_player(\"1runner\")'>교체</a>" +
+							"</div>";
+						}
+						document.getElementById('end_contents').innerHTML = "";
+						document.documentElement.scrollTop = document.body.scrollHeight;
+					}else{
+						document.getElementById('second_contents').innerHTML = "<div class='col-xs-12 col-sm-12 col-md-12' style='padding:1px'>"+
+							"<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%' onclick='change_text()'>주자가 없습니다</a>" +
+						"</div>";
+						document.getElementById('end_contents').innerHTML = "";
+					}
+				}else if(action == 2){
+					if(now_2base != ""){
+						if(hit_action == 1 || hit_action == 2){
+							document.getElementById('second_contents').innerHTML = "<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>"+
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"rungo\",\"2\")'>진루</a>" +
+							"</div>" +
+							"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"runout\",\"2\")'>아웃</a>" + 
+							"</div>" +
+							"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"runsteal\",\"2\")'>도루</a>" +
+							"</div>" +
+							"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_player(\"2runner\")'>교체</a>" +
+							"</div>";
+						}else{
+							document.getElementById('second_contents').innerHTML = "<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>"+
+								"<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%' onClick='change_contents(\"end\",\"norun\")'>진루</a>" +
+							"</div>" +
+							"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"runout\",\"2\")'>아웃</a>" + 
+							"</div>" +
+							"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"runsteal\",\"2\")'>도루</a>" +
+							"</div>" +
+							"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_player(\"2runner\")'>교체</a>" +
+							"</div>";
+						}
+						document.getElementById('end_contents').innerHTML = "";
+						document.documentElement.scrollTop = document.body.scrollHeight;
+					}else{
+						document.getElementById('second_contents').innerHTML = "<div class='col-xs-12 col-sm-12 col-md-12' style='padding:1px'>"+
+							"<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%' onclick='change_text()'>주자가 없습니다</a>" +
+						"</div>";
+						document.getElementById('end_contents').innerHTML = "";
+					}
+				}else if(action == 3){
+					if(now_3base != ""){
+						if(hit_action == 1 || hit_action == 2){
+							document.getElementById('second_contents').innerHTML = "<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>"+
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='go_homebase(\"hit\",\"3\")'>홈 진루</a>" +
+							"</div>" +
+							"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"runout\",\"3\")'>아웃</a>" + 
+							"</div>" +
+							"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"runsteal\",\"3\")'>홈스틸</a>" +
+							"</div>" +
+							"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_player(\"3runner\")'>교체</a>" +
+							"</div>";
+						}else{
+							document.getElementById('second_contents').innerHTML = "<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>"+
+								"<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%' onClick='change_contents(\"end\",\"norun\")'>홈 진루</a>" +
+							"</div>" +
+							"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"runout\",\"3\")'>아웃</a>" + 
+							"</div>" +
+							"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"runsteal\",\"3\")'>홈스틸</a>" +
+							"</div>" +
+							"<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>" +
+								"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_player(\"3runner\")'>교체</a>" +
+							"</div>";
+						}
+						document.getElementById('end_contents').innerHTML = "";
+						document.documentElement.scrollTop = document.body.scrollHeight;
+					}else{
+						document.getElementById('second_contents').innerHTML = "<div class='col-xs-12 col-sm-12 col-md-12' style='padding:1px'>"+
+							"<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%' onclick='change_text()'>주자가 없습니다</a>" +
+						"</div>";
+						document.getElementById('end_contents').innerHTML = "";
+					}
+				}else{
+					change_text();
+				}
+			}
+		}
+		// ball_count_new
+		function ball_count_new(){
+			strike_count = 0;
+			ball_count = 0;
+			hitter_ball_count = "";
+			document.getElementById('fscount').style.display = "none";
+			document.getElementById('sscount').style.display = "none";
+			document.getElementById('fbcount').style.display = "none";
+			document.getElementById('sbcount').style.display = "none";
+			document.getElementById('tbcount').style.display = "none";
+		}
+		// 타자 아웃
+		function out(){
+			ball_count_new();
+			change_text();
+			if(hoaw == 0){
+				pitcher_inning_h = pitcher_inning_h + 1;
+			}else{
+				pitcher_inning_a = pitcher_inning_a + 1;
+			}
+			if(out_count == 0){
+				out_count = out_count + 1;
+				document.getElementById('focount').style.display = "inline-block";
+				next_hitter();
+			}else if(out_count == 1){
+				out_count = out_count + 1;
+				document.getElementById('socount').style.display = "inline-block";
+				next_hitter();
+			}else if(out_count == 2){
+				save_timing = save_timing + 1;
+				save_data[save_timing] = [3, hoaw, now_hitter, now_1base, now_2base, now_3base, "change"];
+				tot_inning_point[hoaw].push(inning_point);
+				inning_point = 0;
+				out_count = 0;
+				now_1base = "";
+				now_1base_no = "";
+				document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>1루</a>";
+				now_2base = "";
+				now_2base_no = "";
+				document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>2루</a>";
+				now_3base = "";
+				now_3base_no = "";
+				document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>3루</a>";
+				document.getElementById('focount').style.display = "none";
+				document.getElementById('socount').style.display = "none";
+				if(hoaw == 0){
+					hoaw = 1;
+					if(aw_ht < 8){
+						aw_ht = aw_ht + 1;
+					}else{
+						aw_ht = 0;
+					}
+					save_timing = save_timing + 1;
+					save_data[save_timing] = [1, 1, ho_ht];
+					document.getElementById("inning_" + inning + "_ho").textContent = 0;
+					start_game();
+				}else if(hoaw == 1){
+					hoaw = 0;
+					if(ho_ht < 8){
+						ho_ht = ho_ht + 1;
+					}else{
+						ho_ht = 0;
+					}
+					inning = inning + 1;
+					save_timing = save_timing + 1;
+					save_data[save_timing] = [1, 0, aw_ht];
+					document.getElementById("inning_" + inning + "_aw").textContent = 0;
+					start_game();
+				}
+			}
+		}
+		//주자 아웃
+		function runner_out(){
+			if(hoaw == 0){
+				pitcher_inning_h = pitcher_inning_h + 1;
+			}else{
+				pitcher_inning_a = pitcher_inning_a + 1;
+			}
+			if(out_count == 0){
+				connect_save();
+				out_count = out_count + 1;
+				document.getElementById('focount').style.display = "inline-block";
+			}else if(out_count == 1){
+				connect_save();
+				out_count = out_count + 1;
+				document.getElementById('socount').style.display = "inline-block";
+			}else if(out_count == 2){
+				save_data[save_timing - 1].push("change");
+				save_data[save_timing].push("change");
+				tot_inning_point[hoaw].push(inning_point);
+				inning_point = 0;
+				out_count = 0;
+				now_1base = "";
+				now_1base_no = "";
+				document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>1루</a>";
+				now_2base = "";
+				now_2base_no = "";
+				document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>2루</a>";
+				now_3base = "";
+				now_3base_no = "";
+				document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>3루</a>";
+				ball_count_new();
+				document.getElementById('focount').style.display = "none";
+				document.getElementById('socount').style.display = "none";
+				if(hoaw == 0){
+					hoaw = 1;
+					save_timing = save_timing + 1;
+					save_data[save_timing] = [1, 1, ho_ht];
+					document.getElementById("inning_" + inning + "_ho").textContent = 0;
+					start_game();
+				}else if(hoaw == 1){
+					hoaw = 0;
+					inning = inning + 1;
+					save_timing = save_timing + 1;
+					save_data[save_timing] = [1, 0, aw_ht];
+					document.getElementById("inning_" + inning + "_aw").textContent = 0;
+					start_game();
+				}
+			}
+		}
+		//pitcher_count
+		function pitcher_count(){
+			if(hoaw == 0){
+				pitcher_count_h = pitcher_count_h + 1;
+				document.getElementById("pitcher_count").textContent = pitcher_count_h;
+			}else if(hoaw == 1){
+				pitcher_count_a = pitcher_count_a + 1;
+				document.getElementById("pitcher_count").textContent = pitcher_count_a;
+			}
+		}
+		function error_p(who){
+			if(who == "check"){
+				document.getElementById('cfa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='cf' onClick='error_p(\"8\")'>중견수</a>";
+				document.getElementById('lfa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='lf' onClick='error_p(\"7\")'>좌익수</a>";
+				document.getElementById('rfa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='rf' onClick='error_p(\"9\")'>우익수</a>";
+				document.getElementById('ssa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='ss' onClick='error_p(\"6\")'>유격수</a>";
+				document.getElementById('b2a').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='b2' onClick='error_p(\"4\")'>2루수</a>";
+				document.getElementById('b3a').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='b3' onClick='error_p(\"5\")'>3루수</a>";
+				document.getElementById('b1a').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='b1' onClick='error_p(\"3\")'>1루수</a>";
+				document.getElementById('pica').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='pic' onClick='error_p(\"1\")'>투수</a>";
+				document.getElementById('cata').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='cat' onClick='error_p(\"2\")'>포수</a>";
+			}else{
+				if(hoaw == 0){
+					error_team = "<? echo $home_team_no?>";
+				}else if(hoaw == 1){
+					error_team = "<? echo $away_team_no?>";
+				}
+				$.ajax({
+					type: 'POST',
+					url: 'save_error.php',
+					data: {
+						play: play_no,
+						team: error_team,
+						position : who
+					},
+					dataTpye: 'text',
+					success: function(data){
+					
+					},
+					error: function(data) {
+					
+					}
+				});
+				map_btn_change();
+				save_timing = save_timing + 1;
+				save_data[save_timing] = [5, hoaw, now_hitter, now_1base, now_2base, now_3base, 'error', 0];
+				connect_save();
+				if(hoaw == 0){
+					ho_e = ho_e + 1;
+					document.getElementById("ho_e").textContent = ho_e;
+				}else{
+					aw_e = aw_e + 1;
+					document.getElementById("aw_e").textContent = aw_e;
+				}
+				hit_action = 2;
+				document.getElementById('end_contents').innerHTML = "<div class='col-xs-4 col-sm-4 col-md-4' style='padding:1px'>"+
+					"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"hit\")'>안타</a>" +
+				"</div>" +
+				"<div class='col-xs-4 col-sm-4 col-md-4' style='padding:1px'>" +
+					"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents(\"end\",\"error\")'>타자 출루</a>" + 
+				"</div>" +
+				"<div class='col-xs-4 col-sm-4 col-md-4' style='padding:1px'>" +
+					"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='change_text(\"runner\")'>주자 진루</a>" +
+				"</div>";
+			}
+		}
+		//strike 눌렀을 때
+		function strike_p(){
+			pitcher_count();
+			if(hitter_ball_count == ""){
+				hitter_ball_count = "s";
+			}else{
+				hitter_ball_count = hitter_ball_count + "|s";
+			}
+			save_data[save_timing].push("S");
+			text_contents = text_contents + " S";
+			main_text(text_contents);
+			if(strike_count == 0){
+				strike_count = strike_count + 1;
+				document.getElementById('fscount').style.display = "inline-block";
+			}else if(strike_count == 1){
+				strike_count = strike_count + 1;
+				document.getElementById('sscount').style.display = "inline-block";
+				document.getElementById("strike_btn").textContent = "Strike Out";
+			}else if(strike_count == 2){
+				save_hitter('153');
+				out();
+			}
+		}
+		//ball 눌렀을 때
+		function ball_p(){
+			pitcher_count();
+			if(hitter_ball_count == ""){
+				hitter_ball_count = "b";
+			}else{
+				hitter_ball_count = hitter_ball_count + "|b";
+			}
+			save_data[save_timing].push("B");
+			text_contents = text_contents + " B";
+			main_text(text_contents);
+			if(ball_count == 0){
+				ball_count = ball_count + 1;
+				document.getElementById('fbcount').style.display = "inline-block";
+			}else if(ball_count == 1){
+				ball_count = ball_count + 1;
+				document.getElementById('sbcount').style.display = "inline-block";
+			}else if(ball_count == 2){
+				ball_count = ball_count + 1;
+				document.getElementById('tbcount').style.display = "inline-block";
+				document.getElementById("ball_btn").textContent = "4 Ball";
+			}else if(ball_count == 3){
+				save_hitter('51');
+				save_timing = save_timing + 1;
+				save_data[save_timing] = [3 ,hoaw ,now_hitter, now_1base, now_2base, now_3base, "4b"];
+				if(hoaw == 0){
+					ho_b = ho_b + 1;
+					document.getElementById("ho_b").textContent = ho_b;
+				}else if(hoaw == 1){
+					aw_b = aw_b + 1;
+					document.getElementById("aw_b").textContent = aw_b;
+				}
+				ball_count_new();
+				ball_4();
+				next_hitter();
+				change_text();
+			}
+		}
+		//foul 눌렀을 때
+		function foul_p(){
+			pitcher_count();
+			if(strike_count == 0){
+				strike_count = strike_count + 1;
+				document.getElementById('fscount').style.display = "inline-block";
+				save_data[save_timing].push("FS");
+			}else if(strike_count == 1){
+				strike_count = strike_count + 1;
+				document.getElementById('sscount').style.display = "inline-block";
+				document.getElementById("strike_btn").textContent = "Strike Out";
+				save_data[save_timing].push("FS");
+			}else{
+				save_data[save_timing].push("F");
+			}
+			if(hitter_ball_count == ""){
+				hitter_ball_count = "f";
+			}else{
+				hitter_ball_count = hitter_ball_count + "|f";
+			}
+			text_contents = text_contents + " F";
+			main_text(text_contents);
+		}
+		//안타
+		function hit(base, where){
+			save_hitter(base + where);
+			map_btn_change();
+			pitcher_count();
+			ball_count_new();
+			save_data[save_timing].push(base + where);
+			if(hoaw == 1){
+				ho_h = ho_h + 1;
+				document.getElementById("ho_h").textContent = ho_h;
+			}else if(hoaw == 0){
+				aw_h = aw_h + 1;
+				document.getElementById("aw_h").textContent = aw_h;
+			}
+			save_timing = save_timing + 1;
+			save_data[save_timing] = [3, hoaw, now_hitter, now_1base, now_2base, now_3base];
+			if(now_1base == "" && now_2base == "" && now_3base == ""){
+				if(base == 1){
+					save_data[save_timing].push("1h");
+					now_1base = now_hitter;
+					now_1base_no = now_hitter_no;
+					save_runner(now_1base_no, '1', '0');
+					document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_1base +"</a>";
+				}else if(base == 2){
+					save_data[save_timing].push("2h");
+					now_2base = now_hitter;
+					now_2base_no = now_hitter_no;
+					save_runner(now_2base_no, '2', '0');
+					document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_2base +"</a>";
+				}else if(base == 3){
+					save_data[save_timing].push("3h");
+					now_3base = now_hitter;
+					now_3base_no = now_hitter_no;
+					save_runner(now_3base_no, '3', '0');
+					document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_3base +"</a>";
+				}
+				save_data[save_timing].push("0");
+				change_text();
+				next_hitter();
+			}else{
+				if(base == 1){
+					after_1base = now_hitter;
+					after_1base_no = now_hitter_no;
+					save_data[save_timing].push("1h");
+				}else if(base == 2){
+					after_2base = now_hitter;
+					after_2base_no = now_hitter_no;
+					save_data[save_timing].push("2h");
+				}else if(base == 3){
+					after_3base = now_hitter;
+					after_3base_no = now_hitter_no;
+					save_data[save_timing].push("3h");
+				}
+				hit_action = 1;
+				change_text("runner");
+				text_contents = "주자 상황을 선택해 주세요";
+				main_text(text_contents);
+				document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+				document.getElementById('hita').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='end_hitter()'>다음타자</a>";
+			}
+		}
+			//타자 상황 종료
+			function end_hitter(){
+				hit_action = 0;
+				if(now_1base == "" && after_1base != ""){
+					now_1base = after_1base;
+					now_1base_no = after_1base_no;
+					save_runner(now_1base_no, '1', '0');
+					after_1base = "";
+					after_1base_no = "";
+				}else if(now_1base != "" && after_1base != ""){
+					hit_action = 1;
+					text_contents = "1루 주자가 2명 이상입니다(상황종료 후 1루 주자 : " + after_1base + "/" + now_1base +")";
+					main_text(text_contents);
+					document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+					return;
+				}
+				if(now_2base == "" && after_2base != ""){
+					now_2base = after_2base;
+					now_2base_no = after_2base_no;
+					save_runner(now_2base_no, '2', '0');
+					after_2base = "";
+					after_2base_no = "";
+				}else if(now_2base != "" && after_2base !=""){
+					hit_action = 1;
+					text_contents = "2루 주자가 2명 이상입니다(상황종료 후 2루 주자 : " + after_2base + "/"+ now_2base +")";
+					main_text(text_contents);
+					document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+					return;
+				}
+				if(now_3base == "" && after_3base != ""){
+					now_3base = after_3base;
+					now_3base_no = after_3base_no;
+					save_runner(now_3base_no, '3', '0');
+					after_3base = "";
+					after_3base_no = "";
+				}else if(now_3base != "" && after_3base !=""){
+					hit_action = 1;
+					text_contents = "3루 주자가 2명 이상입니다(상황종료 후 3루 주자 : " + after_3base + "/"+ now_3base +")";
+					main_text(text_contents);
+					document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+					return;
+				}
+				if(now_1base == ""){
+					document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>1루</a>";
+				}else{
+					document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_1base +"</a>";
+				}
+				if(now_2base == ""){
+					document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>2루</a>";
+				}else{
+					document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_2base +"</a>";
+				}
+				if(now_3base == ""){
+					document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>3루</a>";
+				}else{
+					document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_3base +"</a>";
+				}
+				if(hoaw == 0){
+					aw_r = aw_r + hit_point;
+					document.getElementById("aw_r").textContent = aw_r;
+					inning_point = inning_point + hit_point;
+					document.getElementById("inning_" + inning + "_aw").textContent = inning_point;
+				}else if(hoaw == 1){
+					ho_r = ho_r + hit_point;
+					document.getElementById("ho_r").textContent = ho_r;
+					inning_point = inning_point + hit_point;
+					document.getElementById("inning_" + inning + "_ho").textContent = inning_point;
+				}
+				save_data[save_timing].push(hit_point);
+				// 병살 || 삼중살 업데이트
+				if(hit_out == 2){
+					if(hit_out_0 == "1"){
+						if(hit_out_1 == "2"){
+							update_hitter("131");
+						}else if(hit_out_2 == "3"){
+							update_hitter("132");
+						}else if(hit_out_3 == "4"){
+							update_hitter("133");
+						}
+					}else if(hit_out_1 == "2"){
+						if(hit_out_2 == "3"){
+							update_hitter("134");
+						}else if(hit_out_3 == "4"){
+							update_hitter("135");
+						}
+					}else if(hit_out_2 == "3"){
+						update_hitter("136");
+					}
+				}else if(hit_out == 3){
+					if(hit_out_0 == "1"){
+						if(hit_out_1 == "2"){
+							if(hit_out_2 == "3"){
+								update_hitter("141");
+							}else if(hit_out_3 == "4"){
+								update_hitter("142");
+							}
+						}else if(hit_out_2 == "3"){
+							update_hitter("143");
+						}
+					}else if(hit_out_1 == "2"){
+						update_hitter("144");
+					}
+				}
+				hit_point = 0;
+				hit_out = 0;
+				hit_out_0 = "";
+				hit_out_1 = "";
+				hit_out_2 = "";
+				hit_out_3 = "";
+				hit_out_action = "";
+				change_text();
+				map_btn_change();
+				next_hitter();
+			}
+			
+			function end_error(){
+				change_text();
+				hit_action = 0;
+				document.getElementById("hita").textContent = now_hitter;
+			}
+		//진루
+		function go_2base(){
+			if(hit_action == 1){
+				if(after_2base == ""){
+					after_2base = now_1base;
+					after_2base_no = now_1base_no;
+					now_1base = "";
+					now_1base_no = "";
+					document.getElementById('second_contents').innerHTML = "";
+					document.getElementById('end_contents').innerHTML = "";
+				}else{
+					text_contents = "2루 주자가 2명 이상입니다(상황종료 후 2루 주자 : " + after_2base + ")";
+					main_text(text_contents);
+					document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+				}
+			}else if(hit_action == 2){
+				if(now_2base == ""){
+					document.getElementById('hita').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='end_error()'>상황종료</a>";
+					save_runner(now_1base_no, '2', '0');
+					now_2base = now_1base;
+					now_2base_no = now_1base_no;
+					document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_2base +"</a>";
+					now_1base = "";
+					now_1base_no = "";
+					document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>1루</a>";
+					document.getElementById('second_contents').innerHTML = "";
+					document.getElementById('end_contents').innerHTML = "";
+				}else{
+					text_contents = "2루 주자가 있습니다";
+					main_text(text_contents);
+					document.getElementById('second_contents').innerHTML = "";
+					document.getElementById('end_contents').innerHTML = "";
+				}
+			}
+		}
+		function go_3base(base){
+			if(hit_action == 1){
+				if(after_3base == ""){
+					if(base == 1){
+						after_3base = now_1base;
+						after_3base_no = now_1base_no;
+						now_1base = "";
+						now_1base_no = "";
+					}else{
+						after_3base = now_2base;
+						after_3base_no = now_2base_no;
+						now_2base = "";
+						now_2base_no = "";
+					}
+					document.getElementById('second_contents').innerHTML = "";
+					document.getElementById('end_contents').innerHTML = "";
+				}else{
+					text_contents = "3루 주자가 2명 이상입니다(상황종료 후 3루 주자 : " + after_3base + ")";
+					main_text(text_contents);
+					document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+				}
+			}else if(hit_action == 2){
+				if(base == 1){
+					if(now_3base == ""){
+						document.getElementById('hita').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='end_error()'>상황종료</a>";
+						save_runner(now_1base_no, '3', '0');
+						now_3base = now_1base;
+						now_3base_no = now_1base_no;
+						document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_3base +"</a>";
+						now_1base = "";
+						now_1base_no = "";
+						document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>1루</a>";
+						document.getElementById('second_contents').innerHTML = "";
+						document.getElementById('end_contents').innerHTML = "";
+					}else{
+						text_contents = "3루 주자가 있습니다";
+						main_text(text_contents);
+						document.getElementById('second_contents').innerHTML = "";
+						document.getElementById('end_contents').innerHTML = "";
+					}
+				}else{
+					if(now_3base == ""){
+						document.getElementById('hita').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='end_error()'>상황종료</a>";
+						save_runner(now_2base_no, '3', '0');
+						now_3base = now_2base;
+						now_3base_no = now_2base_no;
+						document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_3base +"</a>";
+						now_2base = "";
+						now_2base_no = "";
+						document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>2루</a>";
+						document.getElementById('second_contents').innerHTML = "";
+						document.getElementById('end_contents').innerHTML = "";
+					}else{
+						text_contents = "2루 주자가 있습니다";
+						main_text(text_contents);
+						document.getElementById('second_contents').innerHTML = "";
+						document.getElementById('end_contents').innerHTML = "";
+					}
+				}
+			}
+		}
+
+		//홈런
+		function homerun(where){
+			save_hitter('4'+ where);
+			pitcher_count();
+			ball_count_new();
+			save_data[save_timing].push('4'+ where);
+			map_btn_change();
+			save_timing = save_timing + 1;
+			save_data[save_timing] = [3, hoaw, now_hitter, now_1base, now_2base, now_3base, "hr"];
+			if(hoaw == 1){
+				ho_h = ho_h + 1;
+				document.getElementById("ho_h").textContent = ho_h;
+			}else if(hoaw == 0){
+				aw_h = aw_h + 1;
+				document.getElementById("aw_h").textContent = aw_h;
+			}
+			go_homebase('homerun');
+			next_hitter();
+			change_text();
+		}
+		//에러 출루
+		function error_hit(base){
+			save_hitter(base + 153);
+			map_btn_change();
+			pitcher_count();
+			ball_count_new();
+			save_data[save_timing].push("er");
+			save_timing = save_timing + 1;
+			save_data[save_timing] = [3, hoaw, now_hitter, now_1base, now_2base, now_3base];
+			if(now_1base == "" && now_2base == "" && now_3base == ""){
+				if(base == 1){
+					save_data[save_timing].push("1h");
+					now_1base = now_hitter;
+					now_1base_no = now_hitter_no;
+					save_runner(now_1base_no, '1', '0');
+					document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_1base +"</a>";
+				}else if(base == 2){
+					save_data[save_timing].push("2h");
+					now_2base = now_hitter;
+					now_2base_no = now_hitter_no;
+					save_runner(now_2base_no, '2', '0');
+					document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_2base +"</a>";
+				}else if(base == 3){
+					save_data[save_timing].push("3h");
+					now_3base = now_hitter;
+					now_3base_no = now_hitter_no;
+					save_runner(now_3base_no, '3', '0');
+					document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_3base +"</a>";
+				}
+				save_data[save_timing].push("0");
+				change_text();
+				next_hitter();
+			}else{
+				if(base == 1){
+					after_1base = now_hitter;
+					after_1base_no = now_hitter_no;
+					save_data[save_timing].push("1h");
+				}else if(base == 2){
+					after_2base = now_hitter;
+					after_2base_no = now_hitter_no;
+					save_data[save_timing].push("2h");
+				}else if(base == 3){
+					after_3base = now_hitter;
+					after_3base_no = now_hitter_no;
+					save_data[save_timing].push("3h");
+				}
+				hit_action = 1;
+				change_text("runner");
+				text_contents = "주자 상황을 선택해 주세요";
+				main_text(text_contents);
+				document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+				document.getElementById('hita').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='end_hitter()'>다음타자</a>";
+			}
+		}
+		//아웃
+		//땅볼
+		function ground_out(how, where, num){
+			pitcher_count();
+			save_hitter(num);
+			ball_count_new();
+			save_data[save_timing].push(where);
+			if(now_1base == "" && now_2base == "" && now_3base == ""){
+				if(how == 's'){
+					return;
+				}else if(how == 'o'){
+					out();
+					change_text();
+				}
+			}else{
+				if(out_count == 2){
+					out();
+					change_text();
+				}else{
+					if(how == 's'){
+						after_1base = now_hitter;
+					}else if(how == 'o'){
+						hit_out = 1;
+						hit_out_0 = "1";
+						if(hoaw == 0){
+							pitcher_inning_h = pitcher_inning_h + 1;
+						}else{
+							pitcher_inning_a = pitcher_inning_a + 1;
+						}
+						if(out_count == 0){
+							out_count = out_count + 1;
+							document.getElementById('focount').style.display = "inline-block";
+						}else if(out_count == 1){
+							out_count = out_count + 1;
+							document.getElementById('socount').style.display = "inline-block";
+						}
+					}
+					save_timing = save_timing + 1;
+					save_data[save_timing] = [3, hoaw, now_hitter, now_1base, now_2base, now_3base, where];
+					hit_action = 1;
+					change_text("runner");
+					text_contents = "주자 상황을 선택해 주세요";
+					main_text(text_contents);
+					document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+					document.getElementById('hita').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='end_hitter()'>다음타자</a>";
+				}
+			}
+		}
+		//타자 아웃
+		function hitter_out(where, num){
+			pitcher_count();
+			save_hitter(num);
+			ball_count_new();
+			save_data[save_timing].push(where);
+			if(now_1base == "" && now_2base == "" && now_3base == ""){
+				change_text();
+				map_btn_change();
+				out();
+			}else{
+				if(out_count == 2){
+					change_text();
+					map_btn_change();
+					out();
+				}else{
+					hit_out = 1;
+					if(num < 160){
+						hit_out_0 = "1";
+					}
+					if(hoaw == 0){
+						pitcher_inning_h = pitcher_inning_h + 1;
+					}else{
+						pitcher_inning_a = pitcher_inning_a + 1;
+					}
+					hit_out_action = where;
+					if(out_count == 0){
+						out_count = out_count + 1;
+						document.getElementById('focount').style.display = "inline-block";
+					}else if(out_count == 1){
+						out_count = out_count + 1;
+						document.getElementById('socount').style.display = "inline-block";
+					}
+					save_timing = save_timing + 1;
+					save_data[save_timing] = [3, hoaw, now_hitter, now_1base, now_2base, now_3base, where];
+					hit_action = 1;
+					change_text("runner");
+					text_contents = "주자 상황을 선택해 주세요";
+					main_text(text_contents);
+					document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+					document.getElementById('hita').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='end_hitter()'>다음타자</a>";
+				}
+			}
+		}
+		//기타
+		//사사구
+		function hbp(){
+			pitcher_count();
+			save_hitter('52');
+			ball_count_new();
+			if(hoaw == 0){
+				ho_b = ho_b + 1;
+				document.getElementById("ho_b").textContent = ho_b;
+			}else if(hoaw == 1){
+				aw_b = aw_b + 1;
+				document.getElementById("aw_b").textContent = aw_b;
+			}
+			save_data[save_timing].push("hbp");
+			save_timing = save_timing + 1;
+			save_data[save_timing] = [3, hoaw, now_hitter, now_1base, now_2base, now_3base, "hbp"];
+			if(now_1base == ""){
+				save_data[save_timing].push("0");
+				document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_hitter +"</a>";
+				now_1base = now_hitter;
+				now_1base_no = now_hitter_no;
+				save_runner(now_1base_no, '1', '0');
+			}else{
+				if(now_2base == ""){
+					save_data[save_timing].push("0");
+					document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_1base +"</a>";
+					now_2base = now_1base;
+					now_2base_no = now_1base_no;
+					save_runner(now_2base_no, '2', '0');
+					document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_hitter +"</a>";
+					now_1base = now_hitter;
+					now_1base_no = now_hitter_no;
+					save_runner(now_1base_no, '1', '0');
+				}else{
+					if(now_3base == ""){
+						save_data[save_timing].push("0");
+						document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_2base +"</a>";
+						now_3base = now_2base;
+						now_3base_no = now_2base_no;
+						save_runner(now_3base_no, '3', '0');
+						document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_1base +"</a>";
+						now_2base = now_1base;
+						now_2base_no = now_1base_no;
+						save_runner(now_2base_no, '2', '0');
+						document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_hitter +"</a>";
+						now_1base = now_hitter;
+						now_1base_no = now_hitter_no;
+						save_runner(now_1base_no, '1', '0');
+					}else{
+						go_homebase('ball4');
+						save_data[save_timing].push("1");
+						document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_2base +"</a>";
+						now_3base = now_2base;
+						now_3base_no = now_2base_no;
+						save_runner(now_3base_no, '3', '0');
+						document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_1base +"</a>";
+						now_2base = now_1base;
+						now_2base_no = now_1base_no;
+						save_runner(now_2base_no, '2', '0');
+						document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_hitter +"</a>";
+						now_1base = now_hitter;
+						now_1base_no = now_hitter_no;
+						save_runner(now_1base_no, '1', '0');
+					}
+				}
+			}
+			next_hitter();
+			change_text();
+		}
+		//번트
+		function bnt(){
+			pitcher_count();
+			save_hitter('151');
+			ball_count_new();
+			if(out_count < 2){
+				save_data[save_timing].push("bnt");
+				save_timing = save_timing + 1;
+				save_data[save_timing] = [3, hoaw, now_hitter, now_1base, now_2base, now_3base, "bnt"];
+				if(now_1base == "" && now_2base == "" && now_3base == ""){
+					save_data[save_timing].push(0);
+					out();
+				}else{
+					hit_action = 1;
+					change_text("runner");
+					text_contents = "주자 상황을 선택해 주세요";
+					main_text(text_contents);
+					document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+					document.getElementById('hita').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='end_hitter()'>다음타자</a>";
+					if(hoaw == 0){
+						pitcher_inning_h = pitcher_inning_h + 1;
+					}else{
+						pitcher_inning_a = pitcher_inning_a + 1;
+					}
+					out_count = out_count + 1;
+					if(out_count == 1){
+						document.getElementById('focount').style.display = "inline-block";
+					}else if(out_count == 2){
+						document.getElementById('socount').style.display = "inline-block";
+					}
+				}
+			}else{
+				save_data[save_timing].push(0);
+				out();
+			}
+		}
+		//낫아웃
+		function not_out(){
+			pitcher_count();
+			save_hitter('152');
+			ball_count_new();
+			save_data[save_timing].push("no");
+			save_timing = save_timing + 1;
+			save_data[save_timing] = [3, hoaw, now_hitter, now_1base, now_2base, now_3base, "no"];
+			if(now_1base == "" && now_2base == "" && now_3base == ""){
+				document.getElementById("base1").textContent = now_hitter;
+				now_1base = now_hitter;
+				now_1base_no = now_hitter_no;
+				next_hitter();
+				change_text();
+			}else{
+				after_1base = now_hitter;
+				after_1base_no = now_hitter_no;
+				hit_action = 1;
+				change_text("runner");
+				text_contents = "주자 상황을 선택해 주세요";
+				main_text(text_contents);
+				document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+				document.getElementById('hita').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='end_hitter()'>다음타자</a>";
+			}
+		}
+		//오버런 타자
+		function hitter_over_run(base){
+			save_hitter(base + "7");
+			pitcher_count();
+			ball_count_new();
+			save_data[save_timing].push(base + "or");
+			if(hoaw == 1){
+				ho_h = ho_h + 1;
+				document.getElementById("ho_h").textContent = ho_h;
+			}else if(hoaw == 0){
+				aw_h = aw_h + 1;
+				document.getElementById("aw_h").textContent = aw_h;
+			}
+			save_timing = save_timing + 1;
+			save_data[save_timing] = [3, hoaw, now_hitter, now_1base, now_2base, now_3base, base + "or"];
+			if(now_1base == "" && now_2base == "" && now_3base == ""){
+				save_data[save_timing].push("0");
+				change_text();
+				out();
+			}else{
+				hit_action = 1;
+				hit_out = 1;
+				if(base == 1){
+					hit_out_1 = "2";
+				}else if(base == 2){
+					hit_out_2 = "3";
+				}else if(base == 3){
+					hit_out_3 = "4";
+				}
+				hit_out_action = base + "or";
+				change_text("runner");
+				text_contents = "주자 상황을 선택해 주세요";
+				main_text(text_contents);
+				document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+				document.getElementById('hita').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='end_hitter_or()'>다음타자</a>";
+			}
+		}
+			//오버런 타자 상황 종료
+			function end_hitter_or(){
+				hit_action = 0;
+				if(now_1base == "" && after_1base != ""){
+					now_1base = after_1base;
+					now_1base_no = after_1base_no;
+					save_runner(now_1base_no, '1', '0');
+					after_1base = "";
+					after_1base_no = "";
+				}else if(now_1base != "" && after_1base != ""){
+					hit_action = 1;
+					text_contents = "1루 주자가 2명 이상입니다(상황종료 후 1루 주자 : " + after_1base + "/" + now_1base +")";
+					main_text(text_contents);
+					document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+					return;
+				}
+				if(now_2base == "" && after_2base != ""){
+					now_2base = after_2base;
+					now_2base_no = after_2base_no;
+					save_runner(now_2base_no, '2', '0');
+					after_2base = "";
+					after_2base_no = "";
+				}else if(now_2base != "" && after_2base !=""){
+					hit_action = 1;
+					text_contents = "2루 주자가 2명 이상입니다(상황종료 후 2루 주자 : " + after_2base + "/"+ now_2base +")";
+					main_text(text_contents);
+					document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+					return;
+				}
+				if(now_3base == "" && after_3base != ""){
+					now_3base = after_3base;
+					now_3base_no = after_3base_no;
+					save_runner(now_3base_no, '3', '0');
+					after_3base = "";
+					after_3base_no = "";
+				}else if(now_3base != "" && after_3base !=""){
+					hit_action = 1;
+					text_contents = "3루 주자가 2명 이상입니다(상황종료 후 3루 주자 : " + after_3base + "/"+ now_3base +")";
+					main_text(text_contents);
+					document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+					return;
+				}
+				if(now_1base == ""){
+					document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>1루</a>";
+				}else{
+					document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_1base +"</a>";
+				}
+				if(now_2base == ""){
+					document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>2루</a>";
+				}else{
+					document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_2base +"</a>";
+				}
+				if(now_3base == ""){
+					document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>3루</a>";
+				}else{
+					document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_3base +"</a>";
+				}
+				if(hoaw == 0){
+					aw_r = aw_r + hit_point;
+					document.getElementById("aw_r").textContent = aw_r;
+					inning_point = inning_point + hit_point;
+					document.getElementById("inning_" + inning + "_aw").textContent = inning_point;
+				}else if(hoaw == 1){
+					ho_r = ho_r + hit_point;
+					document.getElementById("ho_r").textContent = ho_r;
+					inning_point = inning_point + hit_point;
+					document.getElementById("inning_" + inning + "_ho").textContent = inning_point;
+				}
+				save_data[save_timing].push(hit_point);
+				if(hit_out == 2){
+					if(hit_out_1 == "2"){
+						if(hit_out_2 == "3"){
+							update_hitter("134");
+						}else if(hit_out_3 == "4"){
+							update_hitter("135");
+						}
+					}else if(hit_out_2 == "3"){
+						update_hitter("136");
+					}
+				}else if(hit_out == 3){
+					if(hit_out_1 == "2"){
+						update_hitter("144");
+					}
+				}
+				hit_point = 0;
+				hit_out = 0;
+				hit_out_0 = "";
+				hit_out_1 = "";
+				hit_out_2 = "";
+				hit_out_3 = "";
+				hit_out_action = "";
+				change_text();
+				map_btn_change();
+				out();
+			}
+		//주자
+		//도루
+		function steal_base(base, how){
+			save_timing = save_timing + 1;
+			save_data[save_timing] = [3, hoaw, now_hitter, now_1base, now_2base, now_3base];
+			if(how == "s"){
+				if(base == 1){
+					save_data[save_timing].push("1sb");
+					save_data[save_timing].push("0");
+					now_2base = now_1base;
+					now_2base_no = now_1base_no;
+					save_runner(now_2base_no, '2', '71');
+					document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_2base +"</a>";
+					now_1base = "";
+					now_1base_no = "";
+					document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>1루</a>";
+					change_text();
+					connect_save();
+				}else if(base == 2){
+					save_data[save_timing].push("2sb");
+					save_data[save_timing].push("0");
+					now_3base = now_2base;
+					now_3base_no = now_2base_no;
+					save_runner(now_3base_no, '3', '72');
+					document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_3base +"</a>";
+					now_2base = "";
+					now_2base_no = "";
+					document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>2루</a>";
+					change_text();
+					connect_save();
+				}else if(base == 3){
+					save_data[save_timing].push("3sb");
+					save_data[save_timing].push("1");
+					save_runner(now_3base_no, '4', '73');
+					now_3base = "";
+					now_3base_no = "";
+					document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>3루</a>";
+					go_homebase('sb');
+					change_text();
+					connect_save();
+				}
+			}else{
+				if(base == 1){
+					save_data[save_timing].push("1sbo");
+					save_data[save_timing].push("0");
+					save_runner(now_1base_no, '0', '74');
+					now_1base = "";
+					now_1base_no = "";
+					document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>1루</a>";
+				}else if(base == 2){
+					save_data[save_timing].push("2sbo");
+					save_data[save_timing].push("0");
+					save_runner(now_2base_no, '0', '75');
+					now_2base = "";
+					now_2base_no = "";
+					document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>2루</a>";
+				}else if(base == 3){
+					save_data[save_timing].push("3sbo");
+					save_data[save_timing].push("0");
+					save_runner(now_3base_no, '0', '76');
+					now_3base = "";
+					now_3base_no = "";
+					document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>3루</a>";
+				}
+				runner_out();
+				change_text();
+			}
+		}
+		//아웃
+		function running_out(base, how){
+			document.getElementById('second_contents').innerHTML = "";
+			document.getElementById('end_contents').innerHTML = "";
+			if(how == null){
+				if(hit_action == 1){
+					// 안타 상황에 주자 아웃
+					if(base == 1){
+						save_runner(now_1base_no, "0", "0");
+						now_1base = "";
+						now_1base_no = "";
+						hit_out = hit_out + 1;
+						hit_out_1 = "2";
+					}else if(base == 2){
+						save_runner(now_2base_no, "0", "0");
+						now_2base = "";
+						now_2base_no = "";
+						hit_out = hit_out + 1;
+						hit_out_2 = "3";
+					}else if(base == 3){
+						save_runner(now_3base_no, "0", "0");
+						now_3base = "";
+						now_3base_no = "";
+						hit_out = hit_out + 1;
+						hit_out_3 = "4";
+					}
+					if(hit_out_action == ""){
+						if(hit_out == 2){
+							// 병살
+							save_data[save_timing-1].pop();
+							save_data[save_timing-1].push(hit_out_0 + hit_out_1 + hit_out_2 + hit_out_3 + "do");
+							save_data[save_timing].pop();
+							save_data[save_timing].push(hit_out_0 + hit_out_1 + hit_out_2 + hit_out_3 + "do");
+						}else if(hit_out == 3){
+							// 삼중살
+							save_data[save_timing-1].pop();
+							save_data[save_timing-1].push(hit_out_0 + hit_out_1 + hit_out_2 + hit_out_3 + "to");
+							save_data[save_timing].pop();
+							save_data[save_timing].push(hit_out_0 + hit_out_1 + hit_out_2 + hit_out_3 + "to");
+						}
+					}else{
+						if(hit_out == 2){
+							// 병살
+							save_data[save_timing-1].pop();
+							save_data[save_timing-1].push(hit_out_action + "do");
+							save_data[save_timing].pop();
+							save_data[save_timing].push(hit_out_action + "do");
+						}else if(hit_out == 3){
+							// 삼중살
+							save_data[save_timing-1].pop();
+							save_data[save_timing-1].push(hit_out_action + "to");
+							save_data[save_timing].pop();
+							save_data[save_timing].push(hit_out_action + "to");
+						}
+					}
+					if(hoaw == 0){
+						pitcher_inning_h = pitcher_inning_h + 1;
+					}else{
+						pitcher_inning_a = pitcher_inning_a + 1;
+					}
+					if(out_count == 0){
+						out_count = out_count + 1;
+						document.getElementById('focount').style.display = "inline-block";
+					}else if(out_count == 1){
+						out_count = out_count + 1;
+						document.getElementById('socount').style.display = "inline-block";
+					}else if(out_count == 2){
+						// 병살 || 삼중살 업데이트
+						if(hit_out == 2){
+							if(hit_out_0 == "1"){
+								if(hit_out_1 == "2"){
+									update_hitter("131");
+								}else if(hit_out_2 == "3"){
+									update_hitter("132");
+								}else if(hit_out_3 == "4"){
+									update_hitter("133");
+								}
+							}else if(hit_out_1 == "2"){
+								if(hit_out_2 == "3"){
+									update_hitter("134");
+								}else if(hit_out_3 == "4"){
+									update_hitter("135");
+								}
+							}else if(hit_out_2 == "3"){
+								update_hitter("136");
+							}
+						}else if(hit_out == 3){
+							if(hit_out_0 == "1"){
+								if(hit_out_1 == "2"){
+									if(hit_out_2 == "3"){
+										update_hitter("141");
+									}else if(hit_out_3 == "4"){
+										update_hitter("142");
+									}
+								}else if(hit_out_2 == "3"){
+									update_hitter("143");
+								}
+							}else if(hit_out_1 == "2"){
+								update_hitter("144");
+							}
+						}
+						save_data[save_timing].pop();
+						save_data[save_timing].push("change");
+						hit_point = 0;
+						hit_out = 0;
+						hit_out_0 = "";
+						hit_out_1 = "";
+						hit_out_2 = "";
+						hit_out_3 = "";
+						hit_out_action = "";
+						hit_action = 0;
+						change_text();
+						out_count = 0;
+						now_1base = "";
+						document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>1루</a>";
+						now_2base = "";
+						document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>2루</a>";
+						now_3base = "";
+						document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>3루</a>";
+						document.getElementById('focount').style.display = "none";
+						document.getElementById('socount').style.display = "none";
+						if(hoaw == 0){
+							hoaw = 1;
+							if(aw_ht < 8){
+								aw_ht = aw_ht + 1;
+							}else{
+								aw_ht = 0;
+							}
+							save_timing = save_timing + 1;
+							save_data[save_timing] = [1, 1, ho_ht];
+							document.getElementById("inning_" + inning + "_ho").textContent = 0;
+							start_game();
+						}else if(hoaw == 1){
+							hoaw = 0;
+							if(ho_ht < 8){
+								ho_ht = ho_ht + 1;
+							}else{
+								ho_ht = 0;
+							}
+							inning = inning + 1;
+							save_timing = save_timing + 1;
+							save_data[save_timing] = [1, 0, aw_ht];
+							document.getElementById("inning_" + inning + "_aw").textContent = 0;
+							start_game();
+						}
+					}
+				}else{
+					//안타 상황이 아닐때
+					return;
+				}
+			}else if(how == 'ror'){
+				if(hit_action == 1){
+					if(base == 1){
+						save_runner(now_1base_no, '0', '81');
+						now_1base = "";
+						now_1base_no = "";
+						hit_out = hit_out + 1;
+					}else if(base == 2){
+						save_runner(now_2base_no, '0', '81');
+						now_2base = "";
+						now_2base_no = "";
+						hit_out = hit_out + 1;
+					}else if(base == 3){
+						save_runner(now_3base_no, '0', '81');
+						now_3base = "";
+						now_3base_no = "";
+						hit_out = hit_out + 1;
+					}
+					if(hit_out == 2){
+						// 병살
+						save_data[save_timing-1].pop();
+						save_data[save_timing-1].push(hit_out_action + "do");
+						save_data[save_timing].pop();
+						save_data[save_timing].push(hit_out_action + "do");
+					}else if(hit_out == 3){
+						// 삼중살
+						save_data[save_timing-1].pop();
+						save_data[save_timing-1].push(hit_out_action + "to");
+						save_data[save_timing].pop();
+						save_data[save_timing].push(hit_out_action + "to");
+					}
+					if(hoaw == 0){
+						pitcher_inning_h = pitcher_inning_h + 1;
+					}else{
+						pitcher_inning_a = pitcher_inning_a + 1;
+					}
+					if(out_count == 0){
+						out_count = out_count + 1;
+						document.getElementById('focount').style.display = "inline-block";
+					}else if(out_count == 1){
+						out_count = out_count + 1;
+						document.getElementById('socount').style.display = "inline-block";
+					}else if(out_count == 2){
+						save_data[save_timing].pop();
+						save_data[save_timing].push("change");
+						hit_point = 0;
+						hit_out = 0;
+						hit_out_0 = "";
+						hit_out_1 = "";
+						hit_out_2 = "";
+						hit_out_3 = "";
+						hit_out_action = "";
+						hit_action = 0;
+						change_text();
+						out_count = 0;
+						now_1base = "";
+						document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>1루</a>";
+						now_2base = "";
+						document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>2루</a>";
+						now_3base = "";
+						document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>3루</a>";
+						document.getElementById('focount').style.display = "none";
+						document.getElementById('socount').style.display = "none";
+						if(hoaw == 0){
+							hoaw = 1;
+							if(aw_ht < 8){
+								aw_ht = aw_ht + 1;
+							}else{
+								aw_ht = 0;
+							}
+							save_timing = save_timing + 1;
+							save_data[save_timing] = [1, 1, ho_ht];
+							document.getElementById("inning_" + inning + "_ho").textContent = 0;
+							start_game();
+						}else if(hoaw == 1){
+							hoaw = 0;
+							if(ho_ht < 8){
+								ho_ht = ho_ht + 1;
+							}else{
+								ho_ht = 0;
+							}
+							inning = inning + 1;
+							save_timing = save_timing + 1;
+							save_data[save_timing] = [1, 0, aw_ht];
+							document.getElementById("inning_" + inning + "_aw").textContent = 0;
+							start_game();
+						}
+					}
+				}
+			}else if(how == 'rco'){
+				save_timing = save_timing + 1;
+				save_data[save_timing] = [3, hoaw, now_hitter, now_1base, now_2base, now_3base];
+				if(base == 1){
+					save_data[save_timing].push("1" + how);
+					save_data[save_timing].push("0");
+					save_runner(now_1base_no, '0', '82');
+					now_1base = "";
+					now_1base_no = "";
+					document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>1루</a>";
+				}else if(base == 2){
+					save_data[save_timing].push("2" + how);
+					save_data[save_timing].push("0");
+					save_runner(now_2base_no, '0', '82');
+					now_2base = "";
+					now_2base_no = "";
+					document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>2루</a>";
+				}else if(base == 3){
+					save_data[save_timing].push("3" + how);
+					save_data[save_timing].push("0");
+					save_runner(now_3base_no, '0', '82');
+					now_3base = "";
+					now_3base_no = "";
+					document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>3루</a>";
+				}
+				runner_out();
+				change_text();
+			}
+		}	
+		// 투수 선택
+		function change_player(who){
+			if(who == 'pic'){
+				if(now_1base == "" && now_2base == "" && now_3base == ""){
+					document.getElementById('first_contents').innerHTML = "<div class='col-xs-12 col-sm-12 col-md-12' style='padding:1px'>" + 
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='open_members_list(\""+ who +"\")'>교체</a>" +
+					"</div>";
+				}else{
+					document.getElementById('first_contents').innerHTML = "<div class='col-xs-6 col-sm-6 col-md-6' style='padding:1px'>" + 
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='balk()'>보크</a>" +
+					"</div>" +
+					"<div class='col-xs-6 col-sm-6 col-md-6' style='padding:1px'>" +
+						"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='open_members_list(\""+ who +"\")'>교체</a>" +
+					"</div>";
+				}
+			}else{
+			//	공격 선수 교체
+				document.getElementById('first_contents').innerHTML = "<div class='col-xs-12 col-sm-12 col-md-12' style='padding:1px'>" + 
+					"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='open_members_list(\""+ who +"\")'>교체</a>" +
+				"</div>";
+			}
+			document.getElementById('second_contents').innerHTML = "";
+			document.getElementById('end_contents').innerHTML = "";
+		}
+			//보크
+			function balk(){
+				if(now_1base == "" && now_2base == "" && now_3base == ""){
+					return;
+				}else{
+					save_timing = save_timing + 1;
+					save_data[save_timing] = [3, hoaw, now_hitter, now_1base, now_2base, now_3base, 'balk'];
+					if(now_3base != ""){
+						go_homebase('balk');
+						save_data[save_timing].push("1");
+						save_runner(now_3base_no, '4', '91');
+						connect_save();
+						now_3base = "";
+						now_3base_no = "";
+						document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_3base +"</a>";
+					}
+					if(now_2base != ""){
+						save_data[save_timing].push("0");
+						connect_save();
+						now_3base = now_2base;
+						now_3base_no = now_2base_no;
+						save_runner(now_3base_no, '3', '91');
+						document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_3base +"</a>";
+						now_2base = "";
+						now_2base_no = "";
+						document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>2루</a>";
+					}
+					if(now_1base != ""){
+						save_data[save_timing].push("0");
+						connect_save();
+						now_2base = now_1base;
+						now_2base_no = now_1base_no;
+						save_runner(now_2base_no, '2', '91');
+						document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_2base +"</a>";
+						now_1base = "";
+						now_1base_no = "";
+						document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>1루</a>";
+					}
+					change_text();
+				}
+			}
+			
+			function open_members_list(who){
+				who_change = who;
+				document.getElementById('first_contents').innerHTML = "<div class='col-xs-12 col-sm-12 col-md-12' style='padding:1px'>" + 
+					"<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>선수를 선택해 주세요</a>" +
+				"</div>";
+				if(who == "hitter" || who == "1runner" || who == "2runner" || who == "3runner"){
+					if(hoaw == 0){
+						document.getElementById('end_contents').innerHTML = "<? echo $away_member_list;?>";
+					}else if(hoaw == 1){
+						document.getElementById('end_contents').innerHTML = "<? echo $home_member_list;?>";
+					}
+				}else{
+					if(hoaw == 0){
+						document.getElementById('end_contents').innerHTML = "<? echo $home_member_list;?>";
+					}else if(hoaw == 1){
+						document.getElementById('end_contents').innerHTML = "<? echo $away_member_list;?>";
+					}
+				}
+			}
+			
+			function finish_members_list(){
+				document.getElementById('first_contents').innerHTML = "<div class='col-xs-12 col-sm-12 col-md-12' style='padding:1px'>" + 
+					"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='end_members_list()'>선택 완료</a>" +
+				"</div>";
+			}
+			
+			function end_members_list(){
+				if(hoaw == 0){
+					if(who_change == "hitter"){
+						// 교체 선수 번호
+						in_player = document.away_team_members.away_player_change.value;
+						out_player = now_hitter_no;
+						// 타순 검사 , 수비 위치
+						change_turn = aw_hitter_no.indexOf(now_hitter_no);
+						if(aw_p_no == now_hitter_no){
+							change_posi = "1";
+						}else if(aw_c_no == now_hitter_no){
+							change_posi = "2";
+						}else if(aw_1b_no == now_hitter_no){
+							change_posi = "3";
+						}else if(aw_2b_no == now_hitter_no){
+							change_posi = "4";
+						}else if(aw_3b_no == now_hitter_no){
+							change_posi = "5";
+						}else if(aw_ss_no == now_hitter_no){
+							change_posi = "6";
+						}else if(aw_lf_no == now_hitter_no){
+							change_posi = "7";
+						}else if(aw_cf_no == now_hitter_no){
+							change_posi = "8";
+						}else if(aw_rf_no == now_hitter_no){
+							change_posi = "9";
+						}else{
+							change_posi = "10";
+						}
+						save_hoaw = "1";
+					}else if(who_change == "1runner"){
+						// 교체 선수 번호
+						in_player = document.away_team_members.away_player_change.value;
+						out_player = now_1base_no;
+						// 타순 검사 , 수비 위치
+						change_turn = aw_hitter_no.indexOf(now_1base_no);
+						if(aw_p_no == now_1base_no){
+							change_posi = "1";
+						}else if(aw_c_no == now_1base_no){
+							change_posi = "2";
+						}else if(aw_1b_no == now_1base_no){
+							change_posi = "3";
+						}else if(aw_2b_no == now_1base_no){
+							change_posi = "4";
+						}else if(aw_3b_no == now_1base_no){
+							change_posi = "5";
+						}else if(aw_ss_no == now_1base_no){
+							change_posi = "6";
+						}else if(aw_lf_no == now_1base_no){
+							change_posi = "7";
+						}else if(aw_cf_no == now_1base_no){
+							change_posi = "8";
+						}else if(aw_rf_no == now_1base_no){
+							change_posi = "9";
+						}else{
+							change_posi = "10";
+						}
+						save_hoaw = "1";
+					}else if(who_change == "2runner"){
+						// 교체 선수 번호
+						in_player = document.away_team_members.away_player_change.value;
+						out_player = now_2base_no;
+						// 타순 검사 , 수비 위치
+						change_turn = aw_hitter_no.indexOf(now_2base_no);
+						if(aw_p_no == now_2base_no){
+							change_posi = "1";
+						}else if(aw_c_no == now_2base_no){
+							change_posi = "2";
+						}else if(aw_1b_no == now_2base_no){
+							change_posi = "3";
+						}else if(aw_2b_no == now_2base_no){
+							change_posi = "4";
+						}else if(aw_3b_no == now_2base_no){
+							change_posi = "5";
+						}else if(aw_ss_no == now_2base_no){
+							change_posi = "6";
+						}else if(aw_lf_no == now_2base_no){
+							change_posi = "7";
+						}else if(aw_cf_no == now_2base_no){
+							change_posi = "8";
+						}else if(aw_rf_no == now_2base_no){
+							change_posi = "9";
+						}else{
+							change_posi = "10";
+						}
+						save_hoaw = "1";
+					}else if(who_change == "3runner"){
+						// 교체 선수 번호
+						in_player = document.away_team_members.away_player_change.value;
+						out_player = now_3base_no;
+						// 타순 검사 , 수비 위치
+						change_turn = aw_hitter_no.indexOf(now_3base_no);
+						if(aw_p_no == now_3base_no){
+							change_posi = "1";
+						}else if(aw_c_no == now_3base_no){
+							change_posi = "2";
+						}else if(aw_1b_no == now_3base_no){
+							change_posi = "3";
+						}else if(aw_2b_no == now_3base_no){
+							change_posi = "4";
+						}else if(aw_3b_no == now_3base_no){
+							change_posi = "5";
+						}else if(aw_ss_no == now_3base_no){
+							change_posi = "6";
+						}else if(aw_lf_no == now_3base_no){
+							change_posi = "7";
+						}else if(aw_cf_no == now_3base_no){
+							change_posi = "8";
+						}else if(aw_rf_no == now_3base_no){
+							change_posi = "9";
+						}else{
+							change_posi = "10";
+						}
+						save_hoaw = "1";
+					}else if(who_change == "pic"){
+						save_pitcher(0);
+						// 교체 선수 번호
+						in_player = document.home_team_members.home_player_change.value;
+						out_player = ho_p_no;
+						// 타순 검사 , 수비 위치
+						change_turn = ho_hitter_no.indexOf(ho_p_no);
+						change_posi = "1";
+						save_hoaw = "0";
+						pitcher_count_h = 0;
+						pitcher_inning_h = 0;
+						document.getElementById("pitcher_count").textContent = pitcher_count_h;
+					}
+				}else if(hoaw == 1){
+					if(who_change == "hitter"){
+						// 교체 선수 번호
+						in_player = document.home_team_members.home_player_change.value;
+						out_player = now_hitter_no;
+						// 타순 검사 , 수비 위치
+						change_turn = ho_hitter_no.indexOf(now_hitter_no);
+						if(ho_p_no == now_hitter_no){
+							change_posi = "1";
+						}else if(ho_c_no == now_hitter_no){
+							change_posi = "2";
+						}else if(ho_1b_no == now_hitter_no){
+							change_posi = "3";
+						}else if(ho_2b_no == now_hitter_no){
+							change_posi = "4";
+						}else if(ho_3b_no == now_hitter_no){
+							change_posi = "5";
+						}else if(ho_ss_no == now_hitter_no){
+							change_posi = "6";
+						}else if(ho_lf_no == now_hitter_no){
+							change_posi = "7";
+						}else if(ho_cf_no == now_hitter_no){
+							change_posi = "8";
+						}else if(ho_rf_no == now_hitter_no){
+							change_posi = "9";
+						}else{
+							change_posi = "10";
+						}
+						save_hoaw = "0";
+					}else if(who_change == "1runner"){
+						// 교체 선수 번호
+						in_player = document.home_team_members.home_player_change.value;
+						out_player = now_1base_no;
+						// 타순 검사 , 수비 위치
+						change_turn = ho_hitter_no.indexOf(now_1base_no);
+						if(ho_p_no == now_1base_no){
+							change_posi = "1";
+						}else if(ho_c_no == now_1base_no){
+							change_posi = "2";
+						}else if(ho_1b_no == now_1base_no){
+							change_posi = "3";
+						}else if(ho_2b_no == now_1base_no){
+							change_posi = "4";
+						}else if(ho_3b_no == now_1base_no){
+							change_posi = "5";
+						}else if(ho_ss_no == now_1base_no){
+							change_posi = "6";
+						}else if(ho_lf_no == now_1base_no){
+							change_posi = "7";
+						}else if(ho_cf_no == now_1base_no){
+							change_posi = "8";
+						}else if(ho_rf_no == now_1base_no){
+							change_posi = "9";
+						}else{
+							change_posi = "10";
+						}
+						save_hoaw = "0";
+					}else if(who_change == "2runner"){
+						// 교체 선수 번호
+						in_player = document.home_team_members.home_player_change.value;
+						out_player = now_2base_no;
+						// 타순 검사 , 수비 위치
+						change_turn = ho_hitter_no.indexOf(now_2base_no);
+						if(ho_p_no == now_2base_no){
+							change_posi = "1";
+						}else if(ho_c_no == now_2base_no){
+							change_posi = "2";
+						}else if(ho_1b_no == now_2base_no){
+							change_posi = "3";
+						}else if(ho_2b_no == now_2base_no){
+							change_posi = "4";
+						}else if(ho_3b_no == now_2base_no){
+							change_posi = "5";
+						}else if(ho_ss_no == now_2base_no){
+							change_posi = "6";
+						}else if(ho_lf_no == now_2base_no){
+							change_posi = "7";
+						}else if(ho_cf_no == now_2base_no){
+							change_posi = "8";
+						}else if(ho_rf_no == now_2base_no){
+							change_posi = "9";
+						}else{
+							change_posi = "10";
+						}
+						save_hoaw = "0";
+					}else if(who_change == "3runner"){
+						// 교체 선수 번호
+						in_player = document.home_team_members.home_player_change.value;
+						out_player = now_3base_no;
+						// 타순 검사 , 수비 위치
+						change_turn = ho_hitter_no.indexOf(now_3base_no);
+						if(ho_p_no == now_3base_no){
+							change_posi = "1";
+						}else if(ho_c_no == now_3base_no){
+							change_posi = "2";
+						}else if(ho_1b_no == now_3base_no){
+							change_posi = "3";
+						}else if(ho_2b_no == now_3base_no){
+							change_posi = "4";
+						}else if(ho_3b_no == now_3base_no){
+							change_posi = "5";
+						}else if(ho_ss_no == now_3base_no){
+							change_posi = "6";
+						}else if(ho_lf_no == now_3base_no){
+							change_posi = "7";
+						}else if(ho_cf_no == now_3base_no){
+							change_posi = "8";
+						}else if(ho_rf_no == now_3base_no){
+							change_posi = "9";
+						}else{
+							change_posi = "10";
+						}
+						save_hoaw = "0";
+					}else if(who_change == "pic"){
+						save_pitcher(1);
+						// 교체 선수 번호
+						in_player = document.away_team_members.away_player_change.value;
+						out_player = aw_p_no;
+						// 타순 검사 , 수비 위치
+						change_turn = aw_hitter_no.indexOf(aw_p_no);
+						change_posi = "1";
+						save_hoaw = "1";
+						pitcher_count_a = 0;
+						pitcher_inning_a = 0;
+						document.getElementById("pitcher_count").textContent = pitcher_count_a;
+					}
+				}
+				change_turn = change_turn + 1;
+				// 저장
+				$.ajax({
+					type: 'POST',
+					url: 'update_entry.php',
+					data: {
+						play_change : play_no,
+						in_player_change : in_player,
+						hoaw_change : save_hoaw,
+						turn_change : change_turn,
+						position_change : change_posi,
+						out_player_change : out_player,
+						inning_change : inning
+					
+					},
+					dataTpye: 'text',
+					success: function(data){
+						change_turn = change_turn - 1;
+						chagne_data = data.split('|');
+						change_entry_no = chagne_data[0];
+						change_back_num_name = chagne_data[1];
+						// 변경
+						save_timing = save_timing + 1;
+						save_data[save_timing] = [4, save_hoaw, change_turn, change_posi, who_change, out_player];
+						if(hoaw == 0){
+							if(who_change == "hitter"){
+								save_data[save_timing].push(aw_hit_array[change_turn]);
+								save_hitter('56');
+								hitter_ball_count = "";								
+								aw_hit_array[change_turn] = change_back_num_name;
+								aw_hitter_no[change_turn] = change_entry_no;
+								now_hitter = aw_hit_array[change_turn];
+								now_hitter_no = aw_hitter_no[change_turn];
+								document.getElementById("hita").textContent = aw_hit_array[change_turn];
+								if(change_posi == '1'){
+									aw_p = change_back_num_name;
+									aw_p_no = change_entry_no;
+								}else if(change_posi == '2'){
+									aw_c = change_back_num_name;
+									aw_c_no = change_entry_no;
+								}else if(change_posi == '3'){
+									aw_1b = change_back_num_name;
+									aw_1b_no = change_entry_no;
+								}else if(change_posi == '4'){
+									aw_2b = change_back_num_name;
+									aw_2b_no = change_entry_no;
+								}else if(change_posi == '5'){
+									aw_3b = change_back_num_name;
+									aw_3b_no = change_entry_no;
+								}else if(change_posi == '6'){
+									aw_ss = change_back_num_name;
+									aw_ss_no = change_entry_no;
+								}else if(change_posi == '7'){
+									aw_lf = change_back_num_name;
+									aw_lf_no = change_entry_no;
+								}else if(change_posi == '8'){
+									aw_cf = change_back_num_name;
+									aw_cf_no = change_entry_no;
+								}else if(change_posi == '9'){
+									aw_rf = change_back_num_name;
+									aw_rf_no = change_entry_no;
+								}
+							}else if(who_change == "1runner"){
+								save_data[save_timing].push(aw_hit_array[change_turn]);
+								save_runner(now_1base_no, '0', '83');
+								save_runner(change_entry_no, '1', '84');
+								aw_hit_array[change_turn] = change_back_num_name;
+								aw_hitter_no[change_turn] = change_entry_no;
+								now_1base = change_back_num_name;
+								now_1base_no = change_entry_no;
+								if(change_posi == '1'){
+									aw_p = change_back_num_name;
+									aw_p_no = change_entry_no;
+								}else if(change_posi == '2'){
+									aw_c = change_back_num_name;
+									aw_c_no = change_entry_no;
+								}else if(change_posi == '3'){
+									aw_1b = change_back_num_name;
+									aw_1b_no = change_entry_no;
+								}else if(change_posi == '4'){
+									aw_2b = change_back_num_name;
+									aw_2b_no = change_entry_no;
+								}else if(change_posi == '5'){
+									aw_3b = change_back_num_name;
+									aw_3b_no = change_entry_no;
+								}else if(change_posi == '6'){
+									aw_ss = change_back_num_name;
+									aw_ss_no = change_entry_no;
+								}else if(change_posi == '7'){
+									aw_lf = change_back_num_name;
+									aw_lf_no = change_entry_no;
+								}else if(change_posi == '8'){
+									aw_cf = change_back_num_name;
+									aw_cf_no = change_entry_no;
+								}else if(change_posi == '9'){
+									aw_rf = change_back_num_name;
+									aw_rf_no = change_entry_no;
+								}
+							}else if(who_change == "2runner"){
+								save_data[save_timing].push(aw_hit_array[change_turn]);
+								save_runner(now_2base_no, '0', '83');
+								save_runner(change_entry_no, '2', '84');
+								aw_hit_array[change_turn] = change_back_num_name;
+								aw_hitter_no[change_turn] = change_entry_no;
+								now_2base = change_back_num_name;
+								now_2base_no = change_entry_no;
+								if(change_posi == '1'){
+									aw_p = change_back_num_name;
+									aw_p_no = change_entry_no;
+								}else if(change_posi == '2'){
+									aw_c = change_back_num_name;
+									aw_c_no = change_entry_no;
+								}else if(change_posi == '3'){
+									aw_1b = change_back_num_name;
+									aw_1b_no = change_entry_no;
+								}else if(change_posi == '4'){
+									aw_2b = change_back_num_name;
+									aw_2b_no = change_entry_no;
+								}else if(change_posi == '5'){
+									aw_3b = change_back_num_name;
+									aw_3b_no = change_entry_no;
+								}else if(change_posi == '6'){
+									aw_ss = change_back_num_name;
+									aw_ss_no = change_entry_no;
+								}else if(change_posi == '7'){
+									aw_lf = change_back_num_name;
+									aw_lf_no = change_entry_no;
+								}else if(change_posi == '8'){
+									aw_cf = change_back_num_name;
+									aw_cf_no = change_entry_no;
+								}else if(change_posi == '9'){
+									aw_rf = change_back_num_name;
+									aw_rf_no = change_entry_no;
+								}
+							}else if(who_change == "3runner"){
+								save_data[save_timing].push(aw_hit_array[change_turn]);
+								save_runner(now_3base_no, '0', '83');
+								save_runner(change_entry_no, '3', '84');
+								aw_hit_array[change_turn] = change_back_num_name;
+								aw_hitter_no[change_turn] = change_entry_no;
+								now_3base = change_back_num_name;
+								now_3base_no = change_entry_no;
+								if(change_posi == '1'){
+									aw_p = change_back_num_name;
+									aw_p_no = change_entry_no;
+								}else if(change_posi == '2'){
+									aw_c = change_back_num_name;
+									aw_c_no = change_entry_no;
+								}else if(change_posi == '3'){
+									aw_1b = change_back_num_name;
+									aw_1b_no = change_entry_no;
+								}else if(change_posi == '4'){
+									aw_2b = change_back_num_name;
+									aw_2b_no = change_entry_no;
+								}else if(change_posi == '5'){
+									aw_3b = change_back_num_name;
+									aw_3b_no = change_entry_no;
+								}else if(change_posi == '6'){
+									aw_ss = change_back_num_name;
+									aw_ss_no = change_entry_no;
+								}else if(change_posi == '7'){
+									aw_lf = change_back_num_name;
+									aw_lf_no = change_entry_no;
+								}else if(change_posi == '8'){
+									aw_cf = change_back_num_name;
+									aw_cf_no = change_entry_no;
+								}else if(change_posi == '9'){
+									aw_rf = change_back_num_name;
+									aw_rf_no = change_entry_no;
+								}
+							}else if(who_change == "pic"){
+								save_data[save_timing].push(ho_p);
+								save_hitter('57');
+								hitter_ball_count = "";
+								if(change_turn >=0 && change_turn <=8){
+									ho_hit_array[change_turn] = change_back_num_name;
+									ho_hitter_no[change_turn] = change_entry_no;
+								}
+								ho_p = change_back_num_name;
+								ho_p_no = change_entry_no;
+							}
+						}else if(hoaw == 1){
+							if(who_change == "hitter"){
+								save_data[save_timing].push(ho_hit_array[change_turn]);
+								save_hitter('56');
+								hitter_ball_count = "";
+								ho_hit_array[change_turn] = change_back_num_name;
+								ho_hitter_no[change_turn] = change_entry_no;
+								now_hitter = ho_hit_array[change_turn];
+								now_hitter_no = ho_hitter_no[change_turn];
+								document.getElementById("hita").textContent = ho_hit_array[change_turn];
+								if(change_posi == '1'){
+									ho_p = change_back_num_name;
+									ho_p_no = change_entry_no;
+								}else if(change_posi == '2'){
+									ho_c = change_back_num_name;
+									ho_c_no = change_entry_no;
+								}else if(change_posi == '3'){
+									ho_1b = change_back_num_name;
+									ho_1b_no = change_entry_no;
+								}else if(change_posi == '4'){
+									ho_2b = change_back_num_name;
+									ho_2b_no = change_entry_no;
+								}else if(change_posi == '5'){
+									ho_3b = change_back_num_name;
+									ho_3b_no = change_entry_no;
+								}else if(change_posi == '6'){
+									ho_ss = change_back_num_name;
+									ho_ss_no = change_entry_no;
+								}else if(change_posi == '7'){
+									ho_lf = change_back_num_name;
+									ho_lf_no = change_entry_no;
+								}else if(change_posi == '8'){
+									ho_cf = change_back_num_name;
+									ho_cf_no = change_entry_no;
+								}else if(change_posi == '9'){
+									ho_rf = change_back_num_name;
+									ho_rf_no = change_entry_no;
+								}
+							}else if(who_change == "1runner"){
+								save_data[save_timing].push(ho_hit_array[change_turn]);
+								save_runner(now_1base_no, '0', '83');
+								save_runner(change_entry_no, '1', '84');
+								ho_hit_array[change_turn] = change_back_num_name;
+								ho_hitter_no[change_turn] = change_entry_no;
+								now_1base = change_back_num_name;
+								now_1base_no = change_entry_no;
+								if(change_posi == '1'){
+									ho_p = change_back_num_name;
+									ho_p_no = change_entry_no;
+								}else if(change_posi == '2'){
+									ho_c = change_back_num_name;
+									ho_c_no = change_entry_no;
+								}else if(change_posi == '3'){
+									ho_1b = change_back_num_name;
+									ho_1b_no = change_entry_no;
+								}else if(change_posi == '4'){
+									ho_2b = change_back_num_name;
+									ho_2b_no = change_entry_no;
+								}else if(change_posi == '5'){
+									ho_3b = change_back_num_name;
+									ho_3b_no = change_entry_no;
+								}else if(change_posi == '6'){
+									ho_ss = change_back_num_name;
+									ho_ss_no = change_entry_no;
+								}else if(change_posi == '7'){
+									ho_lf = change_back_num_name;
+									ho_lf_no = change_entry_no;
+								}else if(change_posi == '8'){
+									ho_cf = change_back_num_name;
+									ho_cf_no = change_entry_no;
+								}else if(change_posi == '9'){
+									ho_rf = change_back_num_name;
+									ho_rf_no = change_entry_no;
+								}
+							}else if(who_change == "2runner"){
+								save_data[save_timing].push(ho_hit_array[change_turn]);
+								save_runner(now_2base_no, '0', '83');
+								save_runner(change_entry_no, '2', '84');
+								ho_hit_array[change_turn] = change_back_num_name;
+								ho_hitter_no[change_turn] = change_entry_no;
+								now_2base = change_back_num_name;
+								now_2base_no = change_entry_no;
+								if(change_posi == '1'){
+									ho_p = change_back_num_name;
+									ho_p_no = change_entry_no;
+								}else if(change_posi == '2'){
+									ho_c = change_back_num_name;
+									ho_c_no = change_entry_no;
+								}else if(change_posi == '3'){
+									ho_1b = change_back_num_name;
+									ho_1b_no = change_entry_no;
+								}else if(change_posi == '4'){
+									ho_2b = change_back_num_name;
+									ho_2b_no = change_entry_no;
+								}else if(change_posi == '5'){
+									ho_3b = change_back_num_name;
+									ho_3b_no = change_entry_no;
+								}else if(change_posi == '6'){
+									ho_ss = change_back_num_name;
+									ho_ss_no = change_entry_no;
+								}else if(change_posi == '7'){
+									ho_lf = change_back_num_name;
+									ho_lf_no = change_entry_no;
+								}else if(change_posi == '8'){
+									ho_cf = change_back_num_name;
+									ho_cf_no = change_entry_no;
+								}else if(change_posi == '9'){
+									ho_rf = change_back_num_name;
+									ho_rf_no = change_entry_no;
+								}
+							}else if(who_change == "3runner"){
+								save_data[save_timing].push(ho_hit_array[change_turn]);
+								save_runner(now_3base_no, '0', '83');
+								save_runner(change_entry_no, '3', '84');
+								ho_hit_array[change_turn] = change_back_num_name;
+								ho_hitter_no[change_turn] = change_entry_no;
+								now_3base = change_back_num_name;
+								now_3base_no = change_entry_no;
+								if(change_posi == '1'){
+									ho_p = change_back_num_name;
+									ho_p_no = change_entry_no;
+								}else if(change_posi == '2'){
+									ho_c = change_back_num_name;
+									ho_c_no = change_entry_no;
+								}else if(change_posi == '3'){
+									ho_1b = change_back_num_name;
+									ho_1b_no = change_entry_no;
+								}else if(change_posi == '4'){
+									ho_2b = change_back_num_name;
+									ho_2b_no = change_entry_no;
+								}else if(change_posi == '5'){
+									ho_3b = change_back_num_name;
+									ho_3b_no = change_entry_no;
+								}else if(change_posi == '6'){
+									ho_ss = change_back_num_name;
+									ho_ss_no = change_entry_no;
+								}else if(change_posi == '7'){
+									ho_lf = change_back_num_name;
+									ho_lf_no = change_entry_no;
+								}else if(change_posi == '8'){
+									ho_cf = change_back_num_name;
+									ho_cf_no = change_entry_no;
+								}else if(change_posi == '9'){
+									ho_rf = change_back_num_name;
+									ho_rf_no = change_entry_no;
+								}
+							}else if(who_change == "pic"){
+								save_data[save_timing].push(aw_p);
+								save_hitter('57');
+								hitter_ball_count = "";
+								if(change_turn >=0 && change_turn <=8){
+									aw_hit_array[change_turn] = change_back_num_name;
+									aw_hitter_no[change_turn] = change_entry_no;
+								}
+								aw_p = change_back_num_name;
+								aw_p_no = change_entry_no;
+							}
+						}
+						connect_save();
+						who_change = "";
+						in_player = "";
+						save_hoaw = "";
+						change_turn = "";
+						change_posi = "";
+						out_player = "";
+						change_entry_no = "";
+						change_back_num_name = "";
+						change_text();
+						map_btn_change();
+					},
+					error: function(data) {
+					
+					}
+				});
+			}
+		function where_hit(how, base) {
+			if(how == 'homerun'){
+				text_contents = "공이 떨어진 범위를 선택해 주세요";
+				main_text(text_contents);
+				document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+				document.getElementById('lhr').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='homerun(\"3\")'>좌 월</a>";
+				document.getElementById('chr').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='homerun(\"2\")'>중 월</a>";
+				document.getElementById('rhr').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='homerun(\"1\")'>우 월</a>";
+				document.getElementById('chit').innerHTML = "";
+				document.getElementById('cfa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='homerun(\"4\")'>그라운드</a>";
+				document.getElementById('lfa').innerHTML = "";
+				document.getElementById('rfa').innerHTML = "";
+				document.getElementById('ssa').innerHTML = "";
+				document.getElementById('b2a').innerHTML = "";
+				document.getElementById('b3a').innerHTML = "";
+				document.getElementById('b1a').innerHTML = "";
+				document.getElementById('pica').innerHTML = "";
+				document.getElementById('cata').innerHTML = "";
+			}else if(how == 'hit'){
+				text_contents = "공이 떨어진 범위를 선택해 주세요";
+				main_text(text_contents);
+				document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+				document.getElementById('lhr').innerHTML = "";
+				document.getElementById('chr').innerHTML = "";
+				document.getElementById('rhr').innerHTML = "";
+				document.getElementById('chit').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hit(\"" + base + "\",\"2\")'>중 내야</a>";
+				document.getElementById('cfa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hit(\"" + base + "\",\"5\")'>중 전</a>";
+				document.getElementById('lfa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hit(\"" + base + "\",\"6\")'>좌 전</a>";
+				document.getElementById('rfa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hit(\"" + base + "\",\"4\")'>우 전</a>";
+				document.getElementById('ssa').innerHTML = "";
+				document.getElementById('b2a').innerHTML = "";
+				document.getElementById('b3a').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hit(\"" + base + "\",\"3\")'>좌 내야</a>";
+				document.getElementById('b1a').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hit(\"" + base + "\",\"1\")'>우 내야</a>";
+				document.getElementById('pica').innerHTML = "";
+				document.getElementById('cata').innerHTML = "";
+			}else if(how == 'ground_out'){
+				text_contents = "공이 떨어진 범위를 선택해 주세요";
+				main_text(text_contents);
+				document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+				document.getElementById('lhr').innerHTML = "";
+				document.getElementById('chr').innerHTML = "";
+				document.getElementById('rhr').innerHTML = "";
+				document.getElementById('chit').innerHTML = "";
+				document.getElementById('cfa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='ground_out(\"" + base + "\",\"cfgo\",\"106\")'>중견수</a>";
+				document.getElementById('lfa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='ground_out(\"" + base + "\",\"lfgo\",\"107\")'>좌익수</a>";
+				document.getElementById('rfa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='ground_out(\"" + base + "\",\"rfgo\",\"105\")'>우익수</a>";
+				document.getElementById('ssa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='ground_out(\"" + base + "\",\"ssgo\",\"104\")'>유격수</a>";
+				document.getElementById('b2a').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='ground_out(\"" + base + "\",\"2bgo\",\"102\")'>2루수</a>";
+				document.getElementById('b3a').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='ground_out(\"" + base + "\",\"3bgo\",\"103\")'>3루수</a>";
+				document.getElementById('b1a').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='ground_out(\"" + base + "\",\"1bgo\",\"101\")'>1루수</a>";
+				document.getElementById('pica').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='ground_out(\"" + base + "\",\"pgo\",\"109\")'>투수</a>";
+				document.getElementById('cata').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='ground_out(\"" + base + "\",\"cgo\",\"108\")'>포수</a>";
+			}else if(how == 'fly_out'){
+				text_contents = "공이 떨어진 범위를 선택해 주세요";
+				main_text(text_contents);
+				document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+				document.getElementById('lhr').innerHTML = "";
+				document.getElementById('chr').innerHTML = "";
+				document.getElementById('rhr').innerHTML = "";
+				document.getElementById('chit').innerHTML = "";
+				document.getElementById('cfa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"cffo\",\"116\")'>중견수</a>";
+				document.getElementById('lfa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"lffo\",\"117\")'>좌익수</a>";
+				document.getElementById('rfa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"rffo\",\"115\")'>우익수</a>";
+				document.getElementById('ssa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"ssfo\",\"114\")'>유격수</a>";
+				document.getElementById('b2a').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"2bfo\",\"112\")'>2루수</a>";
+				document.getElementById('b3a').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"3bfo\",\"113\")'>3루수</a>";
+				document.getElementById('b1a').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"1bfo\",\"111\")'>1루수</a>";
+				document.getElementById('pica').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"pfo\",\"119\")'>투수</a>";
+				document.getElementById('cata').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"cfo\",\"118\")'>포수</a>";
+			}else if(how == 'foul_fly_out'){
+				text_contents = "공이 떨어진 범위를 선택해 주세요";
+				main_text(text_contents);
+				document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+				document.getElementById('rifpoa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"rifpo\",\"121\")'>우 내야</a>";
+				document.getElementById('lifpoa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"lifpo\",\"122\")'>좌 내야</a>";
+				document.getElementById('rofpoa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"rofpo\",\"123\")'>우 외야</a>";
+				document.getElementById('lofpoa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"lofpo\",\"124\")'>좌 외야</a>";
+				document.getElementById('lhr').innerHTML = "";
+				document.getElementById('chr').innerHTML = "";
+				document.getElementById('rhr').innerHTML = "";
+				document.getElementById('chit').innerHTML = "";
+				document.getElementById('cfa').innerHTML = "";
+				document.getElementById('lfa').innerHTML = "";
+				document.getElementById('rfa').innerHTML = "";
+				document.getElementById('ssa').innerHTML = "";
+				document.getElementById('b2a').innerHTML = "";
+				document.getElementById('b3a').innerHTML = "";
+				document.getElementById('b1a').innerHTML = "";
+				document.getElementById('pica').innerHTML = "";
+				document.getElementById('cata').innerHTML = "";
+			}else if(how == 's_hit'){
+				text_contents = "공이 떨어진 범위를 선택해 주세요";
+				main_text(text_contents);
+				document.getElementById('back_btn').innerHTML = "<a href='javascript:;' type='button' class='btn btn-md btn-danger' style='width:100%'>실행취소</a>";
+				document.getElementById('rifpoa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"rifsh\",\"171\")'>우 내야 F</a>";
+				document.getElementById('lifpoa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"lifsh\",\"172\")'>좌 내야 F</a>";
+				document.getElementById('rofpoa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"rofsh\",\"173\")'>우 외야 F</a>";
+				document.getElementById('lofpoa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"lofsh\",\"174\")'>좌 외야 F</a>";
+				document.getElementById('lhr').innerHTML = "";
+				document.getElementById('chr').innerHTML = "";
+				document.getElementById('rhr').innerHTML = "";
+				document.getElementById('chit').innerHTML = "";
+				document.getElementById('cfa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"cfsh\",\"166\")'>중견수</a>";
+				document.getElementById('lfa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"lfsh\",\"167\")'>좌익수</a>";
+				document.getElementById('rfa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"rfsh\",\"165\")'>우익수</a>";
+				document.getElementById('ssa').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"sssh\",\"164\")'>유격수</a>";
+				document.getElementById('b2a').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"2bsh\",\"162\")'>2루수</a>";
+				document.getElementById('b3a').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"3bsh\",\"163\")'>3루수</a>";
+				document.getElementById('b1a').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"1bsh\",\"161\")'>1루수</a>";
+				document.getElementById('pica').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"psh\",\"169\")'>투수</a>";
+				document.getElementById('cata').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' onclick='hitter_out(\"csh\",\"168\")'>포수</a>";
+			}
+		}
+		
+		function map_btn_change(){
+				document.getElementById('rifpoa').innerHTML = "";
+				document.getElementById('lifpoa').innerHTML = "";
+				document.getElementById('rofpoa').innerHTML = "";
+				document.getElementById('lofpoa').innerHTML = "";
+				document.getElementById('lhr').innerHTML = "";
+				document.getElementById('chr').innerHTML = "";
+				document.getElementById('rhr').innerHTML = "";
+				document.getElementById('chit').innerHTML = "";
+				document.getElementById('cfa').innerHTML = "";
+				document.getElementById('lfa').innerHTML = "";
+				document.getElementById('rfa').innerHTML = "";
+				document.getElementById('ssa').innerHTML = "";
+				document.getElementById('b2a').innerHTML = "";
+				document.getElementById('b3a').innerHTML = "";
+				document.getElementById('b1a').innerHTML = "";
+				document.getElementById('cata').innerHTML = "";
+				if(now_1base == ""){
+					document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>1루</a>";
+				}else{
+					document.getElementById('base1').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_1base +"</a>";
+				}
+				if(now_2base == ""){
+					document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>2루</a>";
+				}else{
+					document.getElementById('base2').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_2base +"</a>";
+				}
+				if(now_3base == ""){
+					document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-default naming'>3루</a>";
+				}else{
+					document.getElementById('base3').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-warning naming'>"+ now_3base +"</a>";
+				}
+			if(hoaw == 0){
+				document.getElementById('pica').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='pic' onClick='change_player(\"pic\")'>"+ ho_p +"</a>";
+			}else{
+				document.getElementById('pica').innerHTML = "<a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='pic' onClick='change_player(\"pic\")'>"+ aw_p +"</a>";
+			}
+		}
+		function connect_save(){
+			save_timing = save_timing + 1;
+			save_ball = "";
+			if(save_data[save_timing-2][0] == 1){
+				for(var i=3; i<save_data[save_timing-2].length; i++) {
+					if(i == 3){
+						save_ball = save_data[save_timing-2][i];
+					}else{
+						save_ball = save_ball + "|" + save_data[save_timing-2][i];
+					}
+				}
+			}else if(save_data[save_timing-2][0] == 2){
+				for(var i=2; i<save_data[save_timing-2].length; i++) {
+					if(i == 2){
+						save_ball = save_data[save_timing-2][i];
+					}else{
+						save_ball = save_ball + "|" + save_data[save_timing-2][i];
+					}
+				}
+			}
+			save_data[save_timing] = [2, hoaw, save_ball];
+			
+		}
+		function end_conment(){
+			if (confirm("정말 경기를 종료 하시겠습니까?") == true){
+				save_pitcher(0);
+				save_pitcher(1);
+				document.getElementById('ballcount').style.display = "none";
+				document.getElementById('groundmap').style.display = "none";
+				document.getElementById('option_contents').innerHTML = "<form name='end_game'>" +
+				"<select class='form-control' id='end_game_state' name='end_game_state' style='margin-bottom:6px'>" +
+				"<option value='1'>정규 이닝 종료</option>" +
+				"<option value='2'>3회 콜드 종료</option>" +
+				"<option value='3'>5회 콜드 종료</option>" +
+				"<option value='4'>강우 콜드 종료</option>" +
+				"<option value='5'>심판 판정 종료 (Home 몰수승)</option>" +
+				"<option value='6'>심판 판정 종료 (Away 몰수승)</option>" +
+				"<option value='7'>경기 취소</option>" +
+				"</select>" +
+				"</form>";
+				document.getElementById('first_contents').innerHTML = "<div class='col-xs-12 col-sm-12 col-md-12' style='padding:1px'>" + 
+					"<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='end_play()'>다음</a>" +
+				"</div>";
+				document.getElementById('second_contents').style.display = "none";
+				document.getElementById('end_contents').style.display = "none";
+			}else{
+				return;
+			}
+		}
+		function end_play(){
+			state = document.end_game.end_game_state.value;
+			$.ajax({
+				type: 'POST',
+				url: 'save_play.php',
+				data: {
+					play: play_no,
+					home_team_no : "<? echo $home_team_no;?>",
+					home_team_score : ho_r,
+					home_team_hit : ho_h,
+					home_team_b4 : ho_b,
+					home_team_error : ho_e,
+					away_team_no : "<? echo $away_team_no;?>",
+					away_team_score : aw_r,
+					away_team_hit : aw_h,
+					away_team_b4 : aw_b,
+					away_team_error : aw_e,
+					start_time : "<? echo $start_time;?>",
+					end_time : "<? echo date("Y-m-d H:i:s");?>",
+					inning : inning,
+					states : state
+				},
+				dataTpye: 'text',
+				success: function(data){
+					//alert(data)
+					win_pitcher_list = "";
+					lose_pitcher_list = "";
+					save_pitcher_list = "";
+					hold_pitcher_list = "";
+					pitchers_data = data.split('|');
+					for(var i=0; i<pitchers_data.length; i++) {
+						pitcher_info = pitchers_data[i].split('/');
+						if(state <= 4){
+							if(ho_r > aw_r){
+								if(pitcher_info[2] == 1){
+									win_pitcher_list = win_pitcher_list + "<div class='col-xs-6 col-sm-6 col-md-6'><input type='radio' id='pitcher_win_"+i+"' name='pitcher_win' value='"+pitcher_info[0]+"' class='custom-control-input'><label for='pitcher_win_"+i+"'>"+pitcher_info[1]+"</label></div>";
+									save_pitcher_list = save_pitcher_list + "<div class='col-xs-6 col-sm-6 col-md-6'><input type='radio' id='pitcher_save_"+i+"' name='pitcher_save' value='"+pitcher_info[0]+"' class='custom-control-input'><label for='pitcher_save_"+i+"'>"+pitcher_info[1]+"</label></div>";
+								}else{
+									lose_pitcher_list = lose_pitcher_list + "<div class='col-xs-6 col-sm-6 col-md-6'><input type='radio' id='pitcher_lose_"+i+"' name='pitcher_lose' value='"+pitcher_info[0]+"' class='custom-control-input'><label for='pitcher_lose_"+i+"'>"+pitcher_info[1]+"</label></div>";
+								}
+							}else if(ho_r < aw_r){
+								if(pitcher_info[2] == 1){
+									lose_pitcher_list = lose_pitcher_list + "<div class='col-xs-6 col-sm-6 col-md-6'><input type='radio' id='pitcher_lose_"+i+"' name='pitcher_lose' value='"+pitcher_info[0]+"' class='custom-control-input'><label for='pitcher_lose_"+i+"'>"+pitcher_info[1]+"</label></div>";
+								}else{
+									win_pitcher_list = win_pitcher_list + "<div class='col-xs-6 col-sm-6 col-md-6'><input type='radio' id='pitcher_win_"+i+"' name='pitcher_win' value='"+pitcher_info[0]+"' class='custom-control-input'><label for='pitcher_win_"+i+"'>"+pitcher_info[1]+"</label></div>";
+									save_pitcher_list = save_pitcher_list + "<div class='col-xs-6 col-sm-6 col-md-6'><input type='radio' id='pitcher_save_"+i+"' name='pitcher_save' value='"+pitcher_info[0]+"' class='custom-control-input'><label for='pitcher_save_"+i+"'>"+pitcher_info[1]+"</label></div>";
+								}
+							}
+						}else if(state == 5){
+							if(pitcher_info[2] == 1){
+								win_pitcher_list = win_pitcher_list + "<div class='col-xs-6 col-sm-6 col-md-6'><input type='radio' id='pitcher_win_"+i+"' name='pitcher_win' value='"+pitcher_info[0]+"' class='custom-control-input'><label for='pitcher_win_"+i+"'>"+pitcher_info[1]+"</label></div>";
+								save_pitcher_list = save_pitcher_list + "<div class='col-xs-6 col-sm-6 col-md-6'><input type='radio' id='pitcher_save_"+i+"' name='pitcher_save' value='"+pitcher_info[0]+"' class='custom-control-input'><label for='pitcher_save_"+i+"'>"+pitcher_info[1]+"</label></div>";
+							}else{
+								lose_pitcher_list = lose_pitcher_list + "<div class='col-xs-6 col-sm-6 col-md-6'><input type='radio' id='pitcher_lose_"+i+"' name='pitcher_lose' value='"+pitcher_info[0]+"' class='custom-control-input'><label for='pitcher_lose_"+i+"'>"+pitcher_info[1]+"</label></div>";
+							}
+						}else if(state == 6){
+							if(pitcher_info[2] == 1){
+								lose_pitcher_list = lose_pitcher_list + "<div class='col-xs-6 col-sm-6 col-md-6'><input type='radio' id='pitcher_lose_"+i+"' name='pitcher_lose' value='"+pitcher_info[0]+"' class='custom-control-input'><label for='pitcher_lose_"+i+"'>"+pitcher_info[1]+"</label></div>";
+							}else{
+								win_pitcher_list = win_pitcher_list + "<div class='col-xs-6 col-sm-6 col-md-6'><input type='radio' id='pitcher_win_"+i+"' name='pitcher_win' value='"+pitcher_info[0]+"' class='custom-control-input'><label for='pitcher_win_"+i+"'>"+pitcher_info[1]+"</label></div>";
+								save_pitcher_list = save_pitcher_list + "<div class='col-xs-6 col-sm-6 col-md-6'><input type='radio' id='pitcher_save_"+i+"' name='pitcher_save' value='"+pitcher_info[0]+"' class='custom-control-input'><label for='pitcher_save_"+i+"'>"+pitcher_info[1]+"</label></div>";
+							}
+						}
+						hold_pitcher_list = hold_pitcher_list + "<div class='col-xs-6 col-sm-6 col-md-6'><input type='checkbox' id='pitcher_hold_"+i+"' name='pitcher_hold[]' value='"+pitcher_info[0]+"' class='custom-control-input'><label for='pitcher_hold_"+i+"'>"+pitcher_info[1]+"</label></div>";
+					}
+					i = i + 1 ;
+					win_pitcher_list = win_pitcher_list + "<div class='col-xs-6 col-sm-6 col-md-6'><input type='radio' id='pitcher_win_"+i+"' name='pitcher_win' value='0' class='custom-control-input'><label for='pitcher_win_"+i+"'>없음</label></div>";
+					lose_pitcher_list = lose_pitcher_list + "<div class='col-xs-6 col-sm-6 col-md-6'><input type='radio' id='pitcher_lose_"+i+"' name='pitcher_lose' value='0' class='custom-control-input'><label for='pitcher_lose_"+i+"'>없음</label></div>";
+					save_pitcher_list = save_pitcher_list + "<div class='col-xs-6 col-sm-6 col-md-6'><input type='radio' id='pitcher_save_"+i+"' name='pitcher_save' value='0' class='custom-control-input'><label for='pitcher_save_"+i+"'>없음</label></div>";
+					if(state <= 4){
+						if(ho_r == aw_r){
+							document.getElementById('option_contents').innerHTML = "<form name='pitcher_result' action='save_pitcher_result.php' method='post'><div class='row col-xs-12 col-sm-12 col-md-12 form-group'>" +
+								"<label class='col-xs-3 col-sm-3 col-md-3 form-group' for='pitcher_hold' style='margin-bottom:0px'>홀드</label><div class='row col-xs-9 col-sm-9 col-md-9'>" + hold_pitcher_list + "</div>" +
+								"<input type='hidden' value='"+ play_no +"' name='play'>" +
+								"<input type='submit' value='경기 종료' class='btn btn-primary' style='width:100%'>" +
+							"</div></form>";
+						}else{
+							document.getElementById('option_contents').innerHTML = "<form name='pitcher_result' action='save_pitcher_result.php' method='post'><div class='row col-xs-12 col-sm-12 col-md-12 form-group'>" + 
+								"<label class='col-xs-3 col-sm-3 col-md-3 form-group' for='pitcher_win' style='margin-bottom:0px'>승리</label><div class='row col-xs-9 col-sm-9 col-md-9'>" + win_pitcher_list + "</div>" +
+								"<label class='col-xs-3 col-sm-3 col-md-3 form-group' for='pitcher_lose' style='margin-bottom:0px'>패배</label><div class='row col-xs-9 col-sm-9 col-md-9'>" + lose_pitcher_list + "</div>" +
+								"<label class='col-xs-3 col-sm-3 col-md-3 form-group' for='pitcher_save' style='margin-bottom:0px'>세이브</label><div class='row col-xs-9 col-sm-9 col-md-9'>" + save_pitcher_list + "</div>" +
+								"<label class='col-xs-3 col-sm-3 col-md-3 form-group' for='pitcher_hold' style='margin-bottom:0px'>홀드</label><div class='row col-xs-9 col-sm-9 col-md-9'>" + hold_pitcher_list + "</div>" +
+								"<input type='hidden' value='"+ play_no +"' name='play'>"+
+								"<input type='submit' value='경기 종료' class='btn btn-primary' style='width:100%'>" +
+							"</div></form>";
+						}
+					}else if(state <= 6){
+						document.getElementById('option_contents').innerHTML = "<form name='pitcher_result' action='save_pitcher_result.php' method='post'><div class='row col-xs-12 col-sm-12 col-md-12 form-group'>" + 
+							"<label class='col-xs-3 col-sm-3 col-md-3 form-group' for='pitcher_win' style='margin-bottom:0px'>승리</label><div class='row col-xs-9 col-sm-9 col-md-9'>" + win_pitcher_list + "</div>" +
+							"<label class='col-xs-3 col-sm-3 col-md-3 form-group' for='pitcher_lose' style='margin-bottom:0px'>패배</label><div class='row col-xs-9 col-sm-9 col-md-9'>" + lose_pitcher_list + "</div>" +
+							"<label class='col-xs-3 col-sm-3 col-md-3 form-group' for='pitcher_save' style='margin-bottom:0px'>세이브</label><div class='row col-xs-9 col-sm-9 col-md-9'>" + save_pitcher_list + "</div>" +
+							"<label class='col-xs-3 col-sm-3 col-md-3 form-group' for='pitcher_hold' style='margin-bottom:0px'>홀드</label><div class='row col-xs-9 col-sm-9 col-md-9'>" + hold_pitcher_list + "</div>" +
+							"<input type='hidden' value='"+ play_no +"' name='play'>" +
+							"<input type='submit' value='경기 종료' class='btn btn-primary' style='width:100%'>" +
+						"</div></form>";
+					}
+					document.getElementById('first_contents').style.display = "none";
+				},
+				error: function(data) {
+				
+				}
+			});
+		}
+	</script>
+</head>
+<body onload="start_game()">
+	<table class="recode">
+		<tr>
+			<th>-</th>
+			<th>1</th>
+			<th>2</th>
+			<th>3</th>
+			<th>4</th>
+			<th>5</th>
+			<th>6</th>
+			<th>7</th>
+			<th>8</th>
+			<th>9</th>
+			<th>R</th>
+			<th>H</th>
+			<th>E</th>
+			<th>B</th>
+		</tr>
+		<tr>
+			<th>A</th>
+			<td><div id="inning_1_aw">0</div></td>
+			<td><div id="inning_2_aw"></div></td>
+			<td><div id="inning_3_aw"></div></td>
+			<td><div id="inning_4_aw"></div></td>
+			<td><div id="inning_5_aw"></div></td>
+			<td><div id="inning_6_aw"></div></td>
+			<td><div id="inning_7_aw"></div></td>
+			<td><div id="inning_8_aw"></div></td>
+			<td><div id="inning_9_aw"></div></td>
+			<td><div id="aw_r">0</div></td>
+			<td><div id="aw_h">0</div></td>
+			<td><div id="aw_e">0</div></td>
+			<td><div id="aw_b">0</div></td>
+		</tr>
+		<tr>
+			<th>H</th>
+			<td><div id="inning_1_ho"></div></td>
+			<td><div id="inning_2_ho"></div></td>
+			<td><div id="inning_3_ho"></div></td>
+			<td><div id="inning_4_ho"></div></td>
+			<td><div id="inning_5_ho"></div></td>
+			<td><div id="inning_6_ho"></div></td>
+			<td><div id="inning_7_ho"></div></td>
+			<td><div id="inning_8_ho"></div></td>
+			<td><div id="inning_9_ho"><a href='javascript:;' type='button' class='btn btn-sm btn-danger' style='width:100%;padding:0px' onclick='end_conment();'>x</a></div></td>
+			<td><div id="ho_r">0</div></td>
+			<td><div id="ho_h">0</div></td>
+			<td><div id="ho_e">0</div></td>
+			<td><div id="ho_b">0</div></td>
+		</tr>		
+	</table>
+	<table class="ballcount" id="ballcount">
+		<tr>
+			<th>S</th>
+			<td>
+				<img src="images/scircle.png" id="fscount" style="display:none">
+				<img src="images/scircle.png" id="sscount" style="display:none">
+			</td>
+			<th>B</th>
+			<td>
+				<img src="images/bcircle.png" id="fbcount" style="display:none">
+				<img src="images/bcircle.png" id="sbcount" style="display:none">
+				<img src="images/bcircle.png" id="tbcount" style="display:none">
+			</td>
+			<th>O</th>
+			<td>
+				<img src="images/ocircle.png" id="focount" style="display:none">
+				<img src="images/ocircle.png" id="socount" style="display:none">
+			</td>
+			<th>P</th>
+			<td><div id="pitcher_count">0</div></td>
+		</tr>
+	</table>
+	<div class="row homerunzone">
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-2 groundcell" id='lhr'></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-2 groundcell" id='chr'></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-2 groundcell" id='rhr'></div>
+		<div class="col-xs-1 groundcell"></div>
+	</div>
+	<div class="row groundmap" id="groundmap">
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<br>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-2 groundcell" id='cfa'><a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='cf'>중견수</a></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<br>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<br>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-2 groundcell" id='lfa'><a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='lf'>좌익수</a></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-2 groundcell" id='chit'></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-2 groundcell" id='rfa'><a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='rf'>우익수</a></div>
+		<div class="col-xs-1 groundcell"></div>
+		<br>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-2 groundcell" id='ssa'><a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='ss'>유격수</a></div>
+		<div class="col-xs-2 groundcell" id='b2a'><a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='b2'>2루수</a></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<br>
+		<div class="col-xs-2 groundcell" id='lofpoa'></div>
+		<div class="col-xs-2 groundcell" id='b3a'><a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='b3'>3루수</a></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-2 groundcell" id="base2" style='font-size:80%'>2루</div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-2 groundcell"id='b1a'><a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='b1'>1루수</a></div>
+		<div class="col-xs-2 groundcell" id='rofpoa'></div>
+		<br>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-2 groundcell" id="base3" style='font-size:80%'>3루</div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-2 groundcell" id="base1" style='font-size:80%'>1루</div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<br>
+		<div class="col-xs-1 groundcell" id=""></div>
+		<div class="col-xs-1 groundcell" id=""></div>
+		<div class="col-xs-2 groundcell" id='lifpoa'></div>
+		<div class="col-xs-1 groundcell" id=""></div>
+		<div class="col-xs-2 groundcell" id='pica'><a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='pic'>투수</a></div>
+		<div class="col-xs-1 groundcell" id=""></div>
+		<div class="col-xs-2 groundcell" id='rifpoa'></div>
+		<div class="col-xs-1 groundcell" id=""></div>
+		<div class="col-xs-1 groundcell" id=""></div>
+		<br>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<br>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-2 groundcell" id='cata'><a href='javascript:;' type='button' class='btn btn-sm btn-primary naming' id='cat'>포수</a></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<br>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-2 groundcell" id='hita'>타자</div><!-- 타자를 눌러야지 where_hit 가능-->
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<br>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-10 groundcell" style="background-color:#ffffff;margin-top:0px"><h5 style="text-align:center;margin-bottom:10px" id='now'></h5></div>
+		<div class="col-xs-1 groundcell"></div>
+
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-10 groundcell"><h6 style="text-align:center;margin-bottom:10px" id='nowf'></h6></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-1 groundcell"></div>
+		<div class="col-xs-10 groundcell"><h6 style="text-align:center;margin-bottom:10px" id='nowb'></h6></div>
+		<div class="col-xs-1 groundcell"></div>
+	</div>
+	<div class='row' style='margin:0px 10px 6px 10px' id='option_contents'>
+		<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>
+			<!--<a href='javascript:;' type='button' class='btn btn-md btn-success' style='width:100%' onclick='cancle()'>상황취소</a>-->
+		</div>
+		<div class="col-xs-3 col-sm-3 col-md-3" style="padding:1px">
+			<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='change_text()'>타자</a>
+		</div>
+		<div class="col-xs-3 col-sm-3 col-md-3" style="padding:1px">
+			<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='change_text("runner")'>주자</a>
+		</div>
+		<div class="col-xs-3 col-sm-3 col-md-3" style="padding:1px" id='back_btn'>
+			<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='back_data()'>실행취소</a>
+		</div>
+	</div>
+	<div class='row' style='margin:0px 10px 6px 10px' id='first_contents'>
+		<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>
+			<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='strike_p()' id='strike_btn'>Strike</a>
+		</div>
+		<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>
+			<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='ball_p()' id='ball_btn'>Ball</a>
+		</div>
+		<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>
+			<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='foul_p()'>Foul</a>
+		</div>
+		<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>
+			<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_player("hitter")'>교체</a>
+		</div>
+	</div>
+	<div class='row' style='margin:0px 10px 6px 10px' id='second_contents'>
+		<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>
+			<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents("end","hit")'>안타</a>
+		</div>
+		<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>
+			<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents("end","out")'>아웃</a>
+		</div>
+		<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px' id='error_btn'>
+			<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onclick='error_p("check")'>Error</a>
+		</div>
+		<div class='col-xs-3 col-sm-3 col-md-3' style='padding:1px'>
+			<a href='javascript:;' type='button' class='btn btn-md btn-primary' style='width:100%' onClick='change_contents("end","etc")'>기타</a>
+		</div>
+	</div>
+	<div class='row' style='margin:0px 10px 0px 10px' id='end_contents'></div>
+</body>
+</html>

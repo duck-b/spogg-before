@@ -1,0 +1,121 @@
+<!DOCTYPE HTML>
+<html>
+<? 	
+	$notice= $_GET["notice"];
+	if($notice == 'free'){
+		$nav = "board";
+		$main = "자유 게시판";
+		$title = "<div style='color:red'>※ 자유게시판 공지사항 필독</div>";
+		$contents_plus = "";
+		$list = "board.html?board=free";
+		$write = "board.html?board=write&kind=free";
+	}else if($notice == 'fa'){
+		$nav = "board";
+		$main = "FA 시장";
+		$title = "<div style='color:red'>※ FA 시장 공지사항 필독</div>";
+		$contents_plus = "FA 시장<br><br>
+자신을 소개할 수 있는 게시판입니다.<br><br>
+이 곳을 통해, 소속팀이 없는 분들이 함께 야구할 수 있는 팀원들을 찾을 수 있습니다.<br><br>
+더욱 자유롭게 자신을 홍보해보시길 바랍니다.<br><hr>";
+		$list = "board.html?board=fa";
+		$write = "board.html?board=write&kind=fa";
+	}else if($notice == 'hgame'){
+		$nav = "game";
+		$main = "일반 경기";
+		$title = "<div style='color:red'>※ 일반경기 공지사항 필독</div>";
+		$contents_plus = "일반 경기<br><br>
+일반경기 게시판은 구장을 보유한 팀이 경기할 상대팀을 구하는 게시판입니다.<br><br>
+1 ) 경기(글쓰기)는 감독 또는 코치 권한 보유자만 작성 할 수 있습니다.<br><br>
+2 ) 자유내용에 필요한 사항 (준비물, 심판여부) 등 구체적으로 작성하면 원활한 경기를 하는데 더욱 도움이 됩니다.<br><hr>";
+		$list = "game.html?game=hgame";
+		$write = "game.html?game=write&kind=hgame";
+	}else if($notice == 'agame'){
+		$nav = "game";
+		$main = "일반 경기 (원정)";
+		$title = "<div style='color:red'>※ 일반경기 (원정) 공지사항 필독</div>";
+		$contents_plus = "일반 경기 (원정)<br><br>
+일반경기(원정)게시판은 구장을 보유하고 있지 않은 팀이 경기할 상대팀을 구하는 게시판입니다.<br><br>
+1 ) 경기(글쓰기)는 감독 또는 코치 권한 보유자만 작성 할 수 있습니다.<br><br>
+2 ) 자유내용에 필요한 사항 (준비물, 심판여부) 등 구체적으로 작성하면 원활한 경기를 하는데 더욱 도움이 됩니다.<br><hr>";
+		$list = "game.html?game=agame";
+		$write = "game.html?game=write&kind=agame";
+	}else if($notice == 'merc'){
+		$nav = "game";
+		$main = "용병 경기";
+		$title = "<div style='color:red'>※ 용병경기 공지사항 필독</div>";
+		$contents_plus = "용병 경기<br><br>
+용병경기 게시판은 일정한 참가비를 통해 자신이 원하는 포지션에 참가하여 경기를 할 수 있는 게시판입니다.<br><br>
+1 ) 참가비는 경기 참가 선수당 가격을 작성 합니다.<br><br>
+2 ) 자유내용에 필요한 사항 (준비물, 심판여부) 등 구체적으로 작성하면 원활한 경기를 하는데 더욱 도움이 됩니다.<br><hr>";
+		$list = "game.html?game=merc";
+		$write = "game.html?game=write&kind=merc";
+	}else if($notice == 'stadium'){
+		$nav = "game";
+		$main = "구장 양도";
+		$title = "<div style='color:red'>※ 구장양도 공지사항 필독</div>";
+		$contents_plus = "구장 양도<br><br>
+구장양도 게시판은 구장을 보유한 팀이 구장을 양도할 때 사용할 수 있는 게시판입니다.<br><hr>";
+		$list = "game.html?game=stadium";
+		$write = "game.html?game=write&kind=stadium";
+	}else{
+		echo "<script>alert('잘못된 접근입니다.');";
+		echo "window.location.replace('index.html');</script>";
+	}
+	$contents = "안녕하세요. 트라이아웃입니다.<br><br>
+트라이아웃 운영팀에서 다음과 같이 게시판 운영정책을 고지합니다.<br><br>
+FA게시판, 경기등록 게시판에 등록되어야 할 게시물은 해당 게시판을 이용해주시길 바랍니다.<br><br>
+게시판 목적에 맞는 사용 부탁드립니다.<br><br>
+<b style='color:red'>※ 규칙 위반 시 공지 사항</b><br><br>
+▶ 특별한 공지없이 게시물 삭제<br><br>
+- 동일 중복 게시물<br><br>
+- 관리자 판단에 의해, 게시판 성격에 맞지 않는 게시물<br><br>
+- 설문,광고,판매 등 상업적인 내용이 있는 게시물<br><br>
+- 기타 분쟁 또는 논란이 유발될 수 있는 게시물<br><hr>";
+	include("inc/_head.html");?>
+<body>
+	<? include("inc/_header.html");?>
+	<section class="site-section">
+		<div class="container">
+			<div class="row">
+				<div class="col-lg-2"></div>
+				<div class="col-lg-8 col-md-12 mb-5 element-animate">
+					<div class="row">
+						<div class="col-md-12">
+							<h3 class="mb-5" style="vertical-align: middle;"><? echo $main;?></h3>
+						</div>
+						<table class="table table-bordered" style="vertical-align: middle;">
+							<thead>
+								<tr>
+									<th colspan="1" style="width:10%">제목</th>
+									<td colspan="1" style="width:40%"><? echo $title;?></td>
+									<th colspan="1" style="width:10%">작성자</th>
+									<td colspan="1" style="width:40%">TRYOUT (관리자)</td>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td colspan="4" style="width:100%">
+										<p><? echo $contents.$contents_plus;?></p>
+										<a class="btn btn-primary btn-sm" href="index.html#question" role="button">문의 하기</a>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+						<div class="col-md-8"></div>
+						<div class="col-md-2">
+							<a class="btn btn-primary" href="<? echo $list;?>" role="button">목&nbsp;&nbsp;&nbsp;록</a>
+						</div>
+						<div class="col-md-2">
+							<a class="btn btn-primary" href="<? echo $write;?>" role="button">글쓰기</a>
+						</div>
+					</div>
+				</div>
+				<div class="col-lg-2"></div>
+			</div>
+		</div>
+	</section>
+	<? include("inc/_footer.html");?>
+	
+    <? include("inc/_script.html");?>
+  </body>
+</html>

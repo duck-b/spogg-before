@@ -1,0 +1,94 @@
+<!DOCTYPE HTML>
+<?
+	include "dbconn.php";
+?>
+<html>
+	<body>
+		<?if($manager_check_row['class'] == 1){?>
+		<table class="table">
+			<thead>
+				<tr>
+					<th scope="col-2" style="width:20%">Name</th>
+					<th scope="col-2" style="width:80%">Manage</th>
+				</tr>
+			</thead>
+			<tbody>
+				<? $members_result = mysqli_query($conn,"SELECT * FROM team_members where team='$no' AND (states ='1' OR states = '2')");
+					while($members_row = mysqli_fetch_array($members_result)){
+					$member_player_no = $members_row['player'];
+					$members_player_result = mysqli_query($conn,"SELECT * FROM player where no='$member_player_no'");
+					$members_player_row = mysqli_fetch_array($members_player_result);
+					$member_user_no = $members_player_row['user'];
+					$member_user_result = mysqli_query($conn,"SELECT * FROM user where no='$member_user_no'");
+					$member_user_row = mysqli_fetch_array($member_user_result);
+					?>
+				<tr>
+					<td style="vertical-align: middle;"><a href="javascript:" onclick="new_info_page(<? echo $members_row['no']?>)"><? echo $member_user_row['name'];?></a></td>
+					<td style="vertical-align: middle;">
+						<!-- 감독 일때 팀원 승급 관리-->
+						<? if($members_row['class'] == 1) {?>
+						<a class="btn btn-secondary disabled" href="#" role="button">감독</a>
+						<? } elseif($members_row['class'] == 2) {?>
+						<a class="btn btn-primary" href="javascript:;" onclick="members_event('<?echo $members_row['no'];?>','위임(본인은 선수가 됩니다)','c1up')" role="button">감독</a>
+						<a class="btn btn-secondary disabled" href="#" role="button">코치</a>
+						<a class="btn btn-primary" href="javascript:;" onclick="members_event('<?echo $members_row['no'];?>','수정','c3dw')" role="button">선수</a>
+						<? } elseif($members_row['class'] == 3) {?>
+						<a class="btn btn-primary" href="javascript:;" onclick="members_event('<?echo $members_row['no'];?>','위임(본인은 선수가 됩니다)','c1up')" role="button">감독</a>
+						<a class="btn btn-primary" href="javascript:;" onclick="members_event('<?echo $members_row['no'];?>','수정','c2up')" role="button">코치</a>
+						<a class="btn btn-secondary disabled" href="#" role="button">선수</a>
+						<? } ?>
+						<!-- 감독 일때 신청(수락) / 추방 관리-->
+						<? if($members_row['states'] == 1 && $members_row['class'] != 1){?>
+						<a class="btn btn-danger" href="javascript:;" onclick="members_event('<?echo $members_row['no'];?>','추방','out')" role="button">추방</a>
+						<? } else if($members_row['states'] == 2){ ?>
+						<a class="btn btn-primary" href="javascript:;" onclick="members_event('<?echo $members_row['no'];?>','수락','acc')" role="button">확인</a>
+						<a class="btn btn-danger" href="javascript:;" onclick="members_event('<?echo $members_row['no'];?>','거절','ref')" role="button">거절</a>
+						<? } ?>
+					</td>
+				</tr>
+				<? } ?>
+			</tbody>
+		</table>
+		<? } else if($member_check_row['class'] == 2 || $member_check_row['class'] == 3){?>
+		<div class="card text-center">
+			<div class="card-body">
+				<h5 class="card-title">정말 탈퇴 하시겠습니까?</h5><br>
+				<a class="btn btn-danger" href="javascript:;" onclick="members_event('<?echo $member_check_row['no'];?>','탈퇴','iut')" role="button">탈퇴하기</a>
+			</div>
+		</div>
+		<? } else if($member_check_row['states'] == 2){ ?>
+		<div class="card text-center">
+			<div class="card-body">
+				<h5 class="card-title">승인 대기중 입니다</h5><br>
+				<a class="btn btn-danger" href="javascript:;" onclick="members_event('<?echo $member_check_row['no'];?>','취소','del')" role="button">신청취소</a>
+			</div>
+		</div>
+		<? } else if($member_check_row['states'] == 3){?>
+		<div class="card text-center">
+			<div class="card-body">
+				<h5 class="card-title">신청이 거절되었습니다</h5>
+				<p class="card-text">다시 신청 하시겠습니까?</p>
+				<a class="btn btn-primary" href="javascript:;" role="button">신청하기</a>
+			</div>
+		</div>
+		<? } else if($member_check_row['states'] == 4){?>
+		<div class="card text-center">
+			<div class="card-body">
+				<h5 class="card-title">추방된 회원입니다</h5>
+				<p class="card-text">신청을 원하시면 관리자에게 문의 바랍니다</p>
+				<a class="btn btn-primary" href="index.html#question" role="button">문의하기</a>
+			</div>
+		</div>
+		<? } else if(!$user_no){ ?>
+		<div class="card text-center">
+			<div class="card-body">
+				<h5 class="card-title">로그인이 필요합니다</h5><br>
+				<a class="btn btn-primary" href="user.html?user=login" role="button">로그인</a>
+			</div>
+		</div>
+		<? } else {?>
+		<? include("team/_member.html");?>
+		<? } ?>
+		<? 	mysqli_close($conn); ?>
+	</body>
+</html>

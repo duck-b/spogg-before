@@ -1,0 +1,173 @@
+<!DOCTYPE HTML>
+<html>
+<? 	
+	$nav = "user";
+	$user = $_GET["user"];
+	include("inc/_head.html");?>
+<body>
+	<? include("inc/_header.html");?>
+	
+	<? 	if($user == "login"){
+			if($user_no){
+				echo "<script>alert('잘못된 접근입니다.');";
+				echo "window.location.replace('index.html');</script>";
+			}else{
+				include("user/_login.html");
+			}
+		}else if($user == "select"){
+			if($user_no){
+				echo "<script>alert('잘못된 접근입니다.');";
+				echo "window.location.replace('index.html');</script>";
+			}else{
+				include("user/_select.html");
+			}
+		}else if($user == "agree"){
+			if($user_no){
+				echo "<script>alert('잘못된 접근입니다.');";
+				echo "window.location.replace('index.html');</script>";
+			}else{
+				include("user/_agree.html");
+			}
+		}else if($user == "regist"){
+			if($_POST['agree1'] == null || $_POST['agree2'] == null){
+				echo "<script>alert('모두 동의해야 회원가입이 가능합니다');";
+				echo "window.location.replace('user.html?user=agree');</script>";
+			}else{
+				include("user/_regist.html");
+			}
+		}else if($user == "edit"){
+			if(!$user_no){
+				echo "<script>alert('로그인이 필요한 기능입니다');";
+				echo "window.location.replace('user.html?user=login');</script>";
+			}else{
+				include("user/_edit.html");
+			}
+		}else if($user == "info"){
+			$no = $_GET['no'];
+			include "dbconn.php";
+			$user_result = mysqli_query($conn,"SELECT * FROM user where no='$no'");
+			$user_row = mysqli_fetch_array($user_result);
+			$player_result = mysqli_query($conn,"SELECT * FROM player where user='$no'");
+			$player_row = mysqli_fetch_array($player_result);
+			mysqli_close($conn);
+			include("user/_info.html");
+		}else if($user == "team"){
+			if($user_no){
+				if($my_row['states'] == 1 || $my_row['states'] == 3){
+					include("user/_team.html");
+				}else{
+					echo "<script>alert('잘못된 접근입니다.');";
+					echo "window.location.replace('index.html');</script>";
+				}
+			}else{
+				echo "<script>alert('로그인이 필요한 기능입니다.');";
+				echo "window.location.replace('user.html?user=login');</script>";
+			}
+		}else if($user == "act"){
+			if($user_no){
+				include("user/_activity.html");
+			}else{
+				echo "<script>alert('로그인이 필요한 기능입니다.');";
+				echo "window.location.replace('user.html?user=login');</script>";
+			}
+		}else if($user == "question"){
+			include "dbconn.php";
+			$no = $_GET['no'];
+			$question_result = mysqli_query($conn,"SELECT * FROM question WHERE no = '$no'");
+			$question_row = mysqli_fetch_array($question_result);
+			mysqli_close($conn);
+			if($question_row['user'] == $user_no){
+				include("user/_question.html");
+			}else{
+				echo "<script>alert('잘못된 접근입니다.');";
+				echo "window.location.replace('index.html');</script>";
+			}
+		}?>
+		
+	<? include("inc/_footer.html");?>
+	
+    <? include("inc/_script.html");?>
+	<script>
+		function check_id(){
+			var regex = /^[A-Za-z0-9]{6,12}$/;
+			if(regex.test(document.user_form.id.value) == false) {
+				alert("ID 형식이 올바르지 않습니다.");
+				document.user_form.id.value = "";
+				return flase;
+			}else{
+				window.open("check_id.php?id=" +
+				document.user_form.id.value,
+				"IDcheck","left=200, top=200, width=500, height=300, scrollbars=no,resizable=yes");
+				//document.getElementById("id").disabled = true;
+			}
+		}
+		function edit_password()
+			{ window.open("edit_password.php",
+						"PWedit","left=200, top=200, width=500, height=450, scrollbars=no,resizable=yes");
+						//document.getElementById("id").disabled = true;
+			}
+		var doubleSubmitFlag = false;
+		function doubleSubmitCheck(){
+			if(doubleSubmitFlag){
+				return doubleSubmitFlag;
+			}else{
+				doubleSubmitFlag = true;
+				return false;
+			}
+		}
+	 
+		function insert(){
+			if(doubleSubmitCheck()) return;
+		}
+		
+		function imageURL(input) {
+			if (input.files && input.files[0]) {
+				var reader = new FileReader();
+
+				reader.onload = function(e) {
+					$('#replaceMe').attr('src', e.target.result)
+				}
+
+				reader.readAsDataURL(input.files[0]);
+			}
+		}
+		function team_on_off(v,id,v2){
+			if(v == "team_no"){
+				document.getElementById(id).style.display = "";
+				document.getElementById(v).style.display = "none";
+				document.getElementById(v2).style.display = "inline-block";
+			}else{
+				document.getElementById(id).style.display = "none";
+				document.getElementById(v).style.display = "none";
+				document.getElementById(v2).style.display = "inline-block";
+			}
+		}
+		function league_on_off(v,id,v2){
+			if(v == "league_on"){
+				document.getElementById(id).style.display = "";
+				document.getElementById(v).style.display = "none";
+				document.getElementById(v2).style.display = "inline-block";
+			}else{
+				document.getElementById(id).style.display = "none";
+				document.getElementById(v).style.display = "none";
+				document.getElementById(v2).style.display = "inline-block";
+			}
+		}
+		function close_col(num){
+			document.getElementById("close_col_"+num).style.display = "none";
+		}
+		function new_page(no){
+			window.open("user_record.html?no=" + no,
+			"user-info","left=200, top=200, width=1200, height=700, scrollbars=no,resizable=yes");
+		}
+		function search_id(){
+			window.open("search_id.php",
+			"user-info","left=200, top=200, width=500, height=400, scrollbars=no,resizable=yes");
+		}
+		function search_pw(){
+			window.open("search_pw.php",
+			"user-info","left=200, top=200, width=550, height=350, scrollbars=no,resizable=yes");
+		}
+	</script>
+  </body>
+</html>

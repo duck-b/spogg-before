@@ -1,0 +1,588 @@
+<? include("header/header.html");?>
+<? include("header/menu.html"); ?>
+<?
+if($user_no){
+	echo "<script>alert('이미 로그인이 되어있습니다.');";
+	echo "window.location.replace('index.html');</script>";
+}
+
+?>
+<div class="container to_player to_join ">
+	<div class="row to_page_title">
+		<div class="col-xs-12 col-sm-12 col-md-12 text-center">
+			회원가입 - <span>선수</span>
+		</div>
+	</div>
+	
+	<!-- 모달창 -->
+	<div class="modal fade" id="defaultModal">
+	    <div class="modal-dialog">
+	        <div class="modal-content">
+	            <div class="modal-header">
+	                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+	            </div>
+	            <div class="modal-body">
+	                <p class="modal-contents"></p>
+	            </div>
+	            <div class="modal-footer">
+	                <button type="button" class="btn btn-default" data-dismiss="modal">확인</button>
+	            </div>
+	        </div><!-- /.modal-content -->
+	    </div><!-- /.modal-dialog -->
+	</div><!-- /.modal -->
+	<!--// 모달창 -->
+	
+	<div class="row">
+		<div class="col-xs-12 col-sm-12 col-md-12">
+			<div class="to_page_part_title">
+				필수정보 <span style="font-size:75%;color:red">('*'은 변경불가)</span>
+			</div>
+			<hr>
+		</div>		
+	</div>
+	<script type="text/javascript">
+		function changesite(obj){
+			 var selectBox = obj.value;
+			 $("#emailsite").val(selectBox);	 
+		}
+	</script>
+	<div class="row">
+		<div class="col-xs-12 col-sm-12 col-md-12">
+			<form class="form-horizontal to_mb_70" id="user_form" role="form" method="post" action="UserInsertProc.php">
+				<div class="form-group" id="divEmail">
+			        <label for="inputEmail" class="col-xs-12 col-sm-12 col-md-2 control-label">이메일(ID) <span style="color:red">*</span></label>
+			       	<div class="col-xs-12 col-sm-3 col-md-3">
+						<input type="text" class="form-control form-control_90" id="email" name="email" data-rule-required="true" placeholder="영어, 숫자 6~12자리" pattern="[A-Za-z0-9]{6,12}$" maxlength="20">&nbsp@
+			        </div>
+			        <div class="col-xs-4 col-sm-3 col-md-3">
+						<input type="text" class="form-control" id="emailsite" name="emailsite" data-rule-required="true" pattern="[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a-zA-Z]{2,3}$" maxlength="20">
+			        </div>
+			        <div class="col-xs-4 col-sm-2 col-md-2">
+			           	<select class="form-control" id="choi_emailsite" onchange="changesite(this)">
+			           		<option value="">직접입력</option>
+			           		<option>naver.com</option>
+			           		<option>daum.net</option>
+			           		<option>google.com</option>
+			           		<option>nate.com</option>
+			           	</select> 
+			        </div>
+			        <div class="col-xs-4 col-sm-2 col-md-2" id='check_id_btn'>
+			        	<input type="button" id="ro_checkbtn" class="ro_checkbtn" onclick="checkemail()" value="중복확인">
+			        </div>
+			    </div>
+			    
+			    <div class="form-group" id="divPassword">
+			        <label for="inputPassword" class="col-xs-12 col-sm-12 col-md-2 control-label">비밀번호</label>
+			        <div class="col-xs-12 col-sm-6 col-md-6">
+			            <input type="password" class="form-control" id="password" name="password" data-rule-required="true" placeholder="특수문자 / 문자 / 숫자 모두 포함 형태의 8~15자리 이내" pattern="^.*(?=^.{8,15}$)(?=.*\d)(?=.*[a-zA-Z])(?=.*[!@#$%^&+=]).*$" maxlength="30">
+			        </div>
+			    </div>
+			    <div class="form-group" id="divPasswordCheck">
+			        <label for="inputPasswordCheck" class="col-xs-12 col-sm-12 col-md-2 control-label">비밀번호 확인</label>
+			        <div class="col-xs-12 col-sm-6 col-md-6">
+			            <input type="password" class="form-control" id="passwordCheck" data-rule-required="true" placeholder="비밀번호 확인" pattern="^.*(?=^.{8,15}$)(?=.*\d)(?=.*[a-zA-Z])(?=.*[!@#$%^&+=]).*$" maxlength="30">
+			        </div>
+			    </div>
+			    <div class="form-group" id="divName">
+			        <label for="inputName" class="col-xs-12 col-sm-12 col-md-2 control-label">이름 <span style="color:red">*</span></label>
+			        <div class="col-xs-12 col-sm-6 col-md-6">
+			            <input type="text" class="form-control onlyHangul" id="name" name="name" data-rule-required="true" placeholder="한글만 입력 가능합니다." maxlength="15">
+			        </div>
+			    </div>
+			     	     
+			    <div class="form-group" id="divPhoneNumber">
+			        <label for="inputPhoneNumber" class="col-xs-12 col-sm-12 col-md-2 control-label">연락처</label>
+			        <div class="col-xs-12 col-sm-6 col-md-6">
+			            <input type="tel" class="form-control onlyNumber" id="phone" name="phone" data-rule-required="true" placeholder="-를 제외하고 숫자만 입력하세요." maxlength="11">
+			        </div>
+			    </div>
+			    
+			    <div class="form-group" id="divGender">
+			        <label for="inputGender" class="col-xs-12 col-sm-12 col-md-2 control-label">성별 <span style="color:red">*</span></label>
+			        <div class="col-xs-12 col-sm-6 col-md-6">
+			        	<div class="col-xs-6 col-sm-6 col-md-6">
+			        		<input type="radio" id="gender_m" name="gender" value="1"/><label for="gender_m">남자</label>
+			        	</div>
+			            <div class="col-xs-6 col-sm-6 col-md-6">
+			            	<input type="radio" id="gender_w" name="gender" value="2"/><label for="gender_w">여자</label>
+			            </div>           
+			        </div>
+			    </div>
+			    
+			    <div class="form-group" id="divBirth">
+			        <label for="inputBirth" class="col-xs-12 col-sm-12 col-md-2 control-label">생년월일 <span style="color:red">*</span></label>
+			        <div class="col-xs-12 col-sm-6 col-md-6">
+						<div class="col-xs-4" style="padding-left:0px">
+							<select class="form-control" id="birth_y" name="birth_y">
+								<?
+									for($y=2019; $y>1950;$y--){
+								?>
+									<option value=<?=$y ?>><?=$y ?></option>
+								<?		
+									}
+								?>
+							</select>  
+						</div>
+						<div class="col-xs-4">
+							<select class="form-control" id="birth_m" name="birth_m" onchange="selectmonth(this.value)">
+									<option value="">월</option>
+								<?
+									for($m=1; $m<13;$m++){
+								?>
+									<option value=<?=$m ?>><?=$m ?></option>
+								<?		
+									}
+								?>    
+							</select>  
+						</div>
+						<div class="col-xs-4" style="padding-right:0px">
+							<select class="form-control" id="birth_d" name="birth_d">
+								   <option value="">일</option>
+							</select>     
+						</div>
+			        </div>
+			    </div>
+			    
+			    <div class="form-group">
+			        <label for="inputFindPW_q" class="col-xs-12 col-sm-12 col-md-2 control-label">비밀번호 찾기 질문 <span style="color:red">*</span></label>
+			        <div class="col-xs-12 col-sm-6 col-md-6">
+			            <select class="form-control" id="findpw_q" name="findpw_q">
+			            	<option value="1">가장 좋아하는 야구 선수 이름은?</option>
+							<option value="2">가장 좋아하는 야구 선수 팀은?</option>
+							<option value="3">가장 아끼는 야구 장비는?</option>
+							<option value="4">처음 야구를 접한 시기는?</option>
+							<option value="5">처음 야구를 가르쳐준 사람은?</option>
+							<option value="6">처음 야구 경기를 한 구장은?</option>
+			            </select>
+			        </div>
+			    </div>
+			    
+			    <div class="form-group to_mb_60" id="divFindpw">
+			        <label for="inputFindPW_a" class="col-xs-12 col-sm-12 col-md-2 control-label">비밀번호 찾기 답 <span style="color:red">*</span></label>
+			        <div class="col-xs-12 col-sm-6 col-md-6">
+			            <input type="text" class="form-control onlyHangul" id="findpw_a" name="findpw_a" data-rule-required="true" placeholder="한글만 입력 가능합니다." maxlength="30">
+			        </div>
+			    </div>
+
+			    <div class="row">
+					<div class="col-xs-12 col-sm-12 col-md-12">
+						<div class="to_page_part_title">
+							추가정보 <span style="font-size:75%;color:red">('*'은 변경불가)</span>
+						</div>
+						<hr>
+					</div>		
+				</div>
+				
+				<div class="form-group" id="divPlayercheck">
+			        <label for="inputPlayerCheck" class="col-xs-12 col-sm-12 col-md-2 control-label">선출여부 <span style="color:red">*</span></label>
+			        <div class="col-xs-12 col-sm-6 col-md-9">
+			        	<div class="col-xs-6 col-sm-6 col-md-3">
+			        		<input type="radio" id="playerCheck_y" name="playercheck" value="1"/><label for="playerCheck_y">선출</label>
+			        	</div>
+			            <div class="col-xs-6 col-sm-6 col-md-3">
+			            	<input type="radio" id="playerCheck_n" name="playercheck" value="2" checked /><label for="playerCheck_n">비선출</label>
+			            </div>           
+			        </div>
+			    </div>
+			    
+			    <div class="form-group" id="divPosition">
+			        <label for="inputPosition" class="col-xs-12 col-sm-12 col-md-2 control-label">주 포지션</label>
+			        <div class="col-xs-12 col-sm-9 col-md-9">
+			        	<div class="col-xs-4 col-sm-4 col-md-3">
+			        		<input type="radio" id="position1" name="position" value="1"/><label for="position1">내야수</label>
+			        	</div>
+			            <div class="col-xs-4 col-sm-4 col-md-3">
+			            	<input type="radio" id="position2" name="position" value="2"/><label for="position2">외야수</label>
+			            </div>
+			            <div class="col-xs-4 col-sm-4 col-md-3">
+			            	<input type="radio" id="position3" name="position" value="3"/><label for="position3">투수</label>
+			            </div>           
+			        </div>
+			    </div>
+			    
+			    <div class="form-group" id="divHitPitch">
+			        <label for="inputHitPitch" class="col-xs-12 col-sm-12 col-md-2 control-label">투/타</label>
+			        <div class="col-xs-12 col-sm-12 col-md-9">
+			        	<div class="col-xs-3 col-sm-3 col-md-3">
+			        		<input type="radio" id="hitPitch1" name="hitpitch" value="1"/><label for="hitPitch1">우투우타</label>
+			        	</div>
+			            <div class="col-xs-3 col-sm-3 col-md-3">
+			            	<input type="radio" id="hitPitch2" name="hitpitch" value="2"/><label for="hitPitch2">우투좌타</label>
+			            </div>
+			            <div class="col-xs-3 col-sm-3 col-md-3">
+			            	<input type="radio" id="hitPitch3" name="hitpitch" value="3"/><label for="hitPitch3">좌투우타</label>
+			            </div>    
+			            <div class="col-xs-3 col-sm-3 col-md-3">
+			            	<input type="radio" id="hitPitch4" name="hitpitch" value="4"/><label for="hitPitch4">좌투좌타</label>
+			            </div>          
+			        </div>
+			    </div>
+				
+				<div class="form-group" id="divPlayerClass">
+			        <label for="inputPlayerClass" class="col-xs-12 col-sm-12 col-md-2 control-label">주 활동 리그</label>
+			        <div class="col-xs-12 col-sm-12 col-md-9">
+			        	<div class="col-xs-3 col-sm-3 col-md-3">
+			        		<input type="radio" id="playerclass1" name="playerclass" value="1"/><label for="playerclass1">사회인 1부</label>
+			        	</div>
+			            <div class="col-xs-3 col-sm-3 col-md-3">
+			            	<input type="radio" id="playerclass2" name="playerclass" value="2"/><label for="playerclass2">사회인 2부</label>
+			            </div>
+			            <div class="col-xs-3 col-sm-3 col-md-3">
+			            	<input type="radio" id="playerclass3" name="playerclass" value="3"/><label for="playerclass3">사회인 3부</label>
+			            </div>    
+			            <div class="col-xs-3 col-sm-3 col-md-3">
+			            	<input type="radio" id="playerclass4" name="playerclass" value="4"/><label for="playerclass4">사회인 4부</label>
+			            </div>          
+			        </div>
+			    </div>
+				
+				<div class="form-group" id="divAddress">
+			        <label for="address" class="col-xs-12 col-sm-12 col-md-2 control-label">주 활동 지역</label>
+			        <div class="col-xs-12 col-sm-6 col-md-6">
+			            <input type="text" class="form-control onlyHangul" id="address" name="address" data-rule-required="true" placeholder="한글만 입력 가능합니다." maxlength="30">
+			        </div>
+			    </div>
+				
+			    <div class="form-group" id="divTall">
+			        <label for="playertall" class="col-xs-12 col-sm-12 col-md-2 control-label">신장</label>
+			        <div class="col-xs-12 col-sm-6 col-md-6">
+			            <input type="text" class="form-control form-control_90 onlyNumber" id="playertall" name="playertall" data-rule-required="true" placeholder="단위(cm)를 제외한 숫자만 입력해주세요" pattern="\d{2,3}" maxlength="3">&nbsp cm
+			        </div>
+			    </div>
+			    
+			    <div class="form-group" id="divWeight">
+			        <label for="playerweight" class="col-xs-12 col-sm-12 col-md-2 control-label">체중</label>
+			        <div class="col-xs-12 col-sm-6 col-md-6">
+			            <input type="text" class="form-control form-control_90 onlyNumber" id="playerweight" name="playerweight" data-rule-required="true" placeholder="단위(kg)를 제외한 숫자만 입력해주세요" pattern="\d{2,3}" maxlength="3">&nbsp kg
+			        </div>
+			    </div>
+				
+				<div class="form-group" id="divBackNum">
+			        <label for="back_num" class="col-xs-12 col-sm-12 col-md-2 control-label">등번</label>
+			        <div class="col-xs-12 col-sm-6 col-md-6">
+			            No.&nbsp;<input type="text" class="form-control form-control_90 onlyNumber" id="back_num" name="back_num" data-rule-required="true" placeholder="숫자만 입력해주세요" pattern="\d{1,2}" maxlength="2">
+			        </div>
+			    </div>
+				
+				<div class="form-group" id="team">
+			        <label for="team" class="col-xs-12 col-sm-12 col-md-2 control-label">소속팀</label>
+			        <div class="col-xs-12 col-sm-6 col-md-6">
+						<div id='team_form'>
+							<div id='team_form1'>
+								<input type="text" class="form-control form-control_90" id="team1" name="team[]"><a id='team1_btn' href='javascript:;' style='margin-left:12px;'><i class='fas fa-plus' style='color:#5383e8;' onclick='team_plus(1)'></i></a>
+							</div>
+						</div>
+			        </div>
+			    </div>
+				
+				<input type="hidden" value="1" name="status">
+				<input type="hidden" value="0" name="check_id" id="check_id">
+                <input type="hidden" value="<?=$_POST['promotion']?>" name="promotion">
+        
+			    <div class="form-group">
+			        <div class="col-lg-offset-2 col-lg-10 text-center">
+			            <button type="submit" class="btn btn-default" id="join_submit_btn">완료</button>
+			        </div>
+			    </div>
+			</form>
+		</div>
+	</div>
+	<script>
+	var team_count = 1;
+	function team_plus(num){
+		document.getElementById("team"+num+"_btn").innerHTML = "<i class='fas fa-minus' style='color:#e85383;' onclick='team_minus("+num+")'></i>";
+		team_count = team_count + 1;
+		var newDiv = document.createElement("div");
+		newDiv.id = 'team_form'+team_count;
+		newDiv.style = 'min-height:0px !important;margin-top:5px';
+		newDiv.innerHTML = "<input type='text' class='form-control form-control_90' id='team"+team_count+"' name='team[]' value=''><a id='team"+team_count+"_btn' href='javascript:;' style='margin-left:12px;'><i class='fas fa-plus' style='color:#5383e8;' onclick='team_plus("+team_count+")'></i></a>";
+		document.getElementById('team_form').appendChild(newDiv);
+	}
+	function team_minus(num){
+		document.getElementById("team"+num).value = "";
+		document.getElementById("team_form"+num).style.display = "none";
+	}
+	function cancle_email(){
+		document.getElementById("check_id").value = 0;
+		document.getElementById("email").value = "";
+		document.getElementById("emailsite").value = "";
+		document.getElementById("email").readOnly = false;
+		document.getElementById("emailsite").readOnly = false;
+		document.getElementById("choi_emailsite").disabled = false;
+		document.getElementById("check_id_btn").innerHTML = "<input type='button' id='ro_checkbtn' class='ro_checkbtn' onclick='checkemail()' value='중복확인'>";
+	}
+	</script>
+    <script>
+  	//모달을 전역변수로 선언
+    var modalContents = $(".modal-contents");
+    var modal = $("#defaultModal");
+    
+    function checkemail() {	//이메일 중복 체크 후 알림창 띄우기
+		email = $("#email").val();
+		emailsite = $("#emailsite").val();
+    	if(email != ""){
+			$.ajax({
+				type: 'POST',
+				url: 'check_id.php',
+				data: {
+					email : email,
+					emailsite : emailsite
+				},
+				dataTpye: 'text',
+				success: function(data){
+					if(data=="check_id"){
+						modalContents.text("\""+email+"@"+emailsite+"\"은 사용이 가능합니다.");
+						modal.modal('show');
+						document.getElementById("check_id").value = 1;
+						document.getElementById("email").readOnly = true;
+						document.getElementById("emailsite").readOnly = true;
+						document.getElementById("choi_emailsite").disabled = true;
+						document.getElementById("ro_checkbtn").disabled = true;
+						document.getElementById("check_id_btn").innerHTML = "<input type='button' id='ro_checkbtn' class='ro_checkbtn' onclick='cancle_email()' value='사용취소'>";
+						return false;
+					}else{
+						modalContents.text("사용이 불가능합니다.");
+						modal.modal('show');
+						document.getElementById("email").value = "";
+						document.getElementById("emailsite").value = "";
+						$("#choi_emailsite option:eq(0)").prop("selected", true);
+						
+						return false;
+					}
+				},
+				error: function(data) {
+					modalContents.text("사용이 불가능합니다.");
+					modal.modal('show');
+				}
+			});
+		}else{
+			modalContents.text("이메일을 입력해 주세요.");
+			modal.modal('show');
+			return false;
+		}
+    	
+	}
+    
+    function selectmonth(obj) {		//생년월일 - 월 선택 후 일
+		console.log("obj : "+obj);
+		$("select#birth_d option").remove();
+		years = $("#birth_y option:selected").val();
+		var day;
+		if(obj=="1" || obj=="3" || obj=="5" || obj=="7" || obj=="8" || obj=="10" || obj=="12"){
+			day = 31;
+		}else if(obj=="2"){
+			if(years%4 == 0){
+				day = 29;
+			}else{
+				day = 28;
+			}
+		}else{
+			day=30;
+		}
+		
+		for(var i=1;i<=day;i++){
+			$("#birth_d").append("<option value='"+i+"'>"+i+"</option>");
+		}
+		
+	}
+        $(function(){
+            
+            $('.onlyAlphabetAndNumber').keyup(function(event){
+                if (!(event.keyCode >=37 && event.keyCode<=40)) {
+                    var inputVal = $(this).val();
+                    $(this).val($(this).val().replace(/[^_a-z0-9]/gi,'')); //_(underscore), 영어, 숫자만 가능
+                }
+            });
+             
+            $(".onlyHangul").keyup(function(event){
+                if (!(event.keyCode >=37 && event.keyCode<=40)) {
+                    var inputVal = $(this).val();
+                    $(this).val(inputVal.replace(/[a-z0-9]/gi,''));
+                }
+            });
+         
+            $(".onlyNumber").keyup(function(event){
+                if (!(event.keyCode >=37 && event.keyCode<=40)) {
+                    var inputVal = $(this).val();
+                    $(this).val(inputVal.replace(/[^0-9]/gi,''));
+                }
+            });
+                          
+             
+            //------- validation 검사
+            $( "form" ).submit(function( event ) {
+                document.getElementById("join_submit_btn").disabled = true;
+            	var divEmail = $('#divEmail');
+                var divPassword = $('#divPassword');
+                var divPasswordCheck = $('#divPasswordCheck');
+                var divPhoneNumber = $('#divPhoneNumber');
+                var divName = $('#divName');
+                var divGender = $('#divGender');
+                var divBirth = $('#divBirth');
+                var divFindpw = $("#divFindpw");
+				var check_id = $("#check_id").val();
+                   
+                if(check_id != 1){
+					 modalContents.text("중복확인이 필요합니다.");
+					 modal.modal('show');
+					 $('#ro_checkbtn').focus();
+					 document.getElementById("join_submit_btn").disabled = false;
+					 return false;
+				}
+              //이메일
+                if($('#email').val()==""){
+                    modalContents.text("이메일을 입력하여 주시기 바랍니다.");
+                    modal.modal('show');
+                     
+                    divEmail.removeClass("has-success");
+                    divEmail.addClass("has-error");
+                    $('#email').focus();
+					document.getElementById("join_submit_btn").disabled = false;
+                    return false;
+                }else{
+                    divEmail.removeClass("has-error");
+                    divEmail.addClass("has-success");
+                }
+              	
+              //이메일
+                if($('#emailsite').val()==""){
+                    modalContents.text("이메일을 입력하여 주시기 바랍니다.");
+                    modal.modal('show');
+                     
+                    divEmail.removeClass("has-success");
+                    divEmail.addClass("has-error");
+                    $('#emailsite').focus();
+					document.getElementById("join_submit_btn").disabled = false;
+                    return false;
+                }else{
+                    divEmail.removeClass("has-error");
+                    divEmail.addClass("has-success");
+                }
+              
+                //패스워드 검사
+                if($('#password').val()==""){
+                    modalContents.text("패스워드를 입력하여 주시기 바랍니다.");
+                    modal.modal('show');
+                     
+                    divPassword.removeClass("has-success");
+                    divPassword.addClass("has-error");
+                    $('#password').focus();
+					document.getElementById("join_submit_btn").disabled = false;
+                    return false;
+                }else{
+                    divPassword.removeClass("has-error");
+                    divPassword.addClass("has-success");
+                }
+                 
+                //패스워드 확인
+                if($('#passwordCheck').val()==""){
+                    modalContents.text("패스워드 확인을 입력하여 주시기 바랍니다.");
+                    modal.modal('show');
+                     
+                    divPasswordCheck.removeClass("has-success");
+                    divPasswordCheck.addClass("has-error");
+                    $('#passwordCheck').focus();
+					document.getElementById("join_submit_btn").disabled = false;
+                    return false;
+                }else{
+                    divPasswordCheck.removeClass("has-error");
+                    divPasswordCheck.addClass("has-success");
+                }
+                 
+                //패스워드 비교
+                if($('#password').val()!=$('#passwordCheck').val() || $('#passwordCheck').val()==""){
+                    modalContents.text("패스워드가 일치하지 않습니다.");
+                    modal.modal('show');
+                     
+                    divPasswordCheck.removeClass("has-success");
+                    divPasswordCheck.addClass("has-error");
+                    $('#passwordCheck').focus();
+					document.getElementById("join_submit_btn").disabled = false;
+                    return false;
+                }else{
+                    divPasswordCheck.removeClass("has-error");
+                    divPasswordCheck.addClass("has-success");
+                }
+                 
+              	//이름
+                if($('#name').val()==""){
+                    modalContents.text("이름을 입력하여 주시기 바랍니다.");
+                    modal.modal('show');
+                     
+                    divName.removeClass("has-success");
+                    divName.addClass("has-error");
+                    $('#name').focus();
+					document.getElementById("join_submit_btn").disabled = false;
+                    return false;
+                }else{
+                    divName.removeClass("has-error");
+                    divName.addClass("has-success");
+                }
+              
+              	//휴대폰 번호
+                if($('#phoneNumber').val()==""){
+                    modalContents.text("휴대폰 번호를 입력하여 주시기 바랍니다.");
+                    modal.modal('show');
+                     
+                    divPhoneNumber.removeClass("has-success");
+                    divPhoneNumber.addClass("has-error");
+                    $('#phoneNumber').focus();
+					document.getElementById("join_submit_btn").disabled = false;
+                    return false;
+                }else{
+                    divPhoneNumber.removeClass("has-error");
+                    divPhoneNumber.addClass("has-success");
+                }
+              
+              	//성별
+                if($(':radio[name="gender"]:checked').length < 1){
+                	 modalContents.text("성별을 입력하여 주시기 바랍니다.");
+                     modal.modal('show');
+                      
+                     divGender.removeClass("has-success");
+                     divGender.addClass("has-error");
+                     $('#gender').focus();
+					 document.getElementById("join_submit_btn").disabled = false;
+                     return false;
+                }else{
+                	divGender.removeClass("has-error");
+                	divGender.addClass("has-success");
+                }
+              	
+                //생년월일
+                if($('#birth_y').val()=="" ||$('#birth_m').val()=="" ||$('#birth_d').val()=="" ){
+                    modalContents.text("생년월일을 입력해주세요.");
+                    modal.modal('show');
+                     
+                    divBirth.removeClass("has-success");
+                    divBirth.addClass("has-error");
+                    $('#birth_y').focus();
+					document.getElementById("join_submit_btn").disabled = false;
+                    return false;
+                }else{
+                	divBirth.removeClass("has-error");
+                	divBirth.addClass("has-success");
+                }
+              //비밀번호 찾기 답
+                if($('#findpw_a').val()==""){
+                    modalContents.text("비밀번호 찾기 답을 입력하여 주시기 바랍니다.");
+                    modal.modal('show');
+                     
+                    divFindpw.removeClass("has-success");
+                    divFindpw.addClass("has-error");
+                    $('#findpw_a').focus();
+					document.getElementById("join_submit_btn").disabled = false;
+                    return false;
+                }else{
+                	divFindpw.removeClass("has-error");
+                	divFindpw.addClass("has-success");
+                }
+              
+               
+            });
+             
+        });
+         
+    </script>
+</div>
+<? include("footer/footer.html"); ?>	

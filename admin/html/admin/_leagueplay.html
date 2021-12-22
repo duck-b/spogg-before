@@ -1,0 +1,58 @@
+<!DOCTYPE HTML>
+<?
+	include "dbconn.php";
+	$league_result = mysqli_query($conn,"SELECT * FROM league WHERE no = '$no'");
+	$league_row = mysqli_fetch_array($league_result);
+	$league_play_result = mysqli_query($conn,"SELECT * FROM play WHERE league = '$no'");
+?>
+<html>
+	<body>
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-8">
+						<h3 style="vertical-align: middle;"><? echo $league_row['name']?> (경기 관리)</h3>
+					</div>
+					<div class="col-md-2">
+						<a class="btn btn-primary" href="admin.html?admin=league&no=<? echo $no?>&manage=playcreate" role="button">경기 개설</a>
+					</div>
+					<div class="col-md-2">
+						<a class="btn btn-primary" href="admin.html?admin=league&no=<? echo $no?>" role="button">리그 관리</a>
+					</div>
+				</div><br>
+				<table class="table">
+					<thead>
+						<tr>
+							<th scope="col-2" style="width:5%">#</th>
+							<th scope="col-2" style="width:50%">Name</th>
+							<th scope="col-2" style="width:20%">Play Date</th>
+							<th scope="col-2" style="width:10%">Edit</th>
+							<th scope="col-2" style="width:10%">Result</th>
+						</tr>
+					</thead>
+					<tbody>
+						<? 	$i = 0;
+							while($league_play_row = mysqli_fetch_array($league_play_result)){
+							$i++;
+							$home_team_no = $league_play_row['home_team'];
+							$home_team_result = mysqli_query($conn,"SELECT * FROM team where no='$home_team_no'");
+							$home_team_row = mysqli_fetch_array($home_team_result);
+							$away_team_no = $league_play_row['away_team'];
+							$away_team_result = mysqli_query($conn,"SELECT * FROM team where no='$away_team_no'");
+							$away_team_row = mysqli_fetch_array($away_team_result);
+							?>
+						<tr>
+							<th scope="row" style="vertical-align: middle;"><? echo $i;?></th>
+							<td style="vertical-align: middle;"><a><? echo $league_play_row['name'];?></a><br>(H : <a href="team.html?team=info&no=<? echo $home_team_no?>"><? echo $home_team_row['name']?></a>&nbsp;&nbsp;VS&nbsp;&nbsp;A : <a href="team.html?team=info&no=<? echo $away_team_no?>"><? echo $away_team_row['name']?></a>)</td>
+							<td style="vertical-align: middle;"><? echo $league_play_row['play_datetime'];?></td>
+							<td style="vertical-align: middle;"><a class="btn btn-primary" href="admin.html?admin=league&no=<? echo $no?>&manage=playedit&playno=<?echo $league_play_row['no']?>" role="button">수정</a></td>
+							<td style="vertical-align: middle;"><a class="btn btn-primary" href="league.html?league=page&no=<? echo $no?>&page=playlist&play=<?echo $league_play_row['no']?>" role="button">결과</a></td>
+						</tr>
+						<? } ?>
+					</tbody>
+				</table>
+				<? 	mysqli_close($conn); ?>
+			</div>
+		</section>
+	</body>
+</html>

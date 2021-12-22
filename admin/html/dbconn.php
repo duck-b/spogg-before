@@ -1,0 +1,12 @@
+<?php
+
+$db_host = "localhost";
+
+$db_user = "tryout";
+
+$db_passwd = "1q2w3e4r";
+
+$db_name = "tryout";
+
+$conn = mysqli_connect($db_host, $db_user, $db_passwd, $db_name);
+?>

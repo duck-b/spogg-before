@@ -1,0 +1,127 @@
+<!DOCTYPE HTML>
+<html>
+<? 	
+	include("inc/_head.html");
+	$nav = "search";
+	if($_GET['search']){
+		$search = $_GET['search'];
+		include "dbconn.php";
+		$player_result = mysqli_query($conn,"SELECT player.no, player.class, user.name, player.img, player.team, user.no as userno FROM user JOIN player WHERE user.name LIKE '%$search%' AND player.user = user.no AND user.states = '1' ORDER BY player.updated_at DESC");
+		$team_result = mysqli_query($conn,"SELECT team.no, team.img, team.name, user.name as username, team.adrs, team.class FROM team JOIN user WHERE team.name LIKE '%$search%' AND team.manager = user.no ORDER BY team.updated_at DESC");
+		mysqli_close($conn);
+	}else{
+		echo "<script>alert('검색어가 없습니다.');";
+		echo "window.location.replace('index.html');</script>";
+	}
+?>
+	<body>
+	<? include("inc/_header.html");?>
+
+	<section class="site-section">
+		<div class="container">
+			<div class="row justify-content-center mb-5">
+				<div class="col-md-7 text-center">
+					<h2>『<? echo $search;?>』에 대한 검색 결과</h2><br>
+					<p>선수</p>
+				</div>
+			</div>
+			<div class="row top-destination">
+				<? while($player_row = mysqli_fetch_array($player_result)){
+					if($player_row['class'] == 1){
+						$class = '사회인 1부';
+					}elseif($player_row['class'] == 2){
+						$class = '사회인 2부';
+					}elseif($player_row['class'] == 3){
+						$class = '사회인 3부';
+					}elseif($player_row['class'] == 4){
+						$class = '사회인 4부';
+					}?>
+					<div class="col-lg-2 col-md-4 col-sm-6 col-12">
+						<a href="user.html?user=info&no=<? echo $player_row['userno'];?>" class="place">
+						<!-- <a href="$player_row no" class="place"> -->
+							<?if($player_row['img']){?>
+							<img class="img-thumbnail" style="width:100%" src="<? echo $player_row['img'];?>" alt="<? echo $player_row['name']?>">
+							<? } else {?>
+							<img class="img-thumbnail" style="width:100%" src="images/none_player_img.png" alt="<? echo $player_row['name']?>">
+							<? } ?>
+							<?if($player_row['team']){
+								$player_no = $player_row['no'];
+								$team_no = $player_row['team'];
+								include "dbconn.php";
+								$team_name_result = mysqli_query($conn,"SELECT * FROM team where no='$team_no'");
+								$team_name_row = mysqli_fetch_array($team_name_result);
+								$back_num_result = mysqli_query($conn,"SELECT * FROM team_members where team='$team_no' AND player='$player_no' AND states='1'");
+								$back_num_row = mysqli_fetch_array($back_num_result);
+								mysqli_close($conn);
+								if($back_num_row['back_num']){
+									$back_num = $back_num_row['back_num'].". ";
+								}else{
+									$back_num = "";
+								}
+								$team_name = $team_name_row['name'];
+							}else{
+								$back_num = "";
+								$team_name = '대표 설정된 팀이 없습니다';
+							}?>
+							<h2><? echo $back_num.$player_row['name'];?></h2>
+							<p><? echo $team_name; ?><br><? echo $class;?></p>
+						</a>
+					</div>
+				<? } ?>
+			</div>
+			<hr>
+			<div class="container">
+				<div class="row justify-content-center mb-5">
+					<div class="col-md-7 text-center">
+						<p>팀</p>
+					</div>
+				</div>
+				<div class="row top-destination">
+					<? while($team_row = mysqli_fetch_array($team_result)){ 
+					if($team_row['class'] == 1){
+						$class = '사회인 1부';
+					}elseif($team_row['class'] == 2){
+						$class = '사회인 2부';
+					}elseif($team_row['class'] == 3){
+						$class = '사회인 3부';
+					}elseif($team_row['class'] == 4){
+						$class = '사회인 4부';
+					}
+					$team_no = $team_row['no'];
+					$i = 0 ;
+					$mean_age = 0;
+					include "dbconn.php";
+					$mean_age_result = mysqli_query($conn,"SELECT user.birth FROM team_members JOIN player JOIN user where team_members.team='$team_no' AND team_members.states='1' AND user.no = player.user AND team_members.player = player.no");
+					while($mean_age_row = mysqli_fetch_array($mean_age_result)){ 
+						$i++;
+						$birth = $mean_age_row['birth'];
+						$birth_time   = strtotime($birth);
+						$now          = date('Ymd');
+						$birthday     = date('Ymd' , $birth_time);
+						$age           = floor(($now - $birthday) / 10000);
+						$mean_age = (($mean_age*($i - 1))/$i) + ($age/$i);
+					}
+					$members = mysqli_query($conn,"SELECT COUNT(*) as count FROM team_members where team='$team_no' AND states='1'");
+					$mambers_row = mysqli_fetch_array($members);
+					mysqli_close($conn);?>
+						<div class="col-lg-2 col-md-4 col-sm-6 col-12">
+							<a href="team.html?team=info&no=<? echo $team_no; ?>" class="place">
+								<?if($team_row['img']){?>
+								<img class="img-thumbnail" style="width:100%" src="<? echo $team_row['img'];?>" alt="<? echo $team_row['name']?>">
+								<? } else {?>
+								<img class="img-thumbnail" style="width:100%" src="images/none_player_img.png" alt="<? echo $team_row['name']?>">
+								<? } ?>
+								<h2><? echo $team_row['name'];?></h2>
+								<p><? echo $team_row['adrs'];?><br><? echo $team_row['username'];?> | <? echo $class?><br><? echo $mambers_row['count'];?>명 | 만 <? echo round($mean_age,2); ?>세</p>
+							</a>
+						</div>
+					<? } ?>
+				</div>
+			</div>
+		</div>
+	</section>
+	<? include("inc/_footer.html");?>
+    
+    <? include("inc/_script.html");?>
+	</body>
+</html>

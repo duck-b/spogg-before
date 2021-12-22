@@ -1,0 +1,90 @@
+<!DOCTYPE HTML>
+<html>
+	<body>
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-lg-2"></div>
+					<div class="col-lg-8 col-md-12 mb-5 element-animate">
+						<h3 class="mb-5">팀 등록</h3>
+						<form name="team_form" action="TeamInsertProc.php" method="post" enctype="multipart/form-data">
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="manager">감독</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="manager" class="form-control " value="<? echo $my_row['name'];?>" disabled>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="name">팀 명</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" name="name" id="name" class="form-control " placeholder="팀 명을 입력해주세요." required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="adrs">연고지</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" name="adrs" id="adrs" class="form-control " placeholder="주 활동지역을 입력해주세요. ex) 부산광역시 금정구" required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="found">창단일</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="date" name="found" id="found" class="form-control " required>
+								</div>
+							</div>
+							<div class="row" style="margin-bottom:10px">
+								<div class="col-md-2 form-group">
+									<label for="team_class">리그 수준</label>
+								</div>
+								<div class="row col-md-10" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="team_class_1" name="team_class" value="1" class="custom-control-input">
+										<label class="custom-control-label" for="team_class_1">사회인 1부</label>
+									</div>
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="team_class_2" name="team_class" value="2" class="custom-control-input">
+										<label class="custom-control-label" for="team_class_2">사회인 2부</label>
+									</div>
+								</div>
+								<div class="col-md-2"></div>
+								<div class="row col-md-10" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="team_class_3" name="team_class" value="3" class="custom-control-input">
+										<label class="custom-control-label" for="team_class_3">사회인 3부</label>
+									</div>
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="team_class_4" name="team_class" value="4" class="custom-control-input">
+										<label class="custom-control-label" for="team_class_4">사회인 4부</label>
+									</div>
+								</div>
+							</div>
+							<div class="row" style="margin-bottom:10px">
+								<div class="col-md-2">
+									<label for="img">팀 로고</label>
+								</div>
+								<div class="col-md-10">
+									<input type="file" id="img" name="img" multiple accept='image/*'>
+								</div>
+							</div>	
+							<hr>							
+							<div class="row">
+								<div class="col-md-6 form-group">
+									<input type="submit" value="팀 등록" class="btn btn-primary">
+								</div>
+							</div>
+						</form>
+					</div>
+					<div class="col-lg-2"></div>
+				</div>
+			</div>
+		</section>
+	</body>
+</html>

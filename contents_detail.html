@@ -1,0 +1,28 @@
+<? include("header/header.html");?>
+<? include("header/menu.html"); ?>
+<div class="ro_subpage ro_contentList">
+	<div class="container-fluid ro_subpage_title_img ro_posi_r">
+		<img src="img/subpage_title/content_titleimg.jpg">
+		<div class="ro_subpage_nav">
+			<p>Contents Detail</p>
+			<ul>
+				<li>Home</li>
+				<li>Contents</li>
+				<li>Contents Detail</li>
+			</ul>
+		</div>
+	</div>
+	<div class="container ro_subpage_content " >
+		<?
+		include "dbconn.php";
+		$contents_query = "SELECT * FROM content WHERE number = ".$_GET['no'];
+		$contents_result = mysqli_query($conn,$contents_query);
+		$contents_row = mysqli_fetch_array($contents_result);
+		include("contents/contents".$_GET['no'].".html");
+		mysqli_close($conn);
+		?>
+	</div>
+</div>
+<? include("footer/footer.html"); ?>	
+</body>
+</html>

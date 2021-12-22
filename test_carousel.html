@@ -1,0 +1,45 @@
+<script>
+	$(document).ready(function() {
+		$('#media').carousel({
+			pause : false,
+			interval : 10000,
+		});
+	});
+</script>
+<style>
+</style>
+<div class='row'>
+	<div class='col-xs-12 col-sm-12 col-md-12'>
+		<div class="carousel slide media-carousel" id="media">
+			<div class="carousel-inner">
+				<div class="item  active">
+					<div class="row">
+						<div class="col-xs-12 col-sm-12 col-md-12">
+							<?if($isMobile==1){	?>
+							<img alt="" src="img/main/main_lesson_mobile.jpg" style="height:350px" class="thumbnail">
+							<?}else{?>
+							<img alt="" src="img/main/main_lesson.jpg" style="height:350px" class="thumbnail">
+							<?}?>
+							<div class="to_main_lesson_info">
+								<div class="to_main_lesson_info_top">
+									야구레슨 강사 모집중
+<!-- 									<span>타자</span> -->
+								</div>
+								<div class="to_main_lesson_info_bottom">
+									<ul>
+										<li>맞춤 레슨 매칭 서비스 준비중</li>
+									</ul>
+								</div>
+								<div class="to_main_lesson_btn row">
+									<div class="col-12">
+										<button onclick="question_click()">문의하기</button>
+									</div>
+								</div>
+							</div>	
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

@@ -1,0 +1,131 @@
+<!DOCTYPE HTML>
+<?
+	include "dbconn.php";
+	$league_result = mysqli_query($conn,"SELECT * FROM league where no='$no'");
+	$league_row = mysqli_fetch_array($league_result);
+	$pro_no = $league_row['pro'];
+	$pro_result = mysqli_query($conn,"SELECT * FROM user where no='$pro_no'");
+	$pro_row = mysqli_fetch_array($pro_result);
+	$team_count_result = mysqli_query($conn,"SELECT COUNT(*) as count FROM league_team where league='$no' AND states = '1'");
+	$team_count_row = mysqli_fetch_array($team_count_result);
+	
+	$board_activiy_result = mysqli_query($conn, "SELECT user_activity.no as no FROM user_activity JOIN league_team where league_team.league = '$no' AND user_activity.user = '$user_no' AND user_activity.board = league_team.no AND user_activity.board_table = 'league' AND user_activity.count = 1");
+	$board_activiy_row = mysqli_fetch_array($board_activiy_result);
+	if($board_activiy_row){
+		$activity_no = $board_activiy_row['no'];
+		mysqli_query($conn,"UPDATE user_activity SET count = '0' WHERE no = '$activity_no'");
+	}
+	mysqli_close($conn);
+
+	if($league_row['class'] == 1){
+		$class = '사회인 1부';
+		$class_1c = "checked";
+	}elseif($league_row['class'] == 2){
+		$class = '사회인 2부';
+		$class_2c = "checked";
+	}elseif($league_row['class'] == 3){
+		$class = '사회인 3부';
+		$class_3c = "checked";
+	}elseif($league_row['class'] == 4){
+		$class = '사회인 4부';
+		$class_4c = "checked";
+	}
+	if($league_row['kinds'] == 1){
+		$kinds = '리그';
+		$kind_1c = "checked";
+	}elseif($league_row['kinds'] == 2){
+		$kinds = '토너먼트';
+		$kind_2c = "checked";
+	}
+	if($_GET['page'] == 'home'){
+		$active_home = "active";
+		$url = "league/_home.html";
+	}else if($_GET['page'] == 'leagueinfo'){
+		$active_leagueinfo = "active";
+		$url = "league/_infoleague.html";
+	}else if($_GET['page'] == 'leaguerule'){
+		$active_leaguerule = "active";
+		$url = "league/_ruleleague.html";
+	}else if($_GET['page'] == 'teamlist'){
+		$active_teamlist = "active";
+		$url = "league/_teamlist.html";
+	}else if($_GET['page'] == 'schedule'){
+		$active_schedule = "active";
+		$url = "league/_schedule.html";
+	}else if($_GET['page'] == 'playlist'){
+		$active_schedule = "active";
+		$url = "league/_playlist.html";
+	}else if($_GET['page'] == 'playcreate'){
+		$active_schedule = "active";
+		$url = "league/_playcreate.html";
+	}else if($_GET['page'] == 'playedit'){
+		$active_schedule = "active";
+		$url = "league/_playedit.html";
+	}else if($_GET['page'] == 'record'){
+		$active_record = "active";
+		$url = "league/_record.html";
+	}else if($_GET['page'] == 'free' || $_GET['page'] == 'write'){
+		$active_free = "active";
+		$url = "league/_freeleague.html";
+	}else if($_GET['page'] == 'manage'){
+		$active_manage = "active";
+		$url = "league/_manage.html";
+	}else{
+		$active_home = "active";
+		$url = "league/_home.html";
+	}
+
+?>
+<html>
+	<body>
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-1 element-animate "></div>
+					<div class="col-md-10 element-animate ">
+						<div class="row">
+							<div class="col-md-3 element-animate">
+								<div class="row" style="margin-top:15px">
+									<div class="col-md-12 element-animate ">
+										<? if($league_row['img']){?>
+										<img src="<? echo $league_row['img'];?>" style="width:100%" class="img-thumbnail" alt="<? echo $league_row['name']?>">
+										<? } else {?>
+										<img class="img-thumbnail" style="width:100%" src="images/none_team_img.png" alt="<? echo $league_row['name']?>">
+										<? } ?>
+									</div>
+									<div class="col-md-12 element-animate " style="text-align:center;">
+										<hr>
+										<div class="nav flex-column nav-pills" role="tablist" aria-orientation="vertical">
+											<a class="nav-link <?=$active_home?>" style="text-align:center; border:1px solid #dee2e6;" href="league.html?league=page&no=<? echo $no?>&page=home"><? echo $league_row['name']?></a>
+											<a class="nav-link <?=$active_leagueinfo?>" style="text-align:center; border:1px solid #dee2e6;" href="league.html?league=page&no=<? echo $no?>&page=leagueinfo" onclick="league_read_contents()">리그 소개</a>
+											<a class="nav-link <?=$active_leaguerule?>" style="text-align:center; border:1px solid #dee2e6;" href="league.html?league=page&no=<? echo $no?>&page=leaguerule" onclick="league_rule_contents()">리그 규칙</a>
+											<a class="nav-link <?=$active_teamlist?>" style="text-align:center; border:1px solid #dee2e6;" href="league.html?league=page&no=<? echo $no?>&page=teamlist">참가팀</a>
+											<a class="nav-link <?=$active_schedule?>" style="text-align:center; border:1px solid #dee2e6;" href="league.html?league=page&no=<? echo $no?>&page=schedule">경기일정 / 경기결과</a>
+											<a class="nav-link <?=$active_record?>" style="text-align:center; border:1px solid #dee2e6;" href="league.html?league=page&no=<? echo $no?>&page=record">기록실</a>
+											<a class="nav-link <?=$active_free?>" style="text-align:center; border:1px solid #dee2e6;" href="league.html?league=page&no=<? echo $no?>&page=free">공지사항 / 자유게시판</a>
+											<? if($user_no == $pro_no){?>
+												<a class="nav-link <?=$active_manage?>" style="text-align:center; border:1px solid #dee2e6;" href="league.html?league=page&no=<? echo $no?>&page=manage">신청관리</a>
+											<? } else{ ?>
+												<a class="nav-link <?=$active_manage?>" style="text-align:center; border:1px solid #dee2e6;" href="league.html?league=page&no=<? echo $no?>&page=manage">신청하기</a>
+											<? } ?>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-9 element-animate" style="margin-top:15px">
+								<div class="row" style="margin-right:5px">
+									<div class="col-md-12 element-animate ">
+										<div class="tab-content">
+											<div class="tab-pane fade active show"><?include($url);?></div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-1 element-animate ">
+				</div>
+			</div>
+		</section>
+	</body>
+</html>

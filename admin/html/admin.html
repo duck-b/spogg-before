@@ -1,0 +1,106 @@
+<!DOCTYPE HTML>
+<html>
+<?
+	$adminpage=1;
+	if($_GET['admin']){
+		$class_admin = 'active';
+		$class_background = 'navbar-background-blue';
+		$admin = $_GET['admin'];
+		if($_GET['no']){
+			$no = $_GET['no'];
+		}
+	}else{
+		$class_admin = 'active';
+	}
+	include("inc/_head.html");
+?>
+<body>
+	<? include("inc/_header.html");?>
+	<?if($my_row['states'] != 3){
+		echo "<script>alert('잘못된 접근입니다.');";
+		echo "window.location.replace('index.html');</script>";
+	}?>
+	
+	<? if(!$admin) { 
+		include("admin/_main.html");
+	}else if($admin == 'user'){
+		if(!$no){
+			include("admin/_user.html");
+		}else if($no){
+			include("admin/_userinfo.html");
+		}
+	}else if($admin == 'team'){
+		include("admin/_team.html");
+	}else if($admin == 'league'){
+		if(!$no){
+			if(!$_GET['create']){
+				include("admin/_league.html");
+			}else{
+				include("admin/_leaguecreate.html");
+			}
+		}else if($no){
+			if(!$_GET['manage']){
+				include("admin/_leagueinfo.html");
+			}else if($_GET['manage'] == 'apply'){
+				include("admin/_leagueapply.html");
+			}else if($_GET['manage'] == 'play'){
+				include("admin/_leagueplay.html");
+			}else if($_GET['manage'] == 'playcreate'){
+				include("admin/_leagueplaycreate.html");
+			}else if($_GET['manage'] == 'playedit'){
+				include("admin/_leagueplayedit.html");
+			}
+		}
+	}else if($admin == 'question'){
+		if(!$no){
+			include("admin/_question.html");
+		}else if($no){
+			include("admin/_answer.html");
+		}
+	}else if($admin == 'play'){
+		if(!$no){
+			include("admin/_playlist.html");
+		}else if($no){
+			include("admin/_playinfo.html");
+		}
+	}?>
+
+	<? include("inc/_footer.html");?>
+    
+	<? include("inc/_script.html");?>
+	<script>
+		function edit_password_admin(no){
+			window.open("edit_password_admin.php?no="+ no,
+						"PWedit","left=200, top=200, width=500, height=450, scrollbars=no,resizable=yes");
+						//document.getElementById("id").disabled = true;
+		}
+		var doubleSubmitFlag = false;
+		function doubleSubmitCheck(){
+			if(doubleSubmitFlag){
+				return doubleSubmitFlag;
+			}else{
+				doubleSubmitFlag = true;
+				return false;
+			}
+		}
+		function insert(){
+			var str = document.getElementById("contents").value;
+			str = str.replace(/(?:\r\n|\r|\n)/g, '<br>');
+			document.getElementById("contents").value = str;
+			if(doubleSubmitCheck()) return;
+		}
+		function answer_contents(){
+			var str = document.getElementById("contents").textContent;
+			str = str.replace(/<br>/g, "\r\n");
+			document.getElementById("contents").value = str;
+		}
+		function record_event(no){
+			if (confirm("정말 경기를 시작하시겠습니까?") == true){
+				location.href="record/record.html?no=" + no;
+			}else{ 
+				return;
+			}
+		}
+	</script>
+  </body>
+</html>

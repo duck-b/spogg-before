@@ -1,0 +1,147 @@
+<!DOCTYPE HTML>
+<?
+	include "dbconn.php";
+	$league_result = mysqli_query($conn,"SELECT * FROM league WHERE no = '$no'");
+	$league_row = mysqli_fetch_array($league_result);
+	$pro_no = $league_row['pro'];
+	$pro_result = mysqli_query($conn,"SELECT * FROM user WHERE no = '$pro_no'");
+	$pro_row = mysqli_fetch_array($pro_result);
+	mysqli_close($conn);
+	if($league_row['class'] == 1){
+		$class_1c = "checked";
+	}else if($league_row['class'] == 2){
+		$class_2c = "checked";
+	}else if($league_row['class'] == 3){
+		$class_3c = "checked";
+	}else if($league_row['class'] == 4){
+		$class_4c = "checked";
+	}
+	if($league_row['kinds'] == 1){
+		$kind_1c = "checked";
+	}else if($league_row['kinds'] == 2){
+		$kind_2c = "checked";
+	}
+	if($league_row['state'] == 1){
+		$bt_c1 = 'secondary disabled';
+		$bt_c2 = 'success';
+		$bt_c3 = 'danger';
+	}else if($league_row['state'] == 2){
+		$bt_c1 = 'primary';
+		$bt_c2 = 'secondary disabled';
+		$bt_c3 = 'danger';
+	}else if($league_row['state'] == 3){
+		$bt_c1 = 'primary';
+		$bt_c2 = 'success';
+		$bt_c3 = 'secondary disabled';
+	}
+?>
+<html>
+	<body>
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-lg-2"></div>
+					<div class="col-lg-8 col-md-12 mb-5 element-animate">
+						<h3 class="mb-5">리그 수정</h3>
+						<form name="league_form" action="LeagueUpdateProc.php?no=<? echo $league_row['no'];?>" method="post" enctype="multipart/form-data">
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="pro">개설인</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="pro" class="form-control " value="<? echo $pro_row['name'];?>" disabled>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="name">리그 명</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" name="name" id="name" class="form-control " placeholder="리그 명을 입력해주세요." value="<? echo $league_row['name'];?>" required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="adrs">연고지</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" name="adrs" id="adrs" class="form-control " placeholder="리그 활동지역을 입력해주세요. ex) 부산광역시 금정구" value="<? echo $league_row['adrs'];?>" required>
+								</div>
+							</div>								
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="found">개최일</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text"  id="found" class="form-control " value="<? echo $league_row['found'];?>" disabled>
+								</div>
+							</div>
+							<div class="row" style="margin-bottom:10px">
+								<div class="col-md-2 form-group">
+									<label for="league_class">리그 수준</label>
+								</div>
+								<div class="row col-md-10" style="padding-left:30px">
+									<div class="col-md-3 custom-control custom-radio">
+										<input type="radio" id="league_class_1" name="league_class" value="1" class="custom-control-input" <?=$class_1c?>>
+										<label class="custom-control-label" for="league_class_1">사회인 1부</label>
+									</div>
+									<div class="col-md-3 custom-control custom-radio">
+										<input type="radio" id="league_class_2" name="league_class" value="2" class="custom-control-input" <?=$class_2c?>>
+										<label class="custom-control-label" for="league_class_2">사회인 2부</label>
+									</div>
+									<div class="col-md-3 custom-control custom-radio">
+										<input type="radio" id="league_class_3" name="league_class" value="3" class="custom-control-input" <?=$class_3c?>>
+										<label class="custom-control-label" for="league_class_3">사회인 3부</label>
+									</div>
+									<div class="col-md-3 custom-control custom-radio">
+										<input type="radio" id="league_class_4" name="league_class" value="4" class="custom-control-input" <?=$class_4c?>>
+										<label class="custom-control-label" for="league_class_4">사회인 4부</label>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="kind">리그 종류</label>
+								</div>
+								<div class="row col-md-10" style="padding-left:30px">
+									<div class="col-md-3 custom-control custom-radio">
+										<input type="radio" id="kind_1" name="kind" value="1" class="custom-control-input" <?=$kind_1c?>>
+										<label class="custom-control-label" for="kind_1">리그</label>
+									</div>
+									<div class="col-md-3 custom-control custom-radio">
+										<input type="radio" id="kind_2" name="kind" value="2" class="custom-control-input" <?=$kind_2c?>>
+										<label class="custom-control-label" for="kind_2">토너먼트</label>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="img">리그 로고</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="file" id="img" name="img" multiple accept='image/*'>
+								</div>
+							</div>
+							<div style="text-align:center">
+								<a class="btn btn-<?=$bt_c1?>" href="LeagueUpdateProc.php?no=<? echo $league_row['no'];?>&com=acc" role="button">확인</a>
+								<a class="btn btn-<?=$bt_c2?>" href="LeagueUpdateProc.php?no=<? echo $league_row['no'];?>&com=stp" role="button">대기</a>
+								<a class="btn btn-<?=$bt_c3?>" href="LeagueUpdateProc.php?no=<? echo $league_row['no'];?>&com=ref" role="button">거절</a>
+								<?if($league_row['state'] == 1){?>
+								<a class="btn btn-primary" href="admin.html?admin=league&no=<? echo $no?>&manage=apply" role="button">신청관리</a>
+								<a class="btn btn-primary" href="admin.html?admin=league&no=<? echo $no?>&manage=play" role="button">경기관리</a>
+								<? } ?>
+							</div>
+							<hr>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<input type="submit" value="수정" class="btn btn-primary">
+								</div>
+							</div>
+						</form>
+					</div>
+					<div class="col-lg-2"></div>
+				</div>
+			</div>
+		</section>
+	</body>
+</html>

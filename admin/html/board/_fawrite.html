@@ -1,0 +1,151 @@
+<!DOCTYPE HTML>
+<?
+	include "dbconn.php";
+	$writer_result = mysqli_query($conn,"SELECT * FROM player WHERE user ='$user_no'");
+	$writer_row = mysqli_fetch_array($writer_result);
+	mysqli_close($conn);
+					
+?>
+<html>
+	<body>
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-2"></div>
+					<div class="col-lg-8 col-md-12 mb-5 element-animate">
+						<div class="row">
+							<div class="col-md-12">
+								<h3 class="mb-5" style="vertical-align: middle;">FA 시장 글쓰기</h3>
+							</div>
+						</div>
+						<form action="BoardInsertProc.php" method="post" enctype="multipart/form-data">
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="manager">글쓴이</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="manager" class="form-control " value="<? echo $my_row['name'];?>" disabled>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="title">제목</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" name="title" id="title" class="form-control " placeholder="제목 입력" required>
+								</div>
+							</div>				
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="img">프로필<br>이미지</label>
+								</div>
+								<div class="col-md-5 form-group">
+								<? if ($writer_row['img']){?>
+								<img src="<? echo $writer_row['img'];?>" id="replaceMe" style="width:100%" class="img-thumbnail" alt="<? echo $writer_row['name']?>">
+								<input type="hidden" value="<? echo $writer_row['img'];?>" name="proimg">
+								<? } ?>
+								</div>
+								<div class="col-md-5 form-group">
+									<input type="file" id="img" name="img" onchange="imageURL(this)" multiple accept='image/*'>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="birth">생년월일</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="birth" class="form-control " value="<? echo $my_row['birth'];?>" disabled>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									포지션
+								</div>
+								<div class="row col-md-10 form-group" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-checkbox">
+										<input type="checkbox" id="position_p" name="position[]" value="1" class="custom-control-input">
+										<label class="custom-control-label" for="position_p">투수</label>
+									</div>
+									<div class="col-md-4 custom-control custom-checkbox">
+										<input type="checkbox" id="position_c" name="position[]" value="2" class="custom-control-input">
+										<label class="custom-control-label" for="position_c">포수</label>
+									</div>
+									<div class="col-md-4 custom-control custom-checkbox">
+										<input type="checkbox" id="position_1b" name="position[]" value="3" class="custom-control-input">
+										<label class="custom-control-label" for="position_1b">1루수</label>
+									</div>
+								</div>
+								<div class="col-md-2 form-group"> </div>
+								<div class="row col-md-10 form-group" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-checkbox">
+										<input type="checkbox" id="position_2b" name="position[]" value="4" class="custom-control-input">
+										<label class="custom-control-label" for="position_2b">2루수</label>
+									</div>
+									<div class="col-md-4 custom-control custom-checkbox">
+										<input type="checkbox" id="position_3b" name="position[]" value="5" class="custom-control-input">
+										<label class="custom-control-label" for="position_3b">3루수</label>
+									</div>
+									<div class="col-md-4 custom-control custom-checkbox">
+										<input type="checkbox" id="position_ss" name="position[]" value="6" class="custom-control-input">
+										<label class="custom-control-label" for="position_ss">유격수</label>
+									</div>
+								</div>
+								<div class="col-md-2 form-group"> </div>
+								<div class="row col-md-10 form-group" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-checkbox">
+										<input type="checkbox" id="position_lf" name="position[]" value="7" class="custom-control-input">
+										<label class="custom-control-label" for="position_lf">좌익수</label>
+									</div>
+									<div class="col-md-4 custom-control custom-checkbox">
+										<input type="checkbox" id="position_cf" name="position[]" value="8" class="custom-control-input">
+										<label class="custom-control-label" for="position_cf">중익수</label>
+									</div>
+									<div class="col-md-4 custom-control custom-checkbox">
+										<input type="checkbox" id="position_rf" name="position[]" value="9" class="custom-control-input">
+										<label class="custom-control-label" for="position_rf">우익수</label>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="adrs">지역</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<select class="custom-select" id="adrs" name="adrs">
+										<option value="" selected>선택해 주세요</option>
+										<option value="1">서울</option>
+										<option value="2">부산</option>
+										<option value="3">대구</option>
+										<option value="4">인천</option>
+										<option value="5">광주</option>
+										<option value="6">대전</option>
+										<option value="7">울산</option>
+									</select>
+								</div>
+							</div>	
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="contents">자유형식 글</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<textarea class="form-control" style="resize: none;" name="contents" rows="8" id="contents" aria-label="With textarea"></textarea>
+								</div>
+							</div>
+							<input type="hidden" value="fa" name="kind">
+							<hr>						
+							<div class="row">
+								<div class="col-md-8"></div>
+								<div class="col-md-2 form-group">
+									<input type="submit" value="등&nbsp;&nbsp;&nbsp;록" class="btn btn-primary" onclick="insert()">
+								</div>
+								<div class="col-md-2">
+									<a class="btn btn-primary" href="board.html?board=fa" role="button">목&nbsp;&nbsp;&nbsp;록</a>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</section>
+	</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE HTML>
+<?
+ $page = "data.html";
+?>
+<html>
+	<? include("inc/_head.html");?>
+	<?if(!$user_no){
+		echo "<script>alert('로그인이 필요한 기능입니다.');";
+		echo "window.location.replace('#login');</script>";
+	}?>
+	<body class="is-preload">
+		<!-- Wrapper -->
+			<div id="wrapper">
+				<? include("inc/_header.html");?>
+				<!-- Main -->
+					<div id="main">
+						<div class="inner">
+							<header>
+								<h1>저장된 기록</h1>
+								<? if($user_no){ ?>
+								<b>※ 로그인 전 입력된 기록은 저장되지 않습니다!</b>
+								<? }else{ ?>
+								<b>※ 로그인이 필요한 기능입니다.</b>
+								<? } ?>
+							</header>
+							<? if($user_no){
+								if($_GET['no'] && $_GET['pos']){
+									if($_GET['data'] == 'edit'){
+										include("data/edit.html");
+									}else{
+										include("data/record.html");
+									}
+								}else{
+									include("data/list.html");
+								}
+							} ?>
+						</div>
+					</div>
+				<? include("inc/_footer.html");?>
+			</div>
+		<? include("inc/_script.html");?>
+		<script>
+		function delete_event(no,pos){
+			if (confirm("정말 삭제하시겠습니까?") == true){
+				location.href="RecordDeleteProc.php?no=" + no + "&pos=" + pos;
+			}else{ 
+				return;
+			}
+		}
+		</script>
+	</body>
+</html>

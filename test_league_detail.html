@@ -1,0 +1,540 @@
+<? include("header/header.html");?>
+<? include("header/menu.html");?>
+<?
+include "dbconn.php";
+$league_record_hit_query = "SELECT test_record_hit.*,
+			ROUND(hit/at_bat,3) as avg ,
+			ROUND((hit1 + hit2 + hit3 + hr + bb + hbp)/(at_bat + bb + hbp + sf),3) as obp,
+			ROUND((hit1 + hit2*2 + hit3*3 +hr*4)/at_bat,3) as slg,
+			ROUND(((hit1 + hit2*2 + hit3*3 +hr*4)/at_bat)+((hit1 + hit2 + hit3 + hr + bb + hbp)/(at_bat + bb + hbp + sf)),3) as ops,
+			(hit1 + hit2*2 + hit3*3 + hr*4) as tb,
+			(hit2 + hit3 + hr) as xbh 
+		FROM test_record_hit WHERE league='테스트리그' ORDER BY num";
+$league_record_hit_result = mysqli_query($conn, $league_record_hit_query);
+$hitter_more_table = "";
+while($league_record_hit_row = mysqli_fetch_array($league_record_hit_result)){
+	$hitter_more_table = $hitter_more_table."<tr><td><a href='javascript:;'><i class='fa fa-download' style='color:#00b7ff'></i></a></td><td>".$league_record_hit_row['num']."</td><td>".$league_record_hit_row['team']."</td><td>".$league_record_hit_row['player']."</td><td>".$league_record_hit_row['avg']."</td><td>".$league_record_hit_row['at_game']."</td><td>".$league_record_hit_row['at_play']."</td><td>".$league_record_hit_row['at_bat']."</td><td>".$league_record_hit_row['hit']."</td><td>".$league_record_hit_row['hit2']."</td><td>".$league_record_hit_row['hit3']."</td><td>".$league_record_hit_row['hr']."</td><td>".$league_record_hit_row['rbi']."</td><td>".$league_record_hit_row['rs']."</td><td>".$league_record_hit_row['sb']."</td><td>".$league_record_hit_row['bb']."</td><td>".$league_record_hit_row['hbp']."</td><td>".$league_record_hit_row['so']."</td><td>".$league_record_hit_row['sf']."</td><td>".$league_record_hit_row['tb']."</td><td>".$league_record_hit_row['xbh']."</td><td>".$league_record_hit_row['obp']."</td><td>".$league_record_hit_row['slg']."</td><td>".$league_record_hit_row['ops']."</td></tr>";
+}
+$league_record_pit_query = "SELECT test_record_pit.*, 
+			ROUND((er * 7)/(inning/3),2) as era, 
+			ROUND((rs * 7)/(inning/3),2) as rsa, 
+			ROUND((so)/(hbp + bb),2) as kbb, 
+			ROUND((win_games)/(win_games + lose_games),3) as pct, 
+			ROUND((hit + hr + bb + hbp)/(inning/3),2) as whip 
+		FROM test_record_pit WHERE league='테스트리그' ORDER BY num";
+$league_record_pit_result = mysqli_query($conn, $league_record_pit_query);
+$pitcher_more_table = "";
+while($league_record_pit_row = mysqli_fetch_array($league_record_pit_result)){
+	if($league_record_pit_row['pitcher_count'] == '9999'){
+		$pitcher_count = "-";
+	}else{
+		$pitcher_count = $league_record_pit_row['pitcher_count'];
+	}
+	if($league_record_pit_row['rs'] == '9999'){
+		$rs = "-";
+		$rsa = "-";
+	}else{
+		$rs = $league_record_pit_row['rs'];
+		$rsa = $league_record_pit_row['rsa'];
+	}
+	if($league_record_pit_row['er'] == '9999'){
+		$er = "-";
+		$era = "-";
+	}else{
+		$er = $league_record_pit_row['er'];
+		$era = $league_record_pit_row['era'];
+	}
+	if($league_record_pit_row['pct']){
+		$pct = $league_record_pit_row['pct'];
+	}else{
+		$pct = "-";
+	}
+	$h_inning = ($league_record_pit_row['inning'] - ($league_record_pit_row['inning'] % 3)) / 3;
+	if($league_record_pit_row['inning'] % 3 == 0){
+		$f_inning = "";
+	}else if($league_record_pit_row['inning'] % 3 == 1){
+		$f_inning = "⅓";
+	}else if($league_record_pit_row['inning'] % 3 == 2){
+		$f_inning = "⅔";
+	}
+	$pitcher_more_table = $pitcher_more_table."<tr><td><a href='javascript:;'><i class='fa fa-download' style='color:#00b7ff'></i></a></td><td>".$league_record_pit_row['num']."</td><td>".$league_record_pit_row['team']."</td><td>".$league_record_pit_row['player']."</td><td>".$era."</td><td>".$rsa."</td><td>".$league_record_pit_row['at_game']."</td><td>".$league_record_pit_row['win_games']."</td><td>".$league_record_pit_row['lose_games']."</td><td>".$league_record_pit_row['hold_games']."</td><td>".$league_record_pit_row['save_games']."</td><td>".$pitcher_count."</td><td>".$h_inning.$f_inning."</td><td>".$er."</td><td>".$rs."</td><td>".$league_record_pit_row['hit']."</td><td>".$league_record_pit_row['hr']."</td><td>".$league_record_pit_row['bb']."</td><td>".$league_record_pit_row['hbp']."</td><td>".$league_record_pit_row['so']."</td><td>".$pct."</td><td>".$league_record_pit_row['whip']."</td></tr>";
+}
+mysqli_close($conn);
+?>
+<!-- 모달창 -->
+<div class="modal fade defaultModal_league" id="defaultModal_league">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            </div>
+            <div class="modal-body" id="modal_body_league">
+                <p class="modal-contents"></p>
+            </div>
+            <div class="modal-footer" id="modal_footer_league">
+                <button type="button" class="btn btn-default" data-dismiss="modal">확인</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+<!--// 모달창 -->
+
+<div class="ro_subpage ro_subpage_leaguedetail leaguedetail2019">
+	<div class="container-fluid ro_subpage_title">
+		<div class="container ro_pos_a">
+			<div class="row leaguedetail_info">
+				<div class="leaguedetail_info_img">
+					<img src="img/spogg_icon_230.png">
+				</div>
+				<div class="leaguedetail_info_content">
+					<div class="leaguedetail_info_text">
+						<div class="leaguedetail_info_text_title">
+							<strong>테스트리그</strong>					
+						</div>
+						<div class="leaguedetail_info_text_content">
+							<ul class="ro_list_title"> 
+								<li><strong>팀수</strong><br>10</li>
+								<li><strong>리그수준</strong><br>프로</li>
+								<li><strong>지역</strong><br>대한민국</li>
+								<li><strong>우승팀</strong><br>베어스</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div><!-- leaguedetail_info end -->
+	</div>
+	
+	<div class="container ro_subpage_content ro_subpage_content_leaguedetail">
+		<!-- TEAM RANKING -->
+		<div class="row to_mb_50">
+			<div class="col-xs-12 col-sm-12 col-md-12">
+				<div class="to_titlebar">
+					TEAM RANKING
+				</div>
+				<hr>
+				<div class="table-responsive teamranking_table">
+					<table class="table" id="teamranking_table">
+						<thead>
+							<tr>
+								<th>순위</th>
+								<th>팀명</th>
+								<th>경기</th>
+								<th>승</th>
+								<th>패</th>
+								<th>무</th>
+								<th>승률</th>
+								<th>게임차</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>1</td><td>베어스</td><td>144</td><td>88</td><td>55</td><td>1</td><td>0.615</td><td>-</td>
+							</tr>
+							<tr>
+								<td>2</td><td>히어로즈</td><td>144</td><td>86</td><td>57</td><td>1</td><td>0.601</td><td>2</td>
+							</tr>
+							<tr>
+								<td>3</td><td>와이번스</td><td>144</td><td>88</td><td>55</td><td>1</td><td>0.615</td><td>-</td>
+							</tr>
+							<tr>
+								<td>4</td><td>트윈스</td><td>144</td><td>79</td><td>64</td><td>1</td><td>0.552</td><td>9</td>
+							</tr>
+							<tr>
+								<td>5</td><td>다이노스</td><td>144</td><td>73</td><td>69</td><td>2</td><td>0.514</td><td>14.5</td>
+							</tr>
+							<tr>
+								<td>6</td><td>위즈</td><td>144</td><td>71</td><td>71</td><td>2</td><td>0.500</td><td>16.5</td>
+							</tr>
+							<tr>
+								<td>7</td><td>타이거즈</td><td>144</td><td>62</td><td>80</td><td>2</td><td>0.437</td><td>25.5</td>
+							</tr>
+							<tr>
+								<td>8</td><td>라이온즈</td><td>144</td><td>60</td><td>83</td><td>1</td><td>0.420</td><td>28</td>
+							</tr>
+							<tr>
+								<td>9</td><td>이글스</td><td>144</td><td>58</td><td>86</td><td>0</td><td>0.403</td><td>30.5</td>
+							</tr>
+							<tr>
+								<td>10</td><td>자이언츠</td><td>144</td><td>48</td><td>93</td><td>3</td><td>0.340</td><td>39</td>
+							</tr>						
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<!-- TEAM RANKING -->
+		
+		<div class="row">
+			<!-- HITTER RANKING -->
+			<div class="col-xs-12 col-sm-6 col-md-6 to_mb_50">
+				<div class="to_titlebar">
+					HITTER RANKING
+					<span><a href="javascript:;" onclick="moreranking(0)">전체보기</a></span>
+				</div>
+				<hr>
+				<div class="table-responsive ranking_table">
+					<table class="table">
+						<tr>
+							<th colspan="1" style="text-align:center;width:10%">순위</th>
+							<th style="text-align:center;width:22%">팀명</th>
+							<th style="text-align:center;width:17%">선수</th>
+							<th style="text-align:center;width:17%">타수</th>
+							<th style="text-align:center;width:17%">안타</th>
+							<th style="text-align:center;width:17%">타율</th>
+						</tr>
+						<tr>
+							<td>1</td><td>다이노스</td><td>양의지</td><td>390</td><td>138</td><td>0.354</td>
+						</tr>
+						<tr>
+							<td>2</td><td>베어스</td><td>페르난데스</td><td>572</td><td>197</td><td>0.344</td>
+						</tr>
+						<tr>
+							<td>3</td><td>다이노스</td><td>박민우</td><td>468</td><td>161</td><td>0.344</td>
+						</tr>
+						<tr>
+							<td>4</td><td>히어로즈</td><td>이정후</td><td>574</td><td>193</td><td>0.336</td>
+						</tr>
+						<tr>
+							<td>5</td><td>위즈</td><td>강백호</td><td>438</td><td>147</td><td>0.336</td>
+						</tr>
+						<tr>
+							<td>6</td><td>와이번스</td><td>고종욱</td><td>492</td><td>159</td><td>0.323</td>
+						</tr>
+						<tr>
+							<td>7</td><td>위즈</td><td>로하스</td><td>521</td><td>168</td><td>0.322</td>
+						</tr>
+						<tr>
+							<td>8</td><td>베어스</td><td>박건우</td><td>458</td><td>146</td><td>0.319</td>
+						</tr>
+						<tr>
+							<td>9</td><td>위즈</td><td>유한준</td><td>501</td><td>159</td><td>0.317</td>
+						</tr>
+						<tr>
+							<td>10</td><td>트윈스</td><td>채은성</td><td>470</td><td>148</td><td>0.315</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+			<!-- HITTER RANKING -->
+			
+			<!-- PITCHER RANKING -->
+			<div class="col-xs-12 col-sm-6 col-md-6 to_mb_50">
+				<div class="to_titlebar">
+					PITCHER RANKING
+					<span><a href="javascript:;" onclick="moreranking(1)">전체보기</a></span>
+				</div>
+				<hr>
+				<div class="table-responsive ranking_table">
+					<table class="table">
+						<tr>
+							<th colspan="1" style="text-align:center;width:10%">순위</th>
+							<th style="text-align:center;width:20%">팀명</th>
+							<th style="text-align:center;width:14%">선수</th>
+							<th style="text-align:center;width:14%">승</th>
+							<th style="text-align:center;width:14%">패</th>
+							<th style="text-align:center;width:14%">홀</th>
+							<th style="text-align:center;width:14%">세</th>
+						</tr>
+						<tr>
+							<td>1</td><td>타이거즈</td><td>양현종</td><td>16</td><td>8</td><td>0</td><td>0</td>
+						</tr>
+						<tr>
+							<td>2</td><td>베어스</td><td>린드블럼</td><td>20</td><td>3</td><td>0</td><td>0</td>
+						</tr>
+						<tr>
+							<td>3</td><td>와이번스</td><td>김광현</td><td>17</td><td>6</td><td>0</td><td>0</td>
+						</tr>
+						<tr>
+							<td>4</td><td>트윈스</td><td>켈리</td><td>14</td><td>12</td><td>0</td><td>0</td>
+						</tr>
+						<tr>
+							<td>5</td><td>와이번스</td><td>산체스</td><td>17</td><td>5</td><td>0</td><td>0</td>
+						</tr>
+						<tr>
+							<td>6</td><td>트윈스</td><td>윌슨</td><td>14</td><td>7</td><td>0</td><td>0</td>
+						</tr>
+						<tr>
+							<td>7</td><td>히어로즈</td><td>브리검</td><td>13</td><td>5</td><td>0</td><td>0</td>
+						</tr>
+						<tr>
+							<td>8</td><td>다이노스</td><td>루친스키</td><td>9</td><td>9</td><td>0</td><td>0</td>
+						</tr>
+						<tr>
+							<td>9</td><td>히어로즈</td><td>요키시</td><td>13</td><td>9</td><td>0</td><td>0</td>
+						</tr>
+						<tr>
+							<td>10</td><td>베어스</td><td>유희관</td><td>11</td><td>8</td><td>0</td><td>0</td>
+						</tr>
+					</table>
+				</div>
+			</div>
+			<!-- PITCHER RANKING -->
+		</div>
+		
+		<div class="row">
+			<div class="col-xs-12 col-sm-12 col-md-12 to_mb_50">
+				<div class="to_titlebar">
+					LATEST GAMES RESULTS
+				</div>
+				<hr>
+				
+				<div class="row">
+					<div class="MultiCarousel" data-items="1,3,3,5" data-slide="1" id="MultiCarousel1" data-interval="1000">
+						<div class="MultiCarousel-inner" style="transform: translateX(0px); width: 5520px;">
+						<?
+							for($i=1;$i<15;$i++){
+						?>
+							<div class="item " style="width: 400px;" onclick="" id="item<?=$i?>">
+								<div class="latest_game_list" >
+									<table>
+										<tr>
+											<td><img src="img/sampleimg/TRYOUT_DESIGN1-19.png"></td>
+											<td>2 : 1</td>
+											<td><img src="img/sampleimg/TRYOUT_DESIGN1-32.png"></td>
+										</tr>
+										<tr>
+											<th>SK 와이번스<p>Home</p></th>
+											<th></th>
+											<th>한화이글스<p>Away</p></th>
+										</tr>
+									</table>
+								</div>
+							</div>
+						<?
+							}
+						?>
+						</div>
+						<button class="btn btn-primary leftLst over">&lt;</button>
+						<button class="btn btn-primary rightLst">&gt;</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<!-- IE8 에서 HTML5 요소와 미디어 쿼리를 위한 HTML5 shim 와 Respond.js -->
+<!-- WARNING: Respond.js 는 당신이 file:// 을 통해 페이지를 볼 때는 동작하지 않습니다. -->
+<!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+<link href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css" rel="stylesheet">
+
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
+<script src="https://cdn.datatables.net/fixedcolumns/3.3.0/js/dataTables.fixedColumns.min.js"></script>
+<script type="text/javascript">
+	
+	var defaultModal_league = $("#defaultModal_league");
+	var modal_body_league = $("#modal_body_league");
+	var modal_footer_league = $("#modal_footer_league");
+	
+	var append_content;
+	var append_btn;
+	
+	var sorttableid="";
+	
+	
+	var count = 0;
+	
+	$(document).ready(function() {
+		$("#teamranking_table").DataTable({
+			// 표시 건수기능 숨기기
+	        lengthChange: false,
+	        // 페이징 기능 숨기기
+	        paging: false,
+	     	// 검색 기능 숨기기
+	        searching: false,
+		});	
+	} );
+	
+	
+	function moreranking(check) {
+		modal_body_league.empty();
+		modal_footer_league.empty();
+		if(check==0){				//타자랭킹더보기 
+			
+			console.log("0check : "+check);
+			
+			append_content = "<div class='ro_color_g'>"
+							+"	<div class='to_titlebar'>"
+							+"		HITTER RANKING"
+							+"	</div>"
+							+"	<hr>"
+							+"	<table class='table table-hover table_h_g hiterranking_modal' id='hiterranking_modal'>"
+							+"		<thead>"
+							+"			<tr>"
+							+"				<th></th><th>No</th><th>팀명</th><th>선수명</th><th>AVG</th><th>G</th><th>PA</th><th>AB</th><th>HIT</th><th>2B</th><th>3B</th><th>HR</th><th>RBI</th><th>R</th><th>SB</th><th>BB</th><th>HBP</th><th>SO</th><th>SF</th><th>TB</th><th>XBH</th><th>OBP</th><th>SLG</th><th>OPS</th>"
+							+"			</tr>"
+							+"		</thead>"
+							+"		<tbody>"
+							+"<?=$hitter_more_table;?>" 
+							+"		</tbody>"				
+							+"	</table></div>";
+							
+			sorttableid = '#hiterranking_modal'; 				
+							
+		}else{		//투수랭킹더보기 
+			console.log("1check : "+check);
+			
+			append_content = "<div class='ro_color_g'>"
+							+"	<div class='to_titlebar'>"
+							+"		PITCHER RANKING"
+							+"	</div>"
+							+"	<hr>"
+							+"	<table class='table table-hover table_h_g pitcherranking_modal' id='pitcherranking_modal'>"
+							+"		<thead>"
+							+"			<tr>"
+							+"				<th></th><th>No</th><th>팀명</th><th>선수명</th><th>ERA</th><th>RA</th><th>G</th><th>WIN</th><th>LOSE</th><th>HOLD</th><th>SAVE</th><th>NP</th><th>IP</th><th>ER</th><th>R</th><th>HIT</th><th>HR</th><th>BB</th><th>HBP</th><th>SO</th><th>PCT</th><th>WHIP</th>"
+							+"			</tr>"
+							+"		</thead>"
+							+"		<tbody>"
+							+"<?=$pitcher_more_table;?>" 
+							+"		</tbody>"				
+							+"	</table></div>";
+			
+			sorttableid = '#pitcherranking_modal'; 	
+			
+		}
+		if(count!=0){
+			table.destroy();
+		}
+		
+		modal_body_league.append(append_content);
+		table = $(sorttableid).DataTable({
+			// 표시 건수기능 숨기기
+	        lengthChange: false,
+	        // 페이징 기능 숨기기
+	        paging: false,
+	        scrollY:        "400px",
+	        scrollX:        true,
+	        scrollCollapse: true,
+	        language: {
+	            search: "",
+	            paginate:{
+	            	"previous" : "<",
+	            	"next" : ">"
+	            }
+	        },
+		});	
+		defaultModal_league.modal('show');
+		count =1;
+	}
+	
+	
+	//최근경기결과 Carousel
+	$(document).ready(function() {
+			$('#item1').trigger('click');
+			
+			var itemsMainDiv = ('.MultiCarousel');
+			var itemsDiv = ('.MultiCarousel-inner');
+			var itemWidth = "";
+
+			$('.leftLst, .rightLst').click(function() {
+				var condition = $(this).hasClass("leftLst");
+				if (condition)
+					click(0, this);
+				else
+					click(1, this)
+			});
+
+			ResCarouselSize();
+
+			$(window).resize(function() {
+				ResCarouselSize();
+			});
+
+			//this function define the size of the items
+			function ResCarouselSize() {
+				var incno = 0;
+				var dataItems = ("data-items");
+				var itemClass = ('.item');
+				var id = 0;
+				var btnParentSb = '';
+				var itemsSplit = '';
+				var sampwidth = $(itemsMainDiv).width();
+				var bodyWidth = $('body').width();
+				$(itemsDiv).each(
+						function() {
+							id = id + 1;
+							var itemNumbers = $(this).find(itemClass).length;
+							btnParentSb = $(this).parent().attr(dataItems);
+							itemsSplit = btnParentSb.split(',');
+							$(this).parent().attr("id","MultiCarousel" + id);
+
+							if (bodyWidth >= 1200) {
+								incno = itemsSplit[3];
+								itemWidth = sampwidth / incno;
+							} else if (bodyWidth >= 992) {
+								incno = itemsSplit[2];
+								itemWidth = sampwidth / incno;
+							} else if (bodyWidth >= 768) {
+								incno = itemsSplit[1];
+								itemWidth = sampwidth / incno;
+							} else {
+								incno = itemsSplit[0];
+								itemWidth = sampwidth / incno;
+							}
+							$(this).css({
+								'transform' : 'translateX(0px)',
+								'width' : itemWidth * itemNumbers
+							});
+							$(this).find(itemClass).each(
+									function() {
+										$(this).outerWidth(itemWidth);
+									});
+
+							$(".leftLst").addClass("over");
+							$(".rightLst").removeClass("over");
+
+						});
+			}
+
+			//this function used to move the items
+			function ResCarousel(e, el, s) {
+				var leftBtn = ('.leftLst');
+				var rightBtn = ('.rightLst');
+				var translateXval = '';
+				var divStyle = $(el + ' ' + itemsDiv).css('transform');
+				var values = divStyle.match(/-?[\d\.]+/g);
+				var xds = Math.abs(values[4]);
+				if (e == 0) {
+					translateXval = parseInt(xds)- parseInt(itemWidth * s);
+					$(el + ' ' + rightBtn).removeClass("over");
+
+					if (translateXval <= itemWidth / 2) {
+						translateXval = 0;
+						$(el + ' ' + leftBtn).addClass("over");
+					}
+				} else if (e == 1) {
+					var itemsCondition = $(el).find(itemsDiv).width() - $(el).width();
+					translateXval = parseInt(xds) + parseInt(itemWidth * s);
+					$(el + ' ' + leftBtn).removeClass("over");
+
+					if (translateXval >= itemsCondition - itemWidth / 2) {
+						translateXval = itemsCondition;
+						$(el + ' ' + rightBtn).addClass("over");
+					}
+				}
+				$(el + ' ' + itemsDiv).css('transform', 'translateX(' + -translateXval + 'px)');
+			}
+
+			//It is used to get some elements from btn
+			function click(ell, ee) {
+				var Parent = "#" + $(ee).parent().attr("id");
+				var slide = $(Parent).attr("data-slide");
+				ResCarousel(ell, Parent, slide);
+			}
+
+		});
+	
+	
+</script>
+
+<?include("footer/footer.html");?>	
+</body>
+</html>

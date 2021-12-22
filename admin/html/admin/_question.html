@@ -1,0 +1,60 @@
+<!DOCTYPE HTML>
+<?
+	include "dbconn.php";
+	$question_result = mysqli_query($conn,"SELECT * FROM question ORDER BY created_at DESC");
+?>
+<html>
+	<body>
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-10">
+						<h3 style="vertical-align: middle;">문의 내역</h3>
+					</div>
+					<div class="col-md-2">
+						<!--<a class="btn btn-primary" href="admin.html?admin=league&create=1" role="button">리그 개설</a>-->
+					</div>
+				</div><br>
+				<table class="table">
+					<thead>
+						<tr>
+							<th scope="col-1" style="width:10%">#</th>
+							<th scope="col-1" style="width:35%">Title</th>
+							<th scope="col-1" style="width:30%">User / Phone / E-mail</th>
+							<th scope="col-1" style="width:10%">States</th>
+							<th scope="col-1" style="width:15%">Answer / Update</th>
+						</tr>
+					</thead>
+					<tbody>
+						<? while($question_row = mysqli_fetch_array($question_result)){
+							if(!$question_row['answer']){
+								$button = "<a class='btn btn-primary' href='admin.html?admin=question&no=".$question_row['no']."' role='button'>Answer</a>";
+								$states = "<a style='color:green'>대기</a>";
+							}else{
+								$button = "<a class='btn btn-danger' href='admin.html?admin=question&no=".$question_row['no']."' role='button'>Update</a>";
+								$states = "<a style='color:blue'>완료</a>";
+							}
+							if($question_row['user']){
+								$user_no = $question_row['user'];
+								$user_result = mysqli_query($conn,"SELECT * FROM user WHERE no = '$user_no'");
+								$user_row = mysqli_fetch_array($user_result);
+								$whos = "<a href='user.html?user=info&no=".$user_no."'>".$user_row['name']." / ".$user_row['id']."</a>";
+							}else{
+								$whos = $question_row['phone']." / ".$question_row['email'];
+							}
+							?>
+						<tr>
+							<th scope="row" style="vertical-align: middle;"><? echo $question_row['no'];?></th>
+							<td style="vertical-align: middle;"><? echo $question_row['title']; ?></td>
+							<td style="vertical-align: middle;"><? echo $whos;?></td>
+							<td style="vertical-align: middle;"><? echo $states;?></td>
+							<td style="vertical-align: middle;"><? echo $button;?></td>
+						</tr>
+						<? } ?>
+					</tbody>
+				</table>
+				<? 	mysqli_close($conn); ?>
+			</div>
+		</section>
+	</body>
+</html>

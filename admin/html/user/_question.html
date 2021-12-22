@@ -1,0 +1,62 @@
+<!DOCTYPE HTML>
+<html>
+<? 	
+	if($question_row['answer']){
+		$answer = $question_row['answer'];
+	}else{
+		$answer = "아직 답변이 없습니다. 최대한 빨리 답변 드리겠습니다.";
+	}
+	include "dbconn.php";
+	$board_activiy_result = mysqli_query($conn, "SELECT * FROM user_activity where user = '$user_no' AND board = '$no' AND board_table = 'question'");
+	$board_activiy_row = mysqli_fetch_array($board_activiy_result);
+	if($board_activiy_row){
+		$activity_no = $board_activiy_row['no'];
+		mysqli_query($conn,"UPDATE user_activity SET count = '0' WHERE no = '$activity_no'");
+	}
+	mysqli_close($conn);
+?>
+<body>
+	<section class="site-section">
+		<div class="container">
+			<div class="row">
+				<div class="col-lg-2"></div>
+				<div class="col-lg-8 col-md-12 mb-5 element-animate">
+					<div class="row">
+						<div class="col-md-12">
+							<h3 class="mb-5" style="vertical-align: middle;">문의 사항</h3>
+						</div>
+						<table class="table table-bordered" style="vertical-align: middle;">
+							<thead>
+								<tr>
+									<th colspan="1" style="width:20%">문의 제목</th>
+									<td colspan="3" style="width:80%"><? echo $question_row['title'];?></td>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<th colspan="1" style="width:20%">문의 내용</th>
+									<td colspan="3" style="width:80%">
+										<? echo $question_row['contents'];?>
+									</td>
+								</tr>
+								<tr>
+									<th colspan="1" style="width:20%">답변 내용</th>
+									<td colspan="3" style="width:80%">
+										<? echo $answer;?>
+									</td>
+								</tr>
+								<tr>
+									<td colspan="4" style="width:100%;text-align:center">
+										<a class="btn btn-primary" href="index.html#question" role="button">다시 문의 하기</a>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+				<div class="col-lg-2"></div>
+			</div>
+		</div>
+	</section>
+  </body>
+</html>

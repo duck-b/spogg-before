@@ -1,0 +1,110 @@
+<!DOCTYPE HTML>
+<?
+	include "dbconn.php";
+	$league_result = mysqli_query($conn,"SELECT * FROM league WHERE no = '$no'");
+	$league_row = mysqli_fetch_array($league_result);
+	mysqli_close($conn);
+?>
+<html>
+	<body>
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-lg-2"></div>
+					<div class="col-lg-8 col-md-12 mb-5 element-animate">
+						<h3 class="mb-5"><? echo $league_row['name']?> (경기 개설)</h3>
+						<form name="league_form" action="PlayInsertProc.php" method="post" enctype="multipart/form-data">
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="name">경기명</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="name" name="name" class="form-control " required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="play_datetime">경기일</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="datetime-local" name="play_datetime" id="play_datetime" class="form-control " min="1900-01-01T00:00" max="2200-12-31T00:00" required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="stadium">구장명</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="stadium" name="stadium" class="form-control " required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="home_team">Home</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<select class="custom-select" id="home_team" name="home_team">
+										<option value="0" selected>홈 팀을 선택해 주세요</option>
+											<? include "dbconn.php";
+											$league_team_result = mysqli_query($conn,"SELECT * FROM league_team WHERE league = '$no' AND states = '1'");
+											while ($league_team_row = mysqli_fetch_array($league_team_result)){
+											$team_no = $league_team_row['team'];
+											$team_result = mysqli_query($conn,"SELECT * FROM team where no='$team_no'");
+											$team_row = mysqli_fetch_array($team_result);?>
+										<option value="<? echo $team_no; ?>"><? echo $team_row['name']; ?></option>
+											<? } 
+											mysqli_close($conn);?>
+									</select>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="away_team">Away</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<select class="custom-select" id="away_team" name="away_team">
+										<option value="0" selected>어웨이 팀을 선택해 주세요</option>
+											<? include "dbconn.php";
+											$league_team_result = mysqli_query($conn,"SELECT * FROM league_team WHERE league = '$no' AND states = '1'");
+											while ($league_team_row = mysqli_fetch_array($league_team_result)){
+											$team_no = $league_team_row['team'];
+											$team_result = mysqli_query($conn,"SELECT * FROM team where no='$team_no'");
+											$team_row = mysqli_fetch_array($team_result);?>
+										<option value="<? echo $team_no; ?>"><? echo $team_row['name']; ?></option>
+											<? } 
+											mysqli_close($conn);?>
+									</select>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="umpc">심판</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="umpc" name="umpc" class="form-control " required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="scoa">기록원</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="scoa" name="scoa" class="form-control " required>
+								</div>
+							</div>
+							<input type="hidden" name="kind" value="<? echo $league_row['kinds']?>">
+							<input type="hidden" name="no" value="<? echo $no?>">
+							<hr>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<input type="submit" value="개설" class="btn btn-primary" required>
+								</div>
+							</div>
+						</form>
+					</div>
+					<div class="col-lg-2"></div>
+				</div>
+			</div>
+		</section>
+	</body>
+</html>

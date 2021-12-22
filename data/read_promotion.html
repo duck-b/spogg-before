@@ -1,0 +1,52 @@
+<?
+	include("header/header.html");
+	$no = $_GET['no'];
+	if(!$_GET['link']){
+		include "dbconn.php";
+		$promotion_result = mysqli_query($conn,"SELECT user_manager_promotion.*,manager_name,user_manager.no as manager_no,manager_link FROM user_manager JOIN user_manager_promotion WHERE user_manager.no = user_manager_promotion.user_manager AND user_manager_promotion.no = $no");
+		$promotion_row = mysqli_fetch_array($promotion_result);
+		mysqli_close($conn);
+	}else{
+		echo "<script>opener.parent.location.replace('".$_GET['link']."');</script>";
+		echo "<script>window.close();</script>";
+	}
+	
+?>
+<body onload="edit_contents()">
+    <div class="sufee-login d-flex align-content-center flex-wrap;">
+        <div class="container" style="padding:20px">
+            <div class="login-content">
+                <div class="login-form">
+					<h3><?=$promotion_row['manager_name']?></h3>
+					<hr>
+                    <form action="read_promotion.html" method="get">
+						<input type="hidden" name="link" value="<?=$promotion_row['manager_link']?>">
+						  <div class="form-group">
+							<label class="col-form-label">제목</label>
+							<div class="border rounded" style="padding:10px"><?=$promotion_row['manager_name']?></div>
+						  </div>
+						  <div class="form-group">
+							<label class="col-form-label">내용</label>
+							<div class="border rounded" style="padding:10px"><?=$promotion_row['contents']?></div>
+						  </div>
+						  <div class="text-right" style="border-top:1px solid #d7d7d7;padding-top:10px">
+							<button type="button" class="btn btn-secondary" onclick="cancle()">닫기</button>
+							<button type="submit" class="btn btn-success" style="border:0px;">바로가기</button>
+						  </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+	<script>
+		function cancle(){
+			window.close();
+		}
+		function edit_contents(){
+			var str = document.getElementById("contents").textContent;
+			str = str.replace(/<br>/g, "\r\n");
+			document.getElementById("contents").value = str;
+		}
+	</script>
+</body>
+</html>

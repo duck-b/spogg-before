@@ -1,0 +1,106 @@
+<!DOCTYPE HTML>
+<html>
+	<body>
+		<!-- Footer -->
+		<footer id="footer">
+			<div class="inner row">
+				<div class="col-6 col-12-xsmall" style="margin-bottom:30px">
+					<h2>트라이아웃 페이지</h2>
+					<ul class="icons">
+						<li><a href="https://www.facebook.com/tryout.kr/" target="_blank" class="icon style2" title="트라이아웃 페이스북 페이지"><img src="images/facebook_logo.png" width="100%" height="100%"><span class="label">Facebook</span></a></li>
+						<li><a href="https://www.instagram.com/to.tryout/?hl=ko" target="_blank" class="icon style2" title="트라이아웃 인스타그램"><img src="images/instar_logo.png" width="100%" height="100%"><span class="label">Instagram</span></a></li>
+						<li><a href="javascript:;" onclick="not_ready()" class="icon style2" title="트라이아웃 네이버 포스트"><img src="images/네이버포스트.png" width="100%" height="100%"><span class="label">Naver Cafe</span></a></li>
+						<li><a href="javascript:;" onclick="not_ready()" class="icon style2" title="트라이아웃 네이버 블로그"><img src="images/naver_blog.png" width="100%" height="100%"><span class="label">Naver Blog</span></a></li>
+						<li><a href="javascript:;" onclick="not_ready()" class="icon style2" title="트라이아웃 다음 카페"><img src="images/daum_cafe.ico" width="100%" height="100%"><span class="label">Daum Cafe</span></a></li>
+						<li><a href="../index.html" class="icon style2" title="트라이아웃 홈페이지"><img src="images/logo.png" width="100%" height="100%"><span class="label">TRYOUT Home</span></a></li>
+					</ul>
+				</div>
+				<? if(!$user_no){ ?>
+				<div class="col-6 col-12-xsmall" id="login">
+					<h2>로그인</h2>
+					<form method="post" action="LoginProc.php">
+						<div class="fields">
+							<div class="field half">
+								<input type="text" name="id" id="id" placeholder="ID를 입력해 주세요" />
+							</div>
+							<div class="field half">
+								<input type="password" name="pw" id="pw" placeholder="PW를 입력해 주세요" />
+							</div>
+						</div>
+						<input type="hidden" value="<?=$page?>" name="page">
+						<div class="row">
+							<div class="col-6">
+								<input type="submit" value="로그인" class="primary fit">
+							</div>
+							<div class="col-6">
+								<a href='javascript:;' class='button primary fit' onclick="signup_open()">회원가입</a>
+							</div>
+						</div>
+					</form>
+				</div>
+				<div class="col-6 col-12-xsmall" id="signup" style="display:none">
+					<h2>회원가입</h2>
+					<form method="post" action="UserInsertProc.php" name="user_form">
+						<div class="fields">
+							<div class="field">
+								<input type="text" name="id" id="id" placeholder="ID : 숫자와 문자 포함 형태의 6~12자리" pattern="[A-Za-z0-9]{6,12}$" required>
+							</div>
+							<div class="field">
+								<input type="password" name="pw" id="pw" pattern="^.*(?=^.{8,15}$)(?=.*\d)(?=.*[a-zA-Z])(?=.*[!@#$%^&+=]).*$" placeholder="PW : 특수문자/문자/숫자 모두 포함 8~15자리 이내" required>
+							</div>
+							<div class="field">
+								<input type="password" name="pw_s" id="pw_s" pattern="^.*(?=^.{8,15}$)(?=.*\d)(?=.*[a-zA-Z])(?=.*[!@#$%^&+=]).*$" placeholder="PW 확인" required>
+							</div>
+						</div>
+						<input type="hidden" value="" name="checkid">
+						<input type="hidden" value="<?=$page?>" name="page">
+						<div class="row">
+							<div class="col-6">
+								<input type="button" id="checkedid" value="ID 중복확인" onclick="check_id()" class="fit">
+							</div>
+							<div class="col-6">
+								<input type="submit" id="signup_button" disabled="true" value="회원가입" class="primary fit">
+							</div>
+						</div>
+					</form>
+				</div>
+				<ul class="copyright">
+					<li>&copy; 2019 <a href="../index.html">TRYOUT</a> All rights reserved</li>
+					<li><a href="javascript:;" onclick="not_ready()">회사소개</a></li>
+					<li><a href="javascript:;" onclick="not_ready()">문의하기</a></li>
+					<li><a href="javascript:;" onclick="not_ready()">제휴제안</a></li>
+					<li><a href="javascript:;" onclick="not_ready()">이용약관</a></li>
+					<li><a href="javascript:;" onclick="not_ready()">개인정보처리방침</a></li>
+				</ul>
+			</div>
+		</footer>
+		<script>
+			function signup_open(){
+				document.getElementById("login").style.display = "none";
+				document.getElementById("signup").style.display = "inline-block";
+				location.href = "#signup";
+			}
+			function login_open(){
+				document.getElementById("login").style.display = "inline-block";
+				document.getElementById("signup").style.display = "none";
+				location.href = "#login";
+			}
+			function check_id(){
+				var regex = /^[A-Za-z0-9]{6,12}$/;
+				if(regex.test(document.user_form.id.value) == false) {
+					alert("ID 형식이 올바르지 않습니다.");
+					document.user_form.id.value = "";
+					return flase;
+				}else{
+					window.open("check_id.php?id=" +
+					document.user_form.id.value,
+					"IDcheck","left=200, top=200, width=500, height=300, scrollbars=no,resizable=yes");
+					//document.getElementById("id").disabled = true;
+				}
+			}
+			function not_ready(){
+				alert("준비중 입니다.");
+			}
+		</script>
+	</body>
+</html>

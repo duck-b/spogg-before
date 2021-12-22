@@ -1,0 +1,211 @@
+<!DOCTYPE HTML>
+<?
+	$page = "index.html";
+?>
+<html>
+	<? include("inc/_head.html");?>
+	<body class="is-preload">
+		<!-- Wrapper -->
+			<div id="wrapper">
+				<? include("inc/_header.html");?>
+				<!-- Main -->
+				<div id="main">
+					<div class="inner">
+						<header>
+							<h1>재미로 보는<br> 사회인야구 데이터 분석<br> <b style="color:#007bff">트라이아웃</b> 입니다</h1>
+							<?if(!$user_no){?>
+							<b><a href="javascript:;" style="color:#007bff" onclick="login_open()">로그인</a>하시면 <u style="color:red">기록 저장이 가능</u>하고 다른 분석 시 <u style="color:red">재입력이 필요 없습니다</u> / 아직 회원이 아니시면 <a href="javascript:;" style="color:#007bff" onclick="signup_open()">회원가입</a> 후 사용해 주세요</b><br>
+							<? } ?>
+							<b>※ 로그인 전 입력된 기록은 저장되지 않습니다!</b>
+						</header>
+						<section class="tiles">
+							<article class="style1">
+								<span class="image">
+									<img src="images/pic01.jpg" alt="" />
+								</span>
+								<a href="analy.html?analy_no=1">
+									<h2>나의 기록은?<br> - 타자</h2>
+									<div class="content">
+										<p style="font-size:70%">자신의 타자 기록은 상위 몇 퍼센트 인가 분석한 콘텐츠</p>
+									</div>
+								</a>
+							</article>
+							<article class="style2">
+								<span class="image">
+									<img src="images/pic02.jpg" alt="" />
+								</span>
+								<a href="analy.html?analy_no=2">
+									<h2>나의 기록은?<br> - 투수</h2>
+									<div class="content">
+										<p style="font-size:70%">자신의 투수 기록은 상위 몇 퍼센트 인가 분석한 콘텐츠</p>
+									</div>
+								</a>
+							</article>
+							<article class="style3">
+								<span class="image">
+									<img src="images/pic03.jpg" alt="" />
+								</span>
+								<a href="analy.html?analy_no=3">
+									<h2>프로 선수가 사회인 선수라면?<br> - 타자</h2>
+									<div class="content">
+										<p style="font-size:70%">프로 야구 타자 기록이 사회인 야구였을 경우 기록을 분석한 콘텐츠</p>
+									</div>
+								</a>
+							</article>
+						</section>
+						<?if($_SESSION['admin']){?>
+						<hr>
+						<h1 style="text-align:center">준비중</h1>
+						<section class="tiles">
+							<article class="style4">
+								<span class="image">
+									<img src="images/pic04.jpg" alt="" />
+								</span>
+								<a href="analy.html?analy_no=4">
+									<h2>프로 선수가 사회인 선수라면?<br> - 투수</h2>
+									<div class="content">
+										<p style="font-size:70%">프로 야구 투수 기록이 사회인 야구였을 경우 기록을 분석한 콘텐츠</p>
+									</div>
+								</a>
+							</article>
+							<article class="style5">
+								<span class="image">
+									<img src="images/pic05.jpg" alt="" />
+								</span>
+								<a href="analy.html?analy_no=5">
+									<h2>내가 프로 선수 라면?<br> - 타자</h2>
+									<div class="content">
+										<p style="font-size:70%">자신의 타자 기록이 프로 야구였을 경우 기록을 분석한 콘텐츠</p>
+									</div>
+								</a>
+							</article>
+							<article class="style6">
+								<span class="image">
+									<img src="images/pic06.jpg" alt="" />
+								</span>
+								<a href="analy.html?analy_no=6">
+									<h2>내가 프로 선수 라면?<br> - 투수</h2>
+									<div class="content">
+										<p style="font-size:70%">자신의 투수 기록이 프로 야구였을 경우 기록을 분석한 콘텐츠</p>
+									</div>
+								</a>
+							</article>
+							<article class="style1">
+								<span class="image">
+									<img src="images/pic01.jpg" style="height:320px" alt="" />
+								</span>
+								<a href="analy.html?analy_no=7">
+									<h2>나는 몇 번 타자일까?</h2>
+									<div class="content">
+										<p style="font-size:70%">자신의 타자 기록으로 어느 타선에 들어가는 것이 가장 적절한가 분석한 콘텐츠</p>
+									</div>
+								</a>
+							</article>
+							<article class="style2">
+								<span class="image">
+									<img src="images/pic02.jpg" style="height:320px" alt="" />
+								</span>
+								<a href="analy.html?analy_no=8">
+									<h2>내가 타자라면?<br> - 투수</h2>
+									<div class="content">
+										<p style="font-size:70%">자신의 투수 기록이 타자였을 경우 기록을 분석한 콘텐츠</p>
+									</div>
+								</a>
+							</article>
+							<article class="style3">
+								<span class="image">
+									<img src="images/pic03.jpg" style="height:320px" alt="" />
+								</span>
+								<a href="analy.html?analy_no=9">
+									<h2>내가 투수라면?<br> - 타자</h2>
+									<div class="content">
+										<p style="font-size:70%">자신의 타자 기록이 투수였을 경우 기록을 분석한 콘텐츠</p>
+									</div>
+								</a>
+							</article>
+							<article class="style4">
+								<span class="image">
+									<img src="images/pic04.jpg" alt="" />
+								</span>
+								<a href="javascript:;">
+									<h2>나의 내년 기록은?<br> - 타자</h2>
+									<div class="content">
+										<p style="font-size:70%">자신의 과거 타자 기록으로 내년 기록을 예측 분석한 콘텐츠</p>
+									</div>
+								</a>
+							</article>
+							<article class="style5">
+								<span class="image">
+									<img src="images/pic05.jpg" alt="" />
+								</span>
+								<a href="javascript:;">
+									<h2>나의 내년 기록은?<br> - 투수</h2>
+									<div class="content">
+										<p style="font-size:70%">자신의 과거 투수 기록으로 내년 기록을 예측 분석한 콘텐츠</p>
+									</div>
+								</a>
+							</article>
+							<article class="style3">
+								<span class="image">
+									<img src="images/pic08.jpg" alt="" />
+								</span>
+								<a href="generic.html">
+									<h2>Dolor</h2>
+									<div class="content">
+										<p>Sed nisl arcu euismod sit amet nisi lorem etiam dolor veroeros et feugiat.</p>
+									</div>
+								</a>
+							</article>
+							<article class="style1">
+								<span class="image">
+									<img src="images/pic09.jpg" alt="" />
+								</span>
+								<a href="generic.html">
+									<h2>Nullam</h2>
+									<div class="content">
+										<p>Sed nisl arcu euismod sit amet nisi lorem etiam dolor veroeros et feugiat.</p>
+									</div>
+								</a>
+							</article>
+							<article class="style5">
+								<span class="image">
+									<img src="images/pic10.jpg" alt="" />
+								</span>
+								<a href="generic.html">
+									<h2>Ultricies</h2>
+									<div class="content">
+										<p>Sed nisl arcu euismod sit amet nisi lorem etiam dolor veroeros et feugiat.</p>
+									</div>
+								</a>
+							</article>
+							<article class="style6">
+								<span class="image">
+									<img src="images/pic11.jpg" alt="" />
+								</span>
+								<a href="generic.html">
+									<h2>Dictum</h2>
+									<div class="content">
+										<p>Sed nisl arcu euismod sit amet nisi lorem etiam dolor veroeros et feugiat.</p>
+									</div>
+								</a>
+							</article>
+							<article class="style4">
+								<span class="image">
+									<img src="images/pic12.jpg" alt="" />
+								</span>
+								<a href="generic.html">
+									<h2>Pretium</h2>
+									<div class="content">
+										<p>Sed nisl arcu euismod sit amet nisi lorem etiam dolor veroeros et feugiat.</p>
+									</div>
+								</a>
+							</article>
+						</section>
+					<? } ?>
+					</div>
+				</div>
+				<? include("inc/_footer.html");?>
+			</div>
+		<? include("inc/_script.html");?>
+	</body>
+</html>

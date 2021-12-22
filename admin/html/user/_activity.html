@@ -1,0 +1,559 @@
+<!DOCTYPE HTML>
+<?
+	include "dbconn.php";
+	$player_no = $_SESSION['player_no'];
+	$query_a = "SELECT no,created_at,updated_at, 'merc' AS tablename FROM game_merc WHERE user='$user_no'
+	UNION ALL
+	SELECT no,created_at,updated_at, 'team' AS tablename FROM team_members WHERE player='$player_no'
+	UNION ALL
+	SELECT no,created_at,updated_at, 'question' AS tablename FROM question WHERE user='$user_no'
+	UNION ALL
+	SELECT no,created_at,updated_at, 'league' AS tablename FROM league_team WHERE user='$user_no'
+	ORDER BY created_at DESC;";
+	
+	$query_b = "SELECT no,user,title,created_at,deleted_at,updated_at,'fa' AS tablename FROM board_fa WHERE user='$user_no' AND deleted_at is null
+	UNION ALL
+	SELECT no,user,title,created_at,deleted_at,updated_at, 'free' AS tablename FROM board_free WHERE user='$user_no' AND deleted_at is null
+	UNION ALL
+	SELECT no,user,title,created_at,deleted_at,updated_at, 'hgame' AS tablename FROM game WHERE user='$user_no' AND kind = '1' AND deleted_at is null
+	UNION ALL
+	SELECT no,user,title,created_at,deleted_at,updated_at, 'agame' AS tablename FROM game WHERE user='$user_no' AND kind = '2' AND deleted_at is null
+	UNION ALL
+	SELECT no,user,title,created_at,deleted_at,updated_at, 'merc' AS tablename FROM game WHERE user='$user_no' AND kind = '3' AND deleted_at is null
+	UNION ALL
+	SELECT no,user,title,created_at,deleted_at,updated_at, 'stadium' AS tablename FROM game WHERE user='$user_no' AND kind = '4' AND deleted_at is null
+	UNION ALL
+	SELECT no,user,title,created_at,deleted_at,updated_at, 'team' AS tablename FROM board_team WHERE user='$user_no' AND notice = '0' AND deleted_at is null
+	ORDER BY created_at DESC;";
+	
+	$query_c = "SELECT no,board,user,contents,created_at,deleted_at,updated_at,'fa' AS tablename FROM board_fa_comment WHERE user='$user_no'
+	UNION ALL
+	SELECT no,board,user,contents,created_at,deleted_at,updated_at, 'free' AS tablename FROM board_free_comment WHERE user='$user_no'
+	UNION ALL
+	SELECT no,game,user,contents,created_at,deleted_at,updated_at, 'game' AS tablename FROM game_comment WHERE user='$user_no'
+	UNION ALL
+	SELECT no,board,user,contents,created_at,deleted_at,updated_at, 'team' AS tablename FROM board_team_comment WHERE user='$user_no'
+	UNION ALL
+	SELECT no,comment,user,contents,created_at,deleted_at,updated_at,'farec' AS tablename FROM board_fa_recomment WHERE user='$user_no'
+	UNION ALL
+	SELECT no,comment,user,contents,created_at,deleted_at,updated_at, 'freerec' AS tablename FROM board_free_recomment WHERE user='$user_no'
+	UNION ALL
+	SELECT no,comment,user,contents,created_at,deleted_at,updated_at, 'gamerec' AS tablename FROM game_recomment WHERE user='$user_no'
+	UNION ALL
+	SELECT no,comment,user,contents,created_at,deleted_at,updated_at, 'teamrec' AS tablename FROM board_team_recomment WHERE user='$user_no'
+	ORDER BY created_at DESC;";
+	
+	$apply_result = mysqli_query($conn, $query_a);
+	$board_result = mysqli_query($conn, $query_b);
+	$comment_result = mysqli_query($conn, $query_c);
+?>
+<html>
+	<body onload="count_text()">
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-12">
+						<h3 class="mb-5" style="vertical-align: middle;">활동내역</h3>
+					</div>
+					<div class="row col-md-12">
+						<div class="col-md-6" id="board_count" style="text-align:center; border:1px solid #dee2e6">총 게시글 : 0 개</div>
+						<div class="col-md-6" id="comment_count" style="text-align:center; border:1px solid #dee2e6; border-left:0px;">총 댓글 : 0개</div>
+					</div>
+				</div><br>
+				<nav>
+					<div class="nav nav-tabs row col-md-12" id="nav-tab" role="tablist" style="text-align:center">
+						<a class="nav-item nav-link active col-md-3" style="text-align:center" id="nav-board-tab" data-toggle="tab" href="#nav-board" role="tab" aria-controls="nav-board" aria-selected="true">등록한 게시글</a>
+						<a class="nav-item nav-link col-md-3" style="text-align:center" id="nav-comment-tab" data-toggle="tab" href="#nav-comment" role="tab" aria-controls="nav-comment" aria-selected="false">등록한 댓글</a>
+						<a class="nav-item nav-link col-md-3" style="text-align:center" id="nav-apply-tab" data-toggle="tab" href="#nav-apply" role="tab" aria-controls="nav-apply" aria-selected="false">신청 내역</a>
+						<a class="nav-item nav-link disabled col-md-3" style="text-align:center" id="nav-contact-tab" data-toggle="tab" href="#nav-contact" role="tab" aria-controls="nav-contact" aria-selected="false">쪽지(준비중)</a>
+					</div>
+				</nav>
+				<div class="tab-content" id="nav-tabContent">
+					<div class="tab-pane fade show active" id="nav-board" role="tabpanel" aria-labelledby="nav-board-tab">
+						<table class="table">
+							<thead>
+								<tr>
+									<th colspan="1" style="width:5%;border-top:0px">#</th>
+									<th colspan="1" style="width:35%;border-top:0px">제목</th>
+									<th colspan="1" style="width:25%;border-top:0px">게시판</th>
+									<th colspan="1" style="width:25%;border-top:0px">작성일</th>
+									<th colspan="1" style="width:10%;border-top:0px">조회</th>
+								</tr>
+							</thead>
+							<tbody>
+								<? 	$i = 0;
+									$i2 = 0;
+									while($board_row = mysqli_fetch_array($board_result)){
+									$board_no = $board_row['no'];
+									if($board_row['tablename'] == 'free'){
+										$tablename ="free";
+										$tableviewname = 'board_free_view';
+										$tablecommetname = 'board_free_comment';
+										$valuename = 'board';
+										$boardname = '자유 게시판';
+										$activity_table = "board_free";
+									}else if($board_row['tablename'] == 'fa'){
+										$tablename ="fa";	
+										$tableviewname = 'board_fa_view';
+										$tablecommetname = 'board_fa_comment';
+										$valuename = 'board';
+										$boardname = 'FA 시장';
+										$activity_table = "board_fa";
+									}else if($board_row['tablename'] == 'hgame'){
+										$tablename ="read";
+										$tableviewname = 'game_view';
+										$tablecommetname = 'game_comment';
+										$valuename = 'game';
+										$boardname = '일반경기';
+										$activity_table = "game";
+									}else if($board_row['tablename'] == 'agame'){
+										$tablename ="read";
+										$tableviewname = 'game_view';
+										$tablecommetname = 'game_comment';
+										$valuename = 'game';
+										$boardname = '일반경기 (원정)';
+										$activity_table = "game";
+									}else if($board_row['tablename'] == 'merc'){
+										$tablename ="read";
+										$tableviewname = 'game_view';
+										$tablecommetname = 'game_comment';
+										$valuename = 'game';
+										$boardname = '용병경기';
+										$activity_table = "game";
+									}else if($board_row['tablename'] == 'stadium'){
+										$tablename ="read";
+										$tableviewname = 'game_view';
+										$tablecommetname = 'game_comment';
+										$valuename = 'game';
+										$boardname = '구장양도';
+										$activity_table = "game";
+									}else if($board_row['tablename'] == 'team'){
+										$tableviewname = 'board_team_view';
+										$tablecommetname = 'board_team_comment';
+										$valuename = 'board';										
+										$board_team_result = mysqli_query($conn, "SELECT * FROM board_team where no='$board_no'");
+										$board_team_row = mysqli_fetch_array($board_team_result);
+										$team_no = $board_team_row['team'];
+										$team_result = mysqli_query($conn, "SELECT * FROM team where no='$team_no'");
+										$team_row = mysqli_fetch_array($team_result);
+										$boardname = "팀 게시판 (<a href='team.html?team=page&no=".$team_no."'>".$team_row['name']."</a>)";
+										$activity_table = "board_team";
+									}
+									$query_v = "SELECT * FROM ".$tableviewname." where ".$valuename."='$board_no'";
+									$query_cc = "SELECT COUNT(*) as count FROM ".$tablecommetname." where ".$valuename."='$board_no'";
+									$comment_count_result = mysqli_query($conn, $query_cc);
+									$comment_count_row = mysqli_fetch_array($comment_count_result);
+									$view_result = mysqli_query($conn, $query_v);
+									$view_row = mysqli_fetch_array($view_result);
+									$count_result = mysqli_query($conn, "SELECT * FROM user_activity where board='$board_no' AND board_table='".$activity_table."'");
+									$count_row = mysqli_fetch_array($count_result);
+									if($count_row['count'] >= 1){
+										$count_comment = "&nbsp;&nbsp;<span class='badge badge-primary badge-pill'>".$count_row['count']."</span>";
+										$i2 = $i2 + $count_row['count'];
+									}else{
+										$count_comment = "";
+									}
+									?>
+								<tr>
+									<th scope="row" style="vertical-align: middle;"><? $i++;?><? echo $i;?></th>
+									<? if ($board_row['tablename'] != 'team'){?>
+									<td style="vertical-align: middle;"><a href="<? echo $valuename;?>.html?<? echo $valuename;?>=<? echo $tablename;?>&no=<? echo $board_row['no'];?>"><? echo $board_row['title'];?></a>&nbsp;[<? echo $comment_count_row['count'];?>]<? echo $count_comment;?></td>
+									<? } else { ?>
+									<td style="vertical-align: middle;"><a href="team.html?team=page&no=<? echo $team_no;?>&page=free&read=<? echo $board_no;?>"><? echo $board_row['title'];?></a>&nbsp;[<? echo $comment_count_row['count'];?>]<? echo $count_comment;?></td>
+									<? } ?>
+									<td style="vertical-align: middle;"><? echo $boardname;?></td>
+									<? if ($board_row['created_at'] == $board_row['updated_at']){?>
+									<td style="vertical-align: middle;"><? echo $board_row['created_at'];?>에 작성됨</td>
+									<? } else {?>
+									<td style="vertical-align: middle;"><? echo $board_row['updated_at'];?>에 수정됨</td>
+									<? } ?>
+									<td scope="row" style="vertical-align: middle;"><? echo $view_row['views'];?></th>
+								</tr>
+								<? } ?>
+							</tbody>
+						</table>
+					</div>
+					<div class="tab-pane fade" id="nav-comment" role="tabpanel" aria-labelledby="nav-comment-tab">
+						<table class="table">
+							<thead>
+								<tr>
+									<th colspan="1" style="width:5%;border-top:0px">#</th>
+									<th colspan="1" style="width:23%;border-top:0px">제목</th>
+									<th colspan="1" style="width:23%;border-top:0px">댓글 / 답글</th>
+									<th colspan="1" style="width:24%;border-top:0px">게시판</th>
+									<th colspan="1" style="width:25%;border-top:0px">작성일</th>
+								</tr>
+							</thead>
+							<tbody>
+								<? 	$j = 0;
+									$j2 = 0;
+									while($comment_row = mysqli_fetch_array($comment_result)){
+									if($comment_row['tablename'] == 'free'){
+										$comment_no = $comment_row['no'];
+										$board_no = $comment_row['board'];
+										$tableviewname = "board_free";
+										
+										$boardname = '자유 게시판';
+										$tablename ="free";
+										$comrecom = "댓글";
+										$htmlname = 'board';
+										$count_result = mysqli_query($conn, "SELECT * FROM user_activity where board='$comment_no' AND board_table='board_free_comment'");
+										$count_row = mysqli_fetch_array($count_result);
+										if($count_row['count'] >= 1){
+											$count_comment = "&nbsp;&nbsp;<span class='badge badge-primary badge-pill'>".$count_row['count']."</span>";
+											$j2 = $j2 + $count_row['count'];
+										}else{
+											$count_comment = "";
+										}
+									}else if($comment_row['tablename'] == 'fa'){
+										$comment_no = $comment_row['no'];
+										$board_no = $comment_row['board'];
+										$tableviewname = "board_fa";
+										
+										$boardname = 'FA 시장';
+										$tablename ="fa";		
+										$comrecom = "댓글";	
+										$htmlname = 'board';
+										$count_result = mysqli_query($conn, "SELECT * FROM user_activity where board='$comment_no' AND board_table='board_fa_comment'");
+										$count_row = mysqli_fetch_array($count_result);
+										if($count_row['count'] >= 1){
+											$count_comment = "&nbsp;&nbsp;<span class='badge badge-primary badge-pill'>".$count_row['count']."</span>";
+											$j2 = $j2 + $count_row['count'];
+										}else{
+											$count_comment = "";
+										}
+									}else if($comment_row['tablename'] == 'game'){
+										$comment_no = $comment_row['no'];									
+										$board_no = $comment_row['board'];
+										$tableviewname = "game";
+										
+										$comrecom = "댓글";
+										$htmlname = 'game';
+										$count_result = mysqli_query($conn, "SELECT * FROM user_activity where board='$comment_no' AND board_table='game_comment'");
+										$count_row = mysqli_fetch_array($count_result);
+										if($count_row['count'] >= 1){
+											$count_comment = "&nbsp;&nbsp;<span class='badge badge-primary badge-pill'>".$count_row['count']."</span>";
+											$j2 = $j2 + $count_row['count'];
+										}else{
+											$count_comment = "";
+										}
+									}else if($comment_row['tablename'] == 'freerec'){
+										$comment_no = $comment_row['board'];
+										$board_result = mysqli_query($conn,"SELECT * FROM board_free_comment WHERE no ='$comment_no'");
+										$board_row = mysqli_fetch_array($board_result);
+										$board_no = $board_row['board'];
+										$tableviewname = "board_free";
+										
+										$boardname = '자유 게시판';
+										$tablename ="free";
+										$comrecom = "답글";
+										$htmlname = 'board';
+										$count_comment = "";
+									}else if($comment_row['tablename'] == 'farec'){
+										$comment_no = $comment_row['board'];	
+										$board_result = mysqli_query($conn,"SELECT * FROM board_fa_comment WHERE no ='$comment_no'");
+										$board_row = mysqli_fetch_array($board_result);
+										$board_no = $board_row['board'];
+										$tableviewname = "board_fa";
+										
+										$boardname = 'FA 시장';
+										$tablename ="fa";
+										$comrecom = "답글";
+										$htmlname = 'board';
+										$count_comment = "";
+									}else if($comment_row['tablename'] == 'gamerec'){
+										$comment_no = $comment_row['board'];	
+										$board_result = mysqli_query($conn,"SELECT * FROM game_comment WHERE no ='$comment_no'");
+										$board_row = mysqli_fetch_array($board_result);
+										$board_no = $board_row['game'];
+										$tableviewname = "game";
+										
+										$comrecom = "답글";
+										$count_comment = "";
+									}else if($comment_row['tablename'] == 'team'){
+										$comment_no = $comment_row['no'];
+										$board_no = $comment_row['board'];
+										$tableviewname = "board_team";
+										
+										$board_team_result = mysqli_query($conn, "SELECT * FROM board_team where no='$board_no'");
+										$board_team_row = mysqli_fetch_array($board_team_result);
+										$team_no = $board_team_row['team'];
+										$team_result = mysqli_query($conn, "SELECT * FROM team where no='$team_no'");
+										$team_row = mysqli_fetch_array($team_result);
+										$boardname = "팀 게시판 (<a href='team.html?team=page&no=".$team_no."'>".$team_row['name']."</a>)";
+									
+										$tablename = "";
+										$comrecom = "댓글";
+										$count_result = mysqli_query($conn, "SELECT * FROM user_activity where board='$comment_no' AND board_table='board_team_comment'");
+										$count_row = mysqli_fetch_array($count_result);
+										if($count_row['count'] >= 1){
+											$count_comment = "&nbsp;&nbsp;<span class='badge badge-primary badge-pill'>".$count_row['count']."</span>";
+											$j2 = $j2 + $count_row['count'];
+										}else{
+											$count_comment = "";
+										}
+									}else if($comment_row['tablename'] == 'teamrec'){
+										$comment_no = $comment_row['board'];	
+										$board_result = mysqli_query($conn,"SELECT * FROM board_team_comment WHERE no ='$comment_no'");
+										$board_row = mysqli_fetch_array($board_result);
+										$board_no = $board_row['board'];
+										$tableviewname = "board_team";
+										
+										$board_team_result = mysqli_query($conn, "SELECT * FROM board_team where no='$board_no'");
+										$board_team_row = mysqli_fetch_array($board_team_result);
+										$team_no = $board_team_row['team'];
+										$team_result = mysqli_query($conn, "SELECT * FROM team where no='$team_no'");
+										$team_row = mysqli_fetch_array($team_result);
+										$boardname = "팀 게시판 (<a href='team.html?team=page&no=".$team_no."'>".$team_row['name']."</a>)";
+										
+										$tablename = "";
+										$comrecom = "답글";
+										$count_comment = "";
+									}
+									$query_t = "SELECT * FROM ".$tableviewname." where no='$board_no'";
+									$title_result = mysqli_query($conn, $query_t);
+									$title_row = mysqli_fetch_array($title_result);
+									if($comment_row['tablename'] == 'game' || $comment_row['tablename'] == 'gamerec'){
+										$tablename ="read";
+										$htmlname = 'game';
+										if($title_row['kind'] == 1){
+											$boardname = '일반경기';
+										}else if($title_row['kind'] == 2){
+											$boardname = '일반경기 (원정)';
+										}else if($title_row['kind'] == 3){
+											$boardname = '용병경기';
+										}else if($title_row['kind'] == 4){
+											$boardname = '구장양도';
+										}
+									}									
+									?>
+									<? if(!$title_row['deleted_at']){?>
+									<tr>
+										<th scope="row" style="vertical-align: middle;"><? $j++; ?><? echo $j;?></th>
+										<? if (!$comment_row['deleted_at']){?>
+											<? if ($tablename){?>
+										<td style="vertical-align: middle;"><a href="<? echo $htmlname;?>.html?<? echo $htmlname;?>=<? echo $tablename;?>&no=<? echo $title_row['no'];?>"><? echo $title_row['title'];?></a></td>
+										<td style="vertical-align: middle;"><a href="<? echo $htmlname;?>.html?<? echo $htmlname;?>=<? echo $tablename;?>&no=<? echo $title_row['no'];?>"><? echo $comment_row['contents'];?></a><? echo $count_comment;?></td>
+											<? } else {?>
+										<td style="vertical-align: middle;"><a href="team.html?team=page&no=<? echo $team_no;?>&page=free&read=<? echo $board_no;?>"><? echo $title_row['title'];?></a></td>
+										<td style="vertical-align: middle;"><a href="team.html?team=page&no=<? echo $team_no;?>&page=free&read=<? echo $board_no;?>"><? echo $comment_row['contents'];?></a><? echo $count_comment;?></td>
+											<? } ?>
+										<td style="vertical-align: middle;"><? echo $boardname;?></td>
+											<? if ($comment_row['created_at'] == $comment_row['updated_at']){?>
+											<td style="vertical-align: middle;"><? echo $comment_row['created_at'];?>에 작성됨</td>
+											<? } else {?>
+											<td style="vertical-align: middle;"><? echo $comment_row['updated_at'];?>에 수정됨</td>
+											<? } ?>
+										<? }else{ ?>
+											<? if ($tablename){?>
+										<td style="vertical-align: middle;"><a href="<? echo $htmlname;?>.html?<? echo $htmlname;?>=<? echo $tablename;?>&no=<? echo $title_row['no'];?>"><? echo $title_row['title'];?></a></td>
+											<? } else { ?>
+										<td style="vertical-align: middle;"><a href="team.html?team=page&no=<? echo $team_no;?>&page=free&read=<? echo $board_no;?>"><? echo $title_row['title'];?></a></td>
+											<? } ?>
+										<td style="vertical-align: middle;">삭제된 <? echo $comrecom;?> 입니다</td>
+										<td style="vertical-align: middle;"><? echo $boardname;?></td>
+										<td style="vertical-align: middle;"><? echo $comment_row['deleted_at'];?>에 삭제됨</td>
+										<? } ?>
+									</tr>
+									<? } ?>
+								<? } ?>
+							</tbody>
+						</table>					
+					</div>
+					<div class="tab-pane fade" id="nav-apply" role="tabpanel" aria-labelledby="nav-apply-tab">
+						<table class="table">
+							<thead>
+								<tr>
+									<th colspan="1" style="width:5%;border-top:0px">#</th>
+									<th colspan="1" style="width:40%;border-top:0px">제목 / 팀 이름</th>
+									<th colspan="1" style="width:20%;border-top:0px">종류</th>
+									<th colspan="1" style="width:25%;border-top:0px">신청일 / 수정일</th>
+									<th colspan="1" style="width:10%;border-top:0px">상태</th>
+								</tr>
+							</thead>
+							<tbody>
+							<? 		$x = 0;
+									$x2 = 0;
+									while($apply_row = mysqli_fetch_array($apply_result)){
+									$apply_no = $apply_row['no'];
+									if($apply_row['tablename'] == 'merc'){
+										$merc_result = mysqli_query($conn,"SELECT * FROM game_merc WHERE no ='$apply_no'");
+										$merc_row = mysqli_fetch_array($merc_result);
+										$game_no = $merc_row['game'];
+										$game_result = mysqli_query($conn,"SELECT * FROM game WHERE no ='$game_no'");
+										$game_row = mysqli_fetch_array($game_result);
+										$apply_pos = $merc_row['position'];
+										$game_states_result = mysqli_query($conn,"SELECT * FROM game_states WHERE game ='$game_no'");
+										$game_states_row = mysqli_fetch_array($game_states_result);
+										if($game_states_row['states'] == 1){
+											$game_date = date("Y-m-d H:i",strtotime($game_row['game_date']))." 경기";
+										}else{
+											$game_date = "<b style='color:red'>※ 마감된 경기</b>";
+										}
+										$pos[1] = "선발투수";
+										$pos[2] = "포수";
+										$pos[3] = "1루수";
+										$pos[4] = "2루수";
+										$pos[5] = "3루수";
+										$pos[6] = "유격수";
+										$pos[7] = "좌익수";
+										$pos[8] = "중견수";
+										$pos[9] = "우익수";
+										$pos[10] = "구원/지명";
+										$pos[11] = "선발투수";
+										$pos[12] = "포수";
+										$pos[13] = "1루수";
+										$pos[14] = "2루수";
+										$pos[15] = "3루수";
+										$pos[16] = "유격수";
+										$pos[17] = "좌익수";
+										$pos[18] = "중견수";
+										$pos[19] = "우익수";
+										$pos[20] = "구원/지명";
+										
+										$title = "<a href='game.html?game=read&no=".$game_no."'>".$game_row['title']."</a> (".$game_date.")";
+										$kind = "용병 경기 (".$pos[$apply_pos].")";
+										if($merc_row['states'] == 1){
+											$states = "<div style='color:blue'>수락</div>";
+										}else{
+											$states_result = mysqli_query($conn,"SELECT * FROM game_merc WHERE game = '$game_no' AND position ='$apply_pos' AND states = '1'");
+											$states_row = mysqli_fetch_array($states_result);
+											if($states_row){
+												$states = "<div style='color:red'>거절</div>";
+											}else{
+												$states = "<div style='color:green'>대기</div>";
+											}
+										}
+										$count_result = mysqli_query($conn, "SELECT * FROM user_activity where board='$apply_no' AND board_table='game_merc'");
+										$count_row = mysqli_fetch_array($count_result);
+										if($count_row['count'] == 1){
+											$count_comment = "&nbsp;&nbsp;<span class='badge badge-primary badge-pill'>new</span>";
+											$x2 = $x2 + $count_row['count'];
+										}else{
+											$count_comment = "";
+										}
+									}else if($apply_row['tablename'] == 'team'){
+										$members_result = mysqli_query($conn,"SELECT * FROM team_members WHERE no ='$apply_no'");
+										$members_row = mysqli_fetch_array($members_result);
+										$team_no = $members_row['team'];
+										$team_result = mysqli_query($conn,"SELECT * FROM team WHERE no ='$team_no'");
+										$team_row = mysqli_fetch_array($team_result);
+										
+										$title = "<a href='team.html?team=page&no=".$team_no."&page=home'>".$team_row['name']."</a>";
+										$kind = "팀원 신청";
+										if($members_row['states'] == 1){
+											if($members_row['class'] == 1){
+												$states = "<div style='color:blue'>감독</div>";
+											}else if($members_row['class'] == 2){
+												$states = "<div style='color:blue'>코치</div>";
+											}else if($members_row['class'] == 3){
+												$states = "<div style='color:blue'>팀원</div>";
+											}
+										}else if($members_row['states'] == 2){
+											$states = "<div style='color:green'>대기</div>";
+										}else if($members_row['states'] == 3){
+											$states = "<div style='color:red'>거절</div>";
+										}else if($members_row['states'] == 4){
+											$states = "<div style='color:red'>추방</div>";
+										}
+										$count_result = mysqli_query($conn, "SELECT * FROM user_activity where board='$apply_no' AND board_table='team_members'");
+										$count_row = mysqli_fetch_array($count_result);
+										if($count_row['count'] == 1){
+											$count_comment = "&nbsp;&nbsp;<span class='badge badge-primary badge-pill'>new</span>";
+											$x2 = $x2 + $count_row['count'];
+										}else{
+											$count_comment = "";
+										}
+									}else if($apply_row['tablename'] == 'question'){
+										$question_result = mysqli_query($conn,"SELECT * FROM question WHERE no ='$apply_no'");
+										$question_row = mysqli_fetch_array($question_result);
+										
+										$title = "<a href='user.html?user=question&no=".$apply_no."'>".$question_row['title']."</a>";
+										$kind = "문의 사항";
+										if($question_row['answer']){
+											$states = "<div style='color:blue'>완료</div>";
+										}else{
+											$states = "<div style='color:green'>대기</div>";
+										}
+										$count_result = mysqli_query($conn, "SELECT * FROM user_activity where board='$apply_no' AND board_table='question'");
+										$count_row = mysqli_fetch_array($count_result);
+										if($count_row['count'] == 1){
+											$count_comment = "&nbsp;&nbsp;<span class='badge badge-primary badge-pill'>new</span>";
+											$x2 = $x2 + $count_row['count'];
+										}else{
+											$count_comment = "";
+										}
+									}else if($apply_row['tablename'] == 'league'){
+										$league_team_result = mysqli_query($conn,"SELECT * FROM league_team WHERE no ='$apply_no'");
+										$league_team_row = mysqli_fetch_array($league_team_result);
+										$league_no = $league_team_row['league'];
+										$league_result = mysqli_query($conn,"SELECT * FROM league WHERE no ='$league_no'");
+										$league_row = mysqli_fetch_array($league_result);
+										
+										$title = "<a href='league.html?league=page&no=$league_no&page=home'>".$league_row['name']."</a>";
+										$kind = "리그 신청";
+										if($league_team_row['states'] == 1){
+											$states = "<div style='color:blue'>수락</div>";
+										}else if($league_team_row['states'] == 2){
+											$states = "<div style='color:green'>대기</div>";
+										}else if(($league_team_row['states'] == 3)){
+											$states = "<div style='color:red'>거절</div>";
+										}
+										$count_result = mysqli_query($conn, "SELECT * FROM user_activity where board='$apply_no' AND board_table='league'");
+										$count_row = mysqli_fetch_array($count_result);
+										if($count_row['count'] == 1){
+											$count_comment = "&nbsp;&nbsp;<span class='badge badge-primary badge-pill'>new</span>";
+											$x2 = $x2 + $count_row['count'];
+										}else{
+											$count_comment = "";
+										}
+									}
+							?>	
+								<tr>
+									<th scope="row" style="vertical-align: middle;"><? $x++; ?><? echo $x;?></th>
+									<td style="vertical-align: middle;"><? echo $title?><? echo $count_comment;?></td>
+									<td style="vertical-align: middle;"><? echo $kind;?></td>
+									<? if ($apply_row['created_at'] == $apply_row['updated_at']){?>
+									<td style="vertical-align: middle;"><? echo $apply_row['created_at'];?></td>
+									<? } else {?>
+									<td style="vertical-align: middle;"><? echo $apply_row['updated_at'];?></td>
+									<? } ?>
+									<td style="vertical-align: middle;"><? echo $states;?></td>
+								</tr>
+							<? } ?>
+							</tbody>
+						</table>
+					</div>
+					<div class="tab-pane fade" id="nav-contact" role="tabpanel" aria-labelledby="nav-contact-tab">4</div>
+				</div>
+				<? 	mysqli_close($conn); ?>
+			</div>
+		</section>
+		<script>
+			function count_text(){
+				var board_count = "<? echo $i;?>";
+				document.getElementById("board_count").textContent = "총 게시글 : " + board_count + " 개";
+				var comment_count = "<? echo $j;?>";
+				document.getElementById("comment_count").textContent = "총 댓글(답글) : " + comment_count + " 개";
+				var board_activity_count = "<? echo $i2;?>";
+				if(board_activity_count == 0){
+					document.getElementById("nav-board-tab").textContent = "등록한 게시글";
+				}else{
+					document.getElementById("nav-board-tab").innerHTML = "등록한 게시글&nbsp;&nbsp;<span class='badge badge-primary badge-pill'>" + board_activity_count + "</span>";
+				}
+				var comment_activity_count = "<? echo $j2;?>";
+				if(comment_activity_count == 0){
+					document.getElementById("nav-comment-tab").textContent = "등록한 댓글";
+				}else{
+					document.getElementById("nav-comment-tab").innerHTML = "등록한 댓글&nbsp;&nbsp;<span class='badge badge-primary badge-pill'>" + comment_activity_count + "</span>";
+				}
+				var apply_activity_count = "<? echo $x2;?>";
+				if(apply_activity_count == 0){
+					document.getElementById("nav-apply-tab").textContent = "신청 내역";
+				}else{
+					document.getElementById("nav-apply-tab").innerHTML = "신청 내역&nbsp;&nbsp;<span class='badge badge-primary badge-pill'>" + apply_activity_count + "</span>";
+				}
+			}
+		</script>
+	</body>
+</html>

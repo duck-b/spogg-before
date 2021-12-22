@@ -1,0 +1,189 @@
+<!DOCTYPE HTML>
+<?
+	if($writer_row['deleted_at']){
+		echo "<script>alert('삭제된 게시글 입니다');";
+		echo "window.location.replace('board.html?board=fa');</script>";
+	}
+	$user_pos = explode("|",$writer_row['position']);
+	for ($i=0; $i < count($user_pos); $i++) {
+		switch ($user_pos[$i]) {
+			case '1':
+			$chked1 = "checked";break;
+			case '2':
+			$chked2 = "checked";break;
+			case '3':
+			$chked3 = "checked";break;
+			case '4':
+			$chked4 = "checked";break;
+			case '5':
+			$chked5 = "checked";break;
+			case '6':
+			$chked6 = "checked";break;
+			case '7':
+			$chked7 = "checked";break;
+			case '8':
+			$chked8 = "checked";break;
+			case '9':
+			$chked9 = "checked";break;
+		}
+	}
+	if($writer_row['adrs'] == 1){
+		$adrs_select1 = 'selected';
+	}elseif($writer_row['adrs'] == 2){
+		$adrs_select2 = 'selected';
+	}elseif($writer_row['adrs'] == 3){
+		$adrs_select3 = 'selected';
+	}elseif($writer_row['adrs'] == 4){
+		$adrs_select4 = 'selected';
+	}elseif($writer_row['adrs'] == 5){
+		$adrs_select5 = 'selected';
+	}elseif($writer_row['adrs'] == 6){
+		$adrs_select6 = 'selected';
+	}elseif($writer_row['adrs'] == 7){
+		$adrs_select7 = 'selected';
+	}
+?>
+<html>
+	<body onload="edit_contents()">
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-2"></div>
+					<div class="col-lg-8 col-md-12 mb-5 element-animate">
+						<div class="row">
+							<div class="col-md-12">
+								<h3 class="mb-5" style="vertical-align: middle;">FA 시장 글 수정</h3>
+							</div>
+						</div>
+						<form action="BoardUpdateProc.php" method="post" enctype="multipart/form-data">
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="manager">글쓴이</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="manager" class="form-control " value="<? echo $my_row['name'];?>" disabled>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="title">제목</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="title" name="title" class="form-control " placeholder="제목 입력" value="<? echo $writer_row['title'];?>" required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="img">프로필<br>이미지</label>
+								</div>
+								<div class="col-md-5 form-group">
+								<? if ($writer_row['img']){?>
+								<img src="<? echo $writer_row['img'];?>" id="replaceMe" style="width:100%" class="img-thumbnail" alt="<? echo $writer_row['name']?>">
+								<input type="hidden" value="<? echo $writer_row['img'];?>" name="proimg">
+								<? } ?>
+								</div>
+								<div class="col-md-5 form-group">
+									<input type="file" id="img" name="img" onchange="imageURL(this)" multiple accept='image/*'>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="birth">생년월일</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="birth" class="form-control " value="<? echo $my_row['birth'];?>" disabled>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									포지션
+								</div>
+								<div class="row col-md-10 form-group" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-checkbox">
+										<input type="checkbox" id="position_p" name="position[]" value="1" class="custom-control-input" <?=$chked1?>>
+										<label class="custom-control-label" for="position_p">투수</label>
+									</div>
+									<div class="col-md-4 custom-control custom-checkbox">
+										<input type="checkbox" id="position_c" name="position[]" value="2" class="custom-control-input" <?=$chked2?>>
+										<label class="custom-control-label" for="position_c">포수</label>
+									</div>
+									<div class="col-md-4 custom-control custom-checkbox">
+										<input type="checkbox" id="position_1b" name="position[]" value="3" class="custom-control-input" <?=$chked3?>>
+										<label class="custom-control-label" for="position_1b">1루수</label>
+									</div>
+								</div>
+								<div class="col-md-2 form-group"> </div>
+								<div class="row col-md-10 form-group" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-checkbox">
+										<input type="checkbox" id="position_2b" name="position[]" value="4" class="custom-control-input" <?=$chked4?>>
+										<label class="custom-control-label" for="position_2b">2루수</label>
+									</div>
+									<div class="col-md-4 custom-control custom-checkbox">
+										<input type="checkbox" id="position_3b" name="position[]" value="5" class="custom-control-input" <?=$chked5?>>
+										<label class="custom-control-label" for="position_3b">3루수</label>
+									</div>
+									<div class="col-md-4 custom-control custom-checkbox">
+										<input type="checkbox" id="position_ss" name="position[]" value="6" class="custom-control-input" <?=$chked6?>>
+										<label class="custom-control-label" for="position_ss">유격수</label>
+									</div>
+								</div>
+								<div class="col-md-2 form-group"> </div>
+								<div class="row col-md-10 form-group" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-checkbox">
+										<input type="checkbox" id="position_lf" name="position[]" value="7" class="custom-control-input" <?=$chked7?>>
+										<label class="custom-control-label" for="position_lf">좌익수</label>
+									</div>
+									<div class="col-md-4 custom-control custom-checkbox">
+										<input type="checkbox" id="position_cf" name="position[]" value="8" class="custom-control-input" <?=$chked8?>>
+										<label class="custom-control-label" for="position_cf">중익수</label>
+									</div>
+									<div class="col-md-4 custom-control custom-checkbox">
+										<input type="checkbox" id="position_rf" name="position[]" value="9" class="custom-control-input" <?=$chked9?>>
+										<label class="custom-control-label" for="position_rf">우익수</label>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="adrs">지역</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<select class="custom-select" id="adrs" name="adrs">
+										<option value="">선택해 주세요</option>
+										<option value="1" <?=$adrs_select1?>>서울</option>
+										<option value="2" <?=$adrs_select2?>>부산</option>
+										<option value="3" <?=$adrs_select3?>>대구</option>
+										<option value="4" <?=$adrs_select4?>>인천</option>
+										<option value="5" <?=$adrs_select5?>>광주</option>
+										<option value="6" <?=$adrs_select6?>>대전</option>
+										<option value="7" <?=$adrs_select7?>>울산</option>
+									</select>
+								</div>
+							</div>	
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="contents">자유형식 글</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<textarea class="form-control" style="resize: none;" name="contents" rows="8" id="contents" aria-label="With textarea"><? echo $writer_row['contents']?></textarea>
+								</div>
+							</div>
+							<input type="hidden" value="fa" name="kind">
+							<input type="hidden" value="<? echo $no;?>" name="no">
+							<hr>						
+							<div class="row">
+								<div class="col-md-8"></div>
+								<div class="col-md-2 form-group">
+									<input type="submit" value="수&nbsp;&nbsp;&nbsp;정" class="btn btn-primary" onclick="insert()">
+								</div>
+								<div class="col-md-2">
+									<a class="btn btn-primary" href="board.html?board=fa" role="button">목&nbsp;&nbsp;&nbsp;록</a>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</section>
+	</body>
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE HTML>
+<?	
+	if($writer_row['kind'] == 1){
+		$kind = "hgame";
+		$kind_comment = "일반 경기";
+		$price_text = "구장비";
+		$game_time   = strtotime($writer_row['game_date']);
+		$game_date     = date('Y-m-d\TH:i:s' , $game_time);
+	}else if($writer_row['kind'] == 2){
+		$kind = "agame";
+		$kind_comment = "일반 경기 (원정)";
+		$price_text = "구장비";
+		$game_time   = strtotime($writer_row['game_date']);
+		$game_date     = date('Y-m-d' , $game_time);
+	}else if($writer_row['kind'] == 3){
+		$kind = "merc";
+		$kind_comment = "용병 경기";
+		$price_text = "참가비";
+		$game_time   = strtotime($writer_row['game_date']);
+		$game_date     = date('Y-m-d\TH:i:s' , $game_time);
+	}else if($writer_row['kind'] == 4){
+		$kind = "stadium";
+		$kind_comment = "구장 양도";
+		$price_text = "구장비";
+		$game_time   = strtotime($writer_row['game_date']);
+		$game_date     = date('Y-m-d\TH:i:s' , $game_time);
+	}
+	if($writer_row['deleted_at']){
+		echo "<script>alert('삭제된 게시글 입니다');";
+		echo "window.location.replace('game.html?game=$kind');</script>";
+	}
+	if($writer_row['adrs'] == 1){
+		$adrs_select1 = 'selected';
+	}elseif($writer_row['adrs'] == 2){
+		$adrs_select2 = 'selected';
+	}elseif($writer_row['adrs'] == 3){
+		$adrs_select3 = 'selected';
+	}elseif($writer_row['adrs'] == 4){
+		$adrs_select4 = 'selected';
+	}elseif($writer_row['adrs'] == 5){
+		$adrs_select5 = 'selected';
+	}elseif($writer_row['adrs'] == 6){
+		$adrs_select6 = 'selected';
+	}elseif($writer_row['adrs'] == 7){
+		$adrs_select7 = 'selected';
+	}
+?>
+<html>
+	<body onload="edit_contents()">
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-2"></div>
+					<div class="col-lg-8 col-md-12 mb-5 element-animate">
+						<div class="row">
+							<div class="col-md-12">
+								<h3 class="mb-5" style="vertical-align: middle;"><? echo $kind_comment?></h3>
+							</div>
+						</div>
+						<form action="GameUpdateProc.php" method="post" enctype="multipart/form-data">
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="user">글쓴이</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="user" class="form-control " value="<? echo $my_row['name'];?>" disabled>
+								</div>
+							</div>
+							<? if($kind == 'hgame' || $kind == 'agame'){?>
+							<? 	include "dbconn.php";
+								$team_no = $writer_row['team'];
+								$team_result = mysqli_query($conn,"SELECT * FROM team WHERE no ='$team_no'");
+								$team_row = mysqli_fetch_array($team_result);
+								mysqli_close($conn);?>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="team">팀 선택</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="team" class="form-control " value="<? echo $team_row['name'];?>" disabled>
+								</div>
+							</div>
+							<? } ?>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="kind">경기 타입</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" id="kind" class="form-control " value="<? echo $kind_comment;?>" disabled>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="title">제목</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" name="title" id="title" class="form-control " placeholder="제목 입력" value="<? echo $writer_row['title']?>" required>
+								</div>
+							</div>
+							<? if($kind != 'agame'){?>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="game_datetime">경기 날짜</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="datetime-local" name="game_date" id="game_datetime" class="form-control " min="1900-01-01T00:00" max="2200-12-31T00:00" value="<? echo $game_date;?>" required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="stadium_name">구장 명</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" name="stadium_name" id="stadium_name" class="form-control " value="<? echo $writer_row['stadium_name']?>" placeholder="구장 명 입력" required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="stadium_price"><? echo $price_text;?></label>
+								</div>
+								<div class="col-md-9 form-group">
+									<input type="text" name="stadium_price" id="stadium_price" class="form-control " placeholder="단위(원)를 제외한 숫자만 입력해 주세요" pattern="\d{1,7}" value="<? echo $writer_row['stadium_price']?>" required>
+								</div>
+								<div class="col-md-1" style="padding-left:0px">원</div>
+							</div>
+							<? } else { ?>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="game_date">경기 날짜</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="date" name="game_date" id="game_date" class="form-control " min="1900-01-01" max="2200-12-31" value="<? echo $game_date;?>" required>
+								</div>
+							</div>
+							<? } ?>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="adrs">경기가능지역</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<select class="custom-select" id="adrs" name="adrs">
+										<option value="">지역 선택</option>
+										<option value="1" <?=$adrs_select1?>>서울</option>
+										<option value="2" <?=$adrs_select2?>>경기</option>
+										<option value="3" <?=$adrs_select3?>>강원</option>
+										<option value="4" <?=$adrs_select4?>>충청</option>
+										<option value="5" <?=$adrs_select5?>>전라</option>
+										<option value="6" <?=$adrs_select6?>>경상</option>
+										<option value="7" <?=$adrs_select7?>>제주</option>
+									</select>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="contents">자유 내용</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<textarea class="form-control" style="resize: none;" name="contents" rows="8" id="contents" aria-label="With textarea"><? echo $writer_row['contents']?></textarea>
+								</div>
+							</div>
+							<hr>
+							<input type="hidden" name="no" value="<? echo $no?>">
+							<div class="row">
+								<div class="col-md-8"></div>
+								<div class="col-md-2 form-group">
+									<input type="submit" value="수&nbsp;&nbsp;&nbsp;정" class="btn btn-primary" onclick="insert()">
+								</div>
+								<div class="col-md-2">
+									<a class="btn btn-primary" href="game.html?game=<? echo $kind?>" role="button">목&nbsp;&nbsp;&nbsp;록</a>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</section>
+	</body>
+</html>

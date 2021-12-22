@@ -1,0 +1,30 @@
+<!DOCTYPE HTML>
+<html>
+	<body>
+		<hr>
+		<table class="alt">
+			<tbody style="text-align:center">
+				<tr>
+					<td colspan="2" style="width:100%">목록</td>
+				</tr>
+				<? 
+				include "dbconn.php";
+				$list_query = "SELECT no,league_name,team_name,created_at,updated_at, '타자' AS pos FROM data_before_hit WHERE player_no='$player_no'
+								UNION ALL
+								SELECT no,league_name,team_name,created_at,updated_at, '투수' AS pos FROM data_before_pic WHERE player_no='$player_no'
+								ORDER BY created_at DESC;";
+				$list_result = mysqli_query($conn, $list_query);
+				mysqli_close($conn);
+				$i = 0;
+				while($list_row = mysqli_fetch_array($list_result)){
+				$i++;
+				?>
+				<tr>
+					<td colspan="1" style="width:10%;vertical-align:middle;"><?=$i?></td>
+					<td colspan="1" style="width:90%;vertical-align:middle;"><a href="data.html?no=<?=$list_row['no']?>&pos=<?=$list_row['pos']?>" style="border:0px"><?=$list_row['league_name']?> : <?=$list_row['team_name']?> (<?=$list_row['pos']?>)</a></td>
+				</tr>
+				<? } ?>
+			</tbody>
+		</table>
+	</body>
+</html>

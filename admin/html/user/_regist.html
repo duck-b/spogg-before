@@ -1,0 +1,234 @@
+<!DOCTYPE HTML>
+<html>
+	<body>
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-lg-2"></div>
+					<div class="col-lg-8 col-md-12 mb-5 element-animate">
+						<h3 class="mb-5">회원 가입</h3>
+						<form name="user_form" action="UserInsertProc.php" method="post">
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="id">ID</label>
+								</div>
+								<div class="col-md-7 form-group">
+									<input type="text" name="id" id="id" class="form-control" placeholder="숫자와 문자 포함 형태의 6~12자리" pattern="[A-Za-z0-9]{6,12}$" required>
+								</div>
+								<div class="col-md-3 form-group">
+									<input style="line-height:0.8;font-size:20px;" type="button" value="중복 확인" onClick="check_id( )" class="btn btn-primary">
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="pw">PW</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="password" name="pw" id="pw" class="form-control " pattern="^.*(?=^.{8,15}$)(?=.*\d)(?=.*[a-zA-Z])(?=.*[!@#$%^&+=]).*$" placeholder="특수문자 / 문자 / 숫자 모두 포함 형태의 8~15자리 이내" required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="pw_s">PW 확인</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="password" name="pw_s" id="pw_s" class="form-control " pattern="^.*(?=^.{8,15}$)(?=.*\d)(?=.*[a-zA-Z])(?=.*[!@#$%^&+=]).*$" placeholder="특수문자 / 문자 / 숫자 모두 포함 형태의 8~15자리 이내" required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="name">이름</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" name="name" id="name" class="form-control " placeholder="이름 입력" required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="phone">연락처</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="tel" name="phone" id="phone" class="form-control " placeholder="ex)010-1234-5678" pattern="(010)-\d{3,4}-\d{4}" required>
+								</div>
+							</div>	
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="email">E-mail</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="email" name="email" id="email" class="form-control " placeholder="test@example.com" pattern="[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a-zA-Z]{2,3}$" required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="birth">생년월일</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="date" name="birth" id="birth" class="form-control " min="1900-01-01" max="2100-12-31" required>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="sex">성별</label>
+								</div>
+								<div class="row col-md-10" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="sex_m" name="sex" value="1" class="custom-control-input">
+										<label class="custom-control-label" for="sex_m">남자</label>
+									</div>
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="sex_f" name="sex" value="2" class="custom-control-input">
+										<label class="custom-control-label" for="sex_f">여자</label>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="pw_question">PW 찾기 질문</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<select class="custom-select" id="pw_question" name="pw_question">
+										<option value="0" selected>선택해 주세요</option>
+										<option value="1">가장 좋아하는 야구 선수 이름은?</option>
+										<option value="2">가장 좋아하는 야구 선수 팀은?</option>
+										<option value="3">가장 아끼는 야구 장비는?</option>
+										<option value="4">처음 야구를 접한 시기는?</option>
+										<option value="5">처음 야구를 가르쳐준 사람은?</option>
+										<option value="6">처음 야구 경기를 한 구장은?</option>
+									</select>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="pw_answer">PW 찾기 답</label>
+								</div>
+								<div class="col-md-10 form-group">
+									<input type="text" name="pw_answer" id="pw_answer" class="form-control " placeholder="PW 찾기 질문에 대한 답" required>
+									<b style="font-size:70%;color:red">※PW 찾기 질문과 답은 변경 할 수 없습니다</b>
+								</div>
+							</div>
+							<hr><h3 class="mb-5">선수 정보</h3>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="none_player">선출 여부</label>
+								</div>
+								<div class="row col-md-10" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="none_player_n" name="none_player" value="1" class="custom-control-input">
+										<label class="custom-control-label" for="none_player_n">비선출</label>
+									</div>
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="none_player_y" name="none_player" value="2" class="custom-control-input">
+										<label class="custom-control-label" for="none_player_y">선출</label>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="position">주 포지션</label>
+								</div>
+								<div class="row col-md-10" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="position_pic" name="position" value="1" class="custom-control-input">
+										<label class="custom-control-label" for="position_pic">투수</label>
+									</div>
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="position_in" name="position" value="2" class="custom-control-input">
+										<label class="custom-control-label" for="position_in">내야수</label>
+									</div>
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="position_out" name="position" value="3" class="custom-control-input">
+										<label class="custom-control-label" for="position_out">외야수</label>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="leri_pic">투</label>
+								</div>
+								<div class="row col-md-10" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="leri_pic_le" name="leri_pic" value="1" class="custom-control-input">
+										<label class="custom-control-label" for="leri_pic_le">좌투</label>
+									</div>
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="leri_pic_ri" name="leri_pic" value="2" class="custom-control-input">
+										<label class="custom-control-label" for="leri_pic_ri">우투</label>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="leri_hit">타</label>
+								</div>
+								<div class="row col-md-10" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="leri_hit_le" name="leri_hit" value="1" class="custom-control-input">
+										<label class="custom-control-label" for="leri_hit_le">좌타</label>
+									</div>
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="leri_hit_ri" name="leri_hit" value="2" class="custom-control-input">
+										<label class="custom-control-label" for="leri_hit_ri">우타</label>
+									</div>
+								</div>
+							</div>
+							<div class="row" style="margin-bottom:10px">
+								<div class="col-md-2 form-group">
+									<label for="player_class">소속 리그</label>
+								</div>
+								<div class="row col-md-10" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="player_class_1" name="player_class" value="1" class="custom-control-input">
+										<label class="custom-control-label" for="player_class_1">사회인 1부</label>
+									</div>
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="player_class_2" name="player_class" value="2" class="custom-control-input">
+										<label class="custom-control-label" for="player_class_2">사회인 2부</label>
+									</div>
+								</div>
+								<div class="col-md-2"></div>
+								<div class="row col-md-10" style="padding-left:30px">
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="player_class_3" name="player_class" value="3" class="custom-control-input">
+										<label class="custom-control-label" for="player_class_3">사회인 3부</label>
+									</div>
+									<div class="col-md-4 custom-control custom-radio">
+										<input type="radio" id="player_class_4" name="player_class" value="4" class="custom-control-input">
+										<label class="custom-control-label" for="player_class_4">사회인 4부</label>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="palyer_height">신장</label>
+								</div>
+								<div class="col-md-9 form-group">
+									<input type="text" name="palyer_height" id="palyer_height" class="form-control " placeholder="단위(cm)를 제외한 숫자만 입력해 주세요" pattern="\d{2,3}" required>
+								</div>
+								<div class="col-md-1" style="padding-left:0px">cm</div>
+							</div>
+							<div class="row">
+								<div class="col-md-2 form-group">
+									<label for="palyer_weight">체중</label>
+								</div>
+								<div class="col-md-9 form-group">
+									<input type="text" name="palyer_weight" id="palyer_weight" class="form-control " placeholder="단위(kg)를 제외한 숫자만 입력해 주세요" pattern="\d{2,3}" required>
+								</div>
+								<div class="col-md-1" style="padding-left:0px">kg</div>
+							</div>
+							<input type="hidden" value="1" name="state">
+							<input type="hidden" value="" id="checkid" name="checkid">
+							<hr>							
+							<div class="row">
+								<div class="col-md-6 form-group">
+									<input type="submit" value="회원가입" class="btn btn-primary" onclick="insert()">
+								</div>
+							</div>
+						</form>
+					</div>
+					<div class="col-lg-2"></div>
+				</div>
+			</div>
+		</section>
+	</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE HTML>
+<?
+	include "dbconn.php";
+	$option = $_GET['option'];
+	$search = $_GET['search'];
+	// 페이지 분할 1
+	if($_GET['pn'] == null || $_GET['pn'] <=0){
+		$pn = 1;
+	}else{
+		$pn = $_GET['pn'];
+	}
+	$pn_count = 15; //페이지 개수
+	$start_pn = $pn_count * ($pn - 1);
+	$page_query = "LIMIT ".$pn_count." OFFSET ".$start_pn;
+	
+	if(!$option){
+		$query = "SELECT * FROM board_free WHERE deleted_at is null ORDER BY created_at DESC ".$page_query;
+		$query_count = "SELECT COUNT(*) as count FROM board_free WHERE deleted_at is null ORDER BY created_at DESC";
+	}else if($option == 'user'){
+		$query = "SELECT board_free.* FROM board_free JOIN user WHERE user.no = board_free.user AND user.name LIKE '%$search%' AND deleted_at is null ORDER BY board_free.created_at DESC ".$page_query;
+		$query_count = "SELECT COUNT(*) as count FROM board_free JOIN user WHERE user.no = board_free.user AND user.name LIKE '%$search%' AND deleted_at is null ORDER BY board_free.created_at DESC";
+	}else if($option == 'title'){
+		$query = "SELECT * FROM board_free WHERE title LIKE '%$search%' AND deleted_at is null ORDER BY created_at DESC ".$page_query;
+		$query_count = "SELECT COUNT(*) as count FROM board_free WHERE title LIKE '%$search%' AND deleted_at is null ORDER BY created_at DESC";
+	}else if($option == 'tag'){
+		$query = "SELECT * FROM board_free WHERE tag LIKE '%$search%' AND deleted_at is null ORDER BY created_at DESC ".$page_query;
+		$query_count = "SELECT COUNT(*) as count FROM board_free WHERE tag LIKE '%$search%' AND deleted_at is null ORDER BY created_at DESC";
+	}
+	$board_result = mysqli_query($conn, $query);
+	//페이지 분할 2
+	$count_result = mysqli_query($conn, $query_count);
+	$count_row = mysqli_fetch_array($count_result);
+	$page_count = ceil($count_row['count']/$pn_count);
+	if(!$option){
+		$page_url = "board.html?board=free&pn=";
+	}else{
+		$page_url = "board.html?board=free&option=".$option."&search=".$search."&pn=";
+	}
+	if($pn == 1){
+		$page_li = "<li class='page-item disabled'><a class='page-link' href='javascript:;'><i class='fas fa-angle-double-left'></i></a></li>";
+	}else{
+		$page_li = "<li class='page-item'><a class='page-link' href='".$page_url."1'><i class='fas fa-angle-double-left'></i></a></li>";
+	}
+	if($page_count < 5){
+		for ($i=1; $i<=$page_count; $i++) {
+			if($i != $pn){
+				$page_li = $page_li."<li class='page-item'><a class='page-link' href='".$page_url."$i'>$i</a></li>";
+			}else{
+				$page_li = $page_li."<li class='page-item disabled'><a class='page-link' href='javascript:;'>$i</a></li>";
+			}
+		}
+	}else{
+		if($pn <= 3){
+			for ($i=1; $i<=5; $i++) {
+				if($i != $pn){
+					$page_li = $page_li."<li class='page-item'><a class='page-link' href='".$page_url."$i'>$i</a></li>";
+				}else{
+					$page_li = $page_li."<li class='page-item disabled'><a class='page-link' href='javascript:;'>$i</a></li>";
+				}
+			}
+		}else if($pn >= $page_count - 2){	
+			for ($i=$page_count-4; $i<=$page_count; $i++) {
+				if($i != $pn){
+					$page_li = $page_li."<li class='page-item'><a class='page-link' href='".$page_url."$i'>$i</a></li>";
+				}else{
+					$page_li = $page_li."<li class='page-item disabled'><a class='page-link' href='javascript:;'>$i</a></li>";
+				}
+			}
+		}else{
+			for ($i=$pn -2; $i<=$pn+2; $i++) {
+				if($i != $pn){
+					$page_li = $page_li."<li class='page-item'><a class='page-link' href='".$page_url."$i'>$i</a></li>";
+				}else{
+					$page_li = $page_li."<li class='page-item disabled'><a class='page-link' href='javascript:;'>$i</a></li>";
+				}
+			}
+		}
+	}
+	if($pn == $page_count){
+		$page_li = $page_li."<li class='page-item disabled'><a class='page-link' href='javascript:;'><i class='fas fa-angle-double-right'></i></a></li>";
+	}else{
+		$page_li = $page_li."<li class='page-item'><a class='page-link' href='".$page_url."$page_count'><i class='fas fa-angle-double-right'></i></a></li>";
+	}
+?>
+<html>
+	<body>
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-12">
+						<h3 class="mb-5" style="vertical-align: middle;">자유 게시판</h3>
+					</div>
+					<div class="col-md-2">
+						<a class="btn btn-primary" href="board.html?board=write&kind=free" role="button">글쓰기</a>
+					</div>
+					<div class="col-md-2"></div>
+					<div class="col-md-8">
+						<form action="board.html?board=free" class="form-inline element-animate" id="search-form" method="get">
+							<button class="btn btn-outline-primary dropdown-toggle col-md-2" id="search_option" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">선택</button>
+							<div class="dropdown-menu">
+								<a class="dropdown-item" href="javascript:;" onclick="chang_option('작성자','user')">작성자</a>
+								<a class="dropdown-item" href="javascript:;" onclick="chang_option('제목','title')">제목</a>
+								<a class="dropdown-item" href="javascript:;" onclick="chang_option('태그','tag')">태그</a>
+								<div role="separator" class="dropdown-divider"></div>
+								<a class="dropdown-item" href="javascript:;" onclick="chang_option('선택','')">취소</a>
+							</div>
+							<input type="hidden" name="board" value="free">
+							<input type="hidden" id="option" name="option" value="">
+							<input type="text" style="border:1px solid #dee2e6; border-right:0px;" name="search" class="form-control form-control-block search-input col-md-8" id="autocomplete" placeholder="검색어를 입력해 주세요" required>
+							<button type="submit" class="btn btn-primary col-md-2">검색</button>
+						</form>
+					</div>
+				</div><br>
+				<table class="table">
+					<thead>
+						<tr>
+							<th scope="col-2" style="width:10%">번호</th>
+							<th scope="col-2" style="width:40%">제목</th>
+							<th scope="col-2" style="width:15%">작성자</th>
+							<th scope="col-2" style="width:25%">작성일</th>
+							<th scope="col-2" style="width:10%">조회</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<th scope="row" style="vertical-align: middle;">공지</th>
+							<td style="vertical-align: middle;color:red"><a href="notice.html?notice=free" style="color:red;">※ 자유게시판 공지사항 필독</a></td>
+							<td style="vertical-align: middle;">관리자(TRYOUT)</td>
+							<td style="vertical-align: middle;">2019-01-01 00:00:00에 작성됨</td>
+							<td style="vertical-align: middle;">-</td>
+						</tr>
+						<? while($board_row = mysqli_fetch_array($board_result)){
+							$writer_no = $board_row['user'];
+							$board_no = $board_row['no'];
+							$writer_result = mysqli_query($conn,"SELECT * FROM user where no='$writer_no'");
+							$writer_row = mysqli_fetch_array($writer_result);
+							$view_result = mysqli_query($conn,"SELECT * FROM board_free_view where board='$board_no'");
+							$view_row = mysqli_fetch_array($view_result);
+							?>
+						<tr>
+							<th scope="row" style="vertical-align: middle;"><? echo $board_row['no'];?></th>
+							<td style="vertical-align: middle;"><a href="board.html?board=free&no=<? echo $board_row['no'];?>"><? echo $board_row['title'];?></a></td>
+							<td style="vertical-align: middle;"><a href="user.html?user=info&no=<? echo $writer_row['no'];?>"><? echo $writer_row['name'];?>(<? echo $writer_row['id'];?>)</a></td>
+							<? if ($board_row['created_at'] == $board_row['updated_at']){?>
+							<td style="vertical-align: middle;"><? echo $board_row['created_at'];?>에 작성됨</td>
+							<? } else {?>
+							<td style="vertical-align: middle;"><? echo $board_row['updated_at'];?>에 수정됨</td>
+							<? } ?>
+							<td scope="row" style="vertical-align: middle;"><? echo $view_row['views'];?></th>
+						</tr>
+						<? } ?>
+					</tbody>
+				</table>
+				<!-- 페이지 분할 3-->
+				<? if($page_count >= 1){?>
+				<hr>
+				<div class="row">
+					<div class="col-md-4"></div>
+					<div class="col-md-4">
+						<nav aria-label="Page navigation example" style="padding-left:15px">
+							<ul class="pagination">
+								<?=$page_li;?>
+							</ul>
+						</nav>
+					</div>
+					<div class="col-md-4"></div>
+				</div>
+				<? } ?>
+				<? 	mysqli_close($conn); ?>
+			</div>
+		</section>
+	</body>
+</html>

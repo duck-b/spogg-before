@@ -1,0 +1,192 @@
+<!DOCTYPE HTML>
+<html>
+<? 	
+	$nav = "game";
+	$game = $_GET["game"];
+	include("inc/_head.html");?>
+<body>
+	<? include("inc/_header.html");?>
+	
+	<? if($game == 'hgame'){
+		include("game/_homegame.html");
+	}else if($game == 'agame'){
+		include("game/_awaygame.html");
+	}else if($game == 'merc'){
+		include("game/_merc.html");
+	}else if($game == 'stadium'){
+		include("game/_stadium.html");
+	}else if($game == 'write'){
+		if($user_no){
+			$player_no = $_SESSION['player_no'];
+			include "dbconn.php";
+			$team_result = mysqli_query($conn,"SELECT * FROM team_members where player='$player_no' AND (class='1' OR class='2')");
+			$team_row = mysqli_fetch_array($team_result);
+			$kind = $_GET['kind'];
+			if($kind == 'hgame' || $kind == 'agame'){
+				if($team_row){
+					include("game/_write.html");
+				}else{
+					echo "<script>alert('감독 또는 코치만 글쓰기가 가능합니다.');";
+					echo "window.location.replace('game.html?game=$kind');</script>";
+				}
+			}else{
+				include("game/_write.html");
+			}
+		}else{
+			echo "<script>alert('로그인이 필요한 기능입니다');";
+			echo "window.location.replace('user.html?user=login');</script>";
+		}
+	}else if($game == 'read'){
+		include("game/_read.html");
+	}else if($game == 'edit'){
+		if($user_no){
+			$no = $_GET['no'];
+			include "dbconn.php";
+			$writer_result = mysqli_query($conn,"SELECT * FROM game WHERE no ='$no'");
+			$writer_row = mysqli_fetch_array($writer_result);
+			mysqli_close($conn);
+			if($user_no == $writer_row['user']){
+				include("game/_edit.html");
+			}else{
+				echo "<script>alert('잘못된 접근입니다.');</script>";
+				echo "<script>window.location.replace('index.html');</script>";	
+			}
+		}else{
+			echo "<script>alert('로그인이 필요한 기능입니다');";
+			echo "window.location.replace('user.html?user=login');</script>";
+		}
+	}
+	?>
+	<? include("inc/_footer.html");?>
+	
+    <? include("inc/_script.html");?>
+	<script>
+		var before_text = "";
+		var user_name = "<? echo $my_row['name'];?>";
+		var user_no = "<? echo $my_row['no'];?>";
+		var doubleSubmitFlag = false;
+		function doubleSubmitCheck(){
+			if(doubleSubmitFlag){
+				return doubleSubmitFlag;
+			}else{
+				doubleSubmitFlag = true;
+				return false;
+			}
+		}
+		function insert(){
+			var str = document.getElementById("contents").value;
+			str = str.replace(/(?:\r\n|\r|\n)/g, '<br>');
+			document.getElementById("contents").value = str;
+			if(doubleSubmitCheck()) return;
+		}
+		function read_contents(){
+			var str = document.getElementById("contents").textContent;
+			str = str.replaceAll("<br>", "\r\n");
+			document.getElementById("contents").textContent = str;
+		}
+		function edit_contents(){
+			var str = document.getElementById("contents").textContent;
+			str = str.replace(/<br>/g, "\r\n");
+			document.getElementById("contents").value = str;
+		}		
+		function chang_option(text, option){
+			document.getElementById("search_option").textContent = text;
+			document.getElementById("option").value = option;
+		}
+		function recomment_bt(no){
+			document.getElementById('blanks_' + no).style.display = "inline-block";
+			document.getElementById('recomment_' + no).style.display = "inline-block";
+		}
+		function comment_edit_bt(no){
+			document.getElementById('comment_edit_bt_' + no).style.display = "none";
+			comment_value = document.getElementById("comment_" + no).textContent;
+			document.getElementById('comment_' + no).innerHTML = "<form action='GameUpdateProc.php' method='post'>" +
+				"<div class='input-group mb-3'>" +
+						"<input type='text' name='contents' value='" + comment_value + "' class='form-control' placeholder='수정할 내용을 입력해 주세요' aria-describedby='basic-addon2'>" + 
+						"<input type='hidden' name='kind' value='comment'>" +
+						"<input type='hidden' name='no' value='" + no + "'>" +
+						"<div class='input-group-append'>" + 
+							"<button class='btn btn-outline-primary' type='submit'>댓글 수정</button>" +
+						"</div>" +
+				"</div>" +
+		"</form>";
+		}
+		function recomment_edit_bt(no){
+			document.getElementById('recomment_edit_bt_' + no).style.display = "none";
+			recomment_value = document.getElementById("recomment_contents_" + no).textContent;
+			document.getElementById('recomment_contents_' + no).innerHTML = "<form action='GameUpdateProc.php' method='post'>" +
+				"<div class='input-group mb-3'>" +
+						"<input type='text' name='contents' value='" + recomment_value + "' class='form-control' placeholder='수정할 내용을 입력해 주세요' aria-describedby='basic-addon2'>" + 
+						"<input type='hidden' name='kind' value='recomment'>" +
+						"<input type='hidden' name='no' value='" + no + "'>" +
+						"<div class='input-group-append'>" + 
+							"<button class='btn btn-outline-primary' type='submit'>답글 수정</button>" +
+						"</div>" +
+				"</div>" +
+		"</form>";
+		}
+		function imageURL(input) {
+			if (input.files && input.files[0]) {
+				var reader = new FileReader();
+
+				reader.onload = function(e) {
+					$('#replaceMe').attr('src', e.target.result)
+				}
+
+				reader.readAsDataURL(input.files[0]);
+			}
+		}
+		function game_search_option(kind){
+				window.open("game_search.php?kind="+ kind,
+				"search","left=200, top=200, width=800, height=500, scrollbars=no,resizable=yes");
+				//document.getElementById("id").disabled = true;
+		}
+		function delete_event(no, kind){
+			if (confirm("정말 삭제하시겠습니까?") == true){
+				location.href="GameDeleteProc.php?no=" + no + "&kind=" + kind;
+			}else{ 
+				return;
+			}
+		}
+		function end_event(no){
+			if (confirm("정말 마감하시겠습니까?") == true){
+				location.href="GameUpdateProc.php?no=" + no + "&kind=states";
+			}else{ 
+				return;
+			}
+		}		
+		function check_position(ha,pos){
+			before_text = document.getElementById("pos_"+ ha +"_"+ pos+"_text").value;
+			if(before_text != ""){
+				document.getElementById("pos_"+ ha +"_"+ pos +"_text").value = "";
+				document.getElementById("pos_"+ ha +"_"+ pos).value = "";
+			}else{
+				document.getElementById("pos_"+ ha +"_"+ pos +"_text").value = user_name;
+				document.getElementById("pos_"+ ha +"_"+ pos).value = user_no;
+			}
+		}
+		function edit_merc_event(no,pos){
+				window.open("edit_merc_event.php?no="+ no + "&pos="+pos,
+				"edit","left=200, top=200, width=800, height=300, scrollbars=no,resizable=yes");
+		}
+		function insert_merc_event(no,pos){
+			if (confirm("정말 신청하시겠습니까?") == true){
+				location.href="GameInsertProc.php?no=" + no + "&kind=mercplayer&pos=" + pos;
+			}else{
+				return;
+			}
+		}
+		function delete_merc_event(no){
+			if (confirm("정말 취소하시겠습니까?") == true){
+				location.href="GameDeleteProc.php?no=" + no + "&kind=mercplayer";
+			}else{
+				return;
+			}
+		}
+		function new_page(no){
+			window.open("user.html?user=info&no=" + no,
+			"user-info","left=200, top=200, width=1200, height=700, scrollbars=no,resizable=yes");
+		}
+	</script>
+  </body>
+</html>

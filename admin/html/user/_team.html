@@ -1,0 +1,74 @@
+<!DOCTYPE HTML>
+<html>
+	<body>
+		<?
+			include "dbconn.php";
+			$player_no = $_SESSION['player_no'];
+			$team_count_result = mysqli_query($conn,"SELECT COUNT(*) as count FROM team JOIN team_members WHERE team_members.player = '$player_no' AND team.no = team_members.team ORDER BY team_members.created_at ASC");
+			$team_count_row = mysqli_fetch_array($team_count_result);
+			$team_result = mysqli_query($conn,"SELECT team.no, team.img, team.name, team_members.created_at FROM team JOIN team_members WHERE team_members.player = '$player_no' AND team.no = team_members.team ORDER BY team_members.created_at ASC");
+		?>
+		<? if($team_count_row['count'] >= 1){?>
+		<section class="feature-destination" style="margin-top:10%">
+			<div class="container">
+				<div class="row">
+				<? while($team_row = mysqli_fetch_array($team_result)){ ?>
+					<div class="col-md-4 element-animate ">
+						<? if ($team_row['img']){?>
+						<a href="team.html?team=page&no=<? echo $team_row['no']; ?>" class="img-bg" style="background-image: url('<? echo $team_row['img']; ?>')">
+						<? } else {?>
+						<a href="team.html?team=page&no=<? echo $team_row['no']; ?>" class="img-bg" style="background-image: url('images/none_team_img.png')">
+						<? } ?>
+							<div class="text">
+								<!--<span class="icon ion-ios-location"></span>-->
+								<h2><? echo $team_row['name'];?></h2>
+								<p>바로가기</p>
+							</div>
+						</a>
+					</div>
+				<? } ?>
+					<div class="col-md-4 element-animate ">
+						<a href="team.html?team=regist" class="img-bg" style="background-image: url('images/team_insert.png')">
+							<div class="text">
+								<!--<span class="icon ion-ios-location"></span>-->
+								<h2>팀 생성</h2>
+								<p>바로가기</p>
+							</div>
+						</a>
+					</div>
+				</div>
+			</div>
+		</section>
+		<? } else { ?>
+		<section class="feature-destination" style="margin-top:10%">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-12" style="text-align:center;margin-bottom:10px;">
+						<h3>팀을 찾아 선수가 되거나, 감독이 되어 팀을 꾸려보세요!!</h3>
+					</div>
+					<div class="col-md-2 "></div>
+					<div class="col-md-4 element-animate ">
+						<a href="join.html?join=team" class="img-bg" style="background-image: url('images/team_search.png')">
+							<div class="text">
+								<!--<span class="icon ion-ios-location"></span>-->
+								<h2>팀 찾기</h2>
+								<p>바로가기</p>
+							</div>
+						</a>
+					</div>
+					<div class="col-md-4 element-animate ">
+						<a href="team.html?team=regist" class="img-bg" style="background-image: url('images/team_insert.png')">
+							<div class="text">
+								<!--<span class="icon ion-ios-location"></span>-->
+								<h2>팀 생성</h2>
+								<p>바로가기</p>
+							</div>
+						</a>
+					</div>
+					<div class="col-md-2 "></div>
+				</div>
+			</div>
+		</section>
+		<? } ?>
+	</body>
+</html>

@@ -1,0 +1,1012 @@
+<!DOCTYPE HTML>
+<html>
+<?php
+	//선수정보
+	//session_start();
+	//for($i=1; $i<10; $i++){
+	//	$_SESSION['ho_'.$i] = "ho ".$i."번";
+	//}
+	//for($i=1; $i<10; $i++){
+	//	$_SESSION['aw_'.$i] = "aw ".$i."번";
+	//}
+?>
+<head>
+	<title>TRYOUT</title>
+	<meta charset="utf-8">
+	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css">
+	<script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+	<link rel="stylesheet" href="main.css">
+	<script>
+	history.pushState(null, null, location.href);
+    window.onpopstate = function () {
+        history.go(1);
+	};
+	</script>
+	<script type="text/javascript">
+		// 타순
+		var ho_hit_array = new Array('ho_1h','ho_2h','ho_3h','ho_4h','ho_5h','ho_6h','ho_7h','ho_8h','ho_9h');
+		var aw_hit_array = new Array('aw_1h','aw_2h','aw_3h','aw_4h','aw_5h','aw_6h','aw_7h','aw_8h','aw_9h');
+		// postion
+		var ho_p = "ho_p";
+		var ho_c ="ho_c";
+		var ho_1b = "ho_1b";
+		var ho_2b = "ho_2b";
+		var ho_3b = "ho_3b";
+		var ho_ss = "ho_ss";
+		var ho_lf = "ho_lf";
+		var ho_cf = "ho_cf";
+		var ho_rf = "ho_rf";
+		var aw_p = "aw_p";
+		var aw_c ="aw_c";
+		var aw_1b = "aw_1b";
+		var aw_2b = "aw_2b";
+		var aw_3b = "aw_3b";
+		var aw_ss = "aw_ss";
+		var aw_lf = "aw_lf";
+		var aw_cf = "aw_cf";
+		var aw_rf = "aw_rf";
+		
+		var strike_count = 0; //스트라이크 카운터
+		var ball_count = 0; // 볼 카운터
+		var out_count = 0; // 아웃 카운터
+		var picture_count_h = 0; //홈 투구 수
+		var picture_count_a = 0; //어웨이 투구 수
+		var inning = 1; // 이닝
+		var inning_point = 0; // 현재 이닝 점수
+		var homerun_point = 0;
+		var hoaw = 0; // 홈 / 어웨이
+		var ho_ht = 0; // 홈 타순
+		var ho_r = 0; // 홈 점수
+		var ho_h = 0; // 홈 안타
+		var ho_e = 0; // 홈 에러
+		var ho_b = 0; // 홈 볼넷
+		var aw_ht = 0; // 어웨이 타순
+		var aw_r = 0; // 어웨이 점수
+		var aw_h = 0; // 어웨이 안타
+		var aw_e = 0; // 어웨이 에러
+		var aw_b = 0; // 어웨이 볼넷
+		var hit = 0; // 안타 여부
+		var now_hitter = ""; //현재 타자
+		var now_1base = ""; // 현재 1루 주자
+		var now_2base = ""; // 현재 2루 주자
+		var now_3base = ""; // 현재 3루 주자
+		var befor_1base = ""; // 전 1루 주자
+		var befor_2base = ""; // 전 2루 주자
+		var befor_3base = ""; // 전 3루 주자
+		var text_contents = ""; // 설명
+		var hitter_ball_count = ""; // 타자 볼카운터 (아직 안함)
+		var hitter_action = ""; // 타자 액션
+		
+		function db_test(){
+			$.ajax({
+				type: 'POST',
+				url: 'save.php',
+				data: {
+					entry_no: entry_no,
+					inning: inning,
+					hoaw: hoaw,
+					ball_count: hitter_ball_count,
+					action: hitter_action
+				},
+				dataTpye: 'text',
+				success: function(data){
+
+				},
+				error: function(data) {
+
+				}
+			});
+		}
+		function main_text(contents){
+			document.getElementById("now").textContent = contents;
+		}
+		function start_game(){
+			//초기화
+			out_count = 0;
+			inning_point = 0;
+			now_1base = "";
+			document.getElementById("base1").textContent = "1루";
+			now_2base = "";
+			document.getElementById("base2").textContent = "2루";
+			now_3base = "";
+			document.getElementById("base3").textContent = "3루";
+			// 홈 수비
+			if(hoaw == 0){
+				document.getElementById("pic").textContent = ho_p;
+				document.getElementById("cat").textContent = ho_c;
+				document.getElementById("b1er").textContent = ho_1b;
+				document.getElementById("b2er").textContent = ho_2b;
+				document.getElementById("b3er").textContent = ho_3b;
+				document.getElementById("ss").textContent = ho_ss;
+				document.getElementById("lf").textContent = ho_lf;
+				document.getElementById("cf").textContent = ho_cf;
+				document.getElementById("rf").textContent = ho_rf;
+				document.getElementById("picture_count").textContent = picture_count_h;
+				// 타자 정보
+				now_hitter = aw_hit_array[aw_ht];
+				document.getElementById("hit").textContent = now_hitter;
+				text_contents = aw_ht+1 +"번 타자 "+now_hitter+" :";
+			}else if(hoaw == 1){
+				document.getElementById("pic").textContent = aw_p;
+				document.getElementById("cat").textContent = aw_c;
+				document.getElementById("b1er").textContent = aw_1b;
+				document.getElementById("b2er").textContent = aw_2b;
+				document.getElementById("b3er").textContent = aw_3b;
+				document.getElementById("ss").textContent = aw_ss;
+				document.getElementById("lf").textContent = aw_lf;
+				document.getElementById("cf").textContent = aw_cf;
+				document.getElementById("rf").textContent = aw_rf;
+				document.getElementById("picture_count").textContent = picture_count_a;
+				// 타자 정보
+				now_hitter = ho_hit_array[ho_ht];
+				document.getElementById("hit").textContent = now_hitter;
+				text_contents = ho_ht+1 +"번 타자 "+now_hitter+" :";
+			}
+			main_text(text_contents);
+		}
+		// next_hitter
+		function next_hitter(){
+			if(hoaw == 0){
+				if(aw_ht < 8){
+					aw_ht = aw_ht + 1;
+				}else{
+					aw_ht = 0;
+				}
+				now_hitter = aw_hit_array[aw_ht];
+				document.getElementById("hit").textContent = aw_hit_array[aw_ht];
+				text_contents = aw_ht+1 +"번 타자 "+now_hitter+" :";
+			}else if(hoaw == 1){
+				if(ho_ht < 8){
+					ho_ht = ho_ht + 1;
+				}else{
+					ho_ht = 0;
+				}
+				now_hitter = ho_hit_array[ho_ht];
+				document.getElementById("hit").textContent = ho_hit_array[ho_ht];
+				text_contents = ho_ht+1 +"번 타자 "+now_hitter+" :";
+			}
+			main_text(text_contents);
+		}
+		// 4ball_base
+		function ball_4(){
+			if(now_1base == ""){
+				document.getElementById("base1").textContent = now_hitter;
+				now_1base = now_hitter;
+			}else{
+				if(now_2base == ""){
+					document.getElementById("base2").textContent = now_1base;
+					now_2base = now_1base;
+					document.getElementById("base1").textContent = now_hitter;
+					now_1base = now_hitter;
+				}else{
+					if(now_3base == ""){
+						document.getElementById("base3").textContent = now_2base;
+						now_3base = now_2base;
+						document.getElementById("base2").textContent = now_1base;
+						now_2base = now_1base;
+						document.getElementById("base1").textContent = now_hitter;
+						now_1base = now_hitter;
+					}else{
+						go_homebase('ball4');
+						document.getElementById("base3").textContent = now_2base;
+						now_3base = now_2base;
+						document.getElementById("base2").textContent = now_1base;
+						now_2base = now_1base;
+						document.getElementById("base1").textContent = now_hitter;
+						now_1base = now_hitter;
+					}
+				}
+			}
+		}
+		function go_homebase(how){
+			if(how == 'ball4'){
+				if(hoaw == 0){
+					aw_r = aw_r + 1;
+					document.getElementById("aw_r").textContent = aw_r;
+					inning_point = inning_point + 1;
+					document.getElementById("inning_" + inning + "_aw").textContent = inning_point;
+				}else if(hoaw == 1){
+					ho_r = ho_r + 1;
+					document.getElementById("ho_r").textContent = ho_r;
+					inning_point = inning_point + 1;
+					document.getElementById("inning_" + inning + "_ho").textContent = inning_point;
+				}
+				//선수 득점 정보 저장
+				now_3base = "";
+			}else if(how == 'homerun'){
+				homerun_point = homerun_point +1;
+				if(now_1base != ""){
+					homerun_point = homerun_point +1;
+					now_1base ="";
+					document.getElementById("base1").textContent = "1루";
+				}
+				if(now_2base != ""){
+					homerun_point = homerun_point +1;
+					now_2base ="";
+					document.getElementById("base2").textContent = "2루";
+				}
+				if(now_3base != ""){
+					homerun_point = homerun_point +1;
+					now_3base ="";
+					document.getElementById("base3").textContent = "3루";
+				}
+				if(hoaw == 0){
+					aw_r = aw_r + homerun_point;
+					document.getElementById("aw_r").textContent = aw_r;
+					inning_point = inning_point + homerun_point;
+					document.getElementById("inning_" + inning + "_aw").textContent = inning_point;
+				}else if(hoaw == 1){
+					ho_r = ho_r + homerun_point;
+					document.getElementById("ho_r").textContent = ho_r;
+					inning_point = inning_point + homerun_point;
+					document.getElementById("inning_" + inning + "_ho").textContent = inning_point;
+				}
+				homerun_point = 0;
+			}else if(how == 'hit'){
+				if(hoaw == 0){
+					aw_r = aw_r + 1;
+					document.getElementById("aw_r").textContent = aw_r;
+					inning_point = inning_point + 1;
+					document.getElementById("inning_" + inning + "_aw").textContent = inning_point;
+				}else if(hoaw == 1){
+					ho_r = ho_r + 1;
+					document.getElementById("ho_r").textContent = ho_r;
+					inning_point = inning_point + 1;
+					document.getElementById("inning_" + inning + "_ho").textContent = inning_point;
+				}
+			}else if(how == 'sb'){
+				if(hoaw == 0){
+					aw_r = aw_r + 1;
+					document.getElementById("aw_r").textContent = aw_r;
+					inning_point = inning_point + 1;
+					document.getElementById("inning_" + inning + "_aw").textContent = inning_point;
+				}else if(hoaw == 1){
+					ho_r = ho_r + 1;
+					document.getElementById("ho_r").textContent = ho_r;
+					inning_point = inning_point + 1;
+					document.getElementById("inning_" + inning + "_ho").textContent = inning_point;
+				}
+			}else if(how == 'balk'){
+				if(hoaw == 0){
+					aw_r = aw_r + 1;
+					document.getElementById("aw_r").textContent = aw_r;
+					inning_point = inning_point + 1;
+					document.getElementById("inning_" + inning + "_aw").textContent = inning_point;
+				}else if(hoaw == 1){
+					ho_r = ho_r + 1;
+					document.getElementById("ho_r").textContent = ho_r;
+					inning_point = inning_point + 1;
+					document.getElementById("inning_" + inning + "_ho").textContent = inning_point;
+				}
+			}
+		}
+
+		// change text
+		function change_text(){
+			document.getElementById('nplay').innerHTML = "<tr><th onClick='strike_p()'>Strike</th><th onClick='ball_p()'>Ball</th><th onClick='foul_p()'>Foul</th><th onClick='out_p()'>Out</th></tr>";
+		}
+		
+		// ball_count_new
+		function ball_count_new(){
+			strike_count = 0;
+			ball_count = 0;
+			document.getElementById('fscount').style.display = "none";
+			document.getElementById('sscount').style.display = "none";
+			document.getElementById('fbcount').style.display = "none";
+			document.getElementById('sbcount').style.display = "none";
+			document.getElementById('tbcount').style.display = "none";
+		}
+		// out
+		function out(){
+			ball_count_new();
+			if(out_count == 0){
+				out_count = out_count + 1;
+				document.getElementById('focount').style.display = "inline-block";
+				next_hitter();
+			}else if(out_count == 1){
+				out_count = out_count + 1;
+				document.getElementById('socount').style.display = "inline-block";
+				next_hitter();
+			}else if(out_count == 2){
+				document.getElementById('focount').style.display = "none";
+				document.getElementById('socount').style.display = "none";
+				if(hoaw == 0){
+					hoaw = 1;
+					if(aw_ht < 8){
+						aw_ht = aw_ht + 1;
+					}else{
+						aw_ht = 0;
+					}
+					start_game();
+					document.getElementById("inning_" + inning + "_ho").textContent = 0;
+					document.getElementById("picture_count").textContent = picture_count_h;
+				}else if(hoaw == 1){
+					hoaw = 0;
+					if(ho_ht < 8){
+						ho_ht = ho_ht + 1;
+					}else{
+						ho_ht = 0;
+					}
+					start_game();
+					inning = inning + 1;
+					document.getElementById("inning_" + inning + "_aw").textContent = 0;
+					document.getElementById("picture_count").textContent = picture_count_a;
+				}
+			}
+		}
+		//picture_count
+		function picture_count(){
+			if(hoaw == 0){
+				picture_count_h = picture_count_h + 1;
+				document.getElementById("picture_count").textContent = picture_count_h;
+			}else if(hoaw == 1){
+				picture_count_a = picture_count_a + 1;
+				document.getElementById("picture_count").textContent = picture_count_a;
+			}
+		}
+		//strike 눌렀을 때
+		function strike_p(){
+			picture_count();
+			text_contents = text_contents + " S";
+			main_text(text_contents);
+			if(strike_count == 0){
+				strike_count = strike_count + 1;
+				document.getElementById('fscount').style.display = "inline-block";
+			}else if(strike_count == 1){
+				strike_count = strike_count + 1;
+				document.getElementById('sscount').style.display = "inline-block";
+			}else if(strike_count == 2){
+				out();
+			}
+		}
+		//ball 눌렀을 때
+		function ball_p(){
+			picture_count();
+			text_contents = text_contents + " B";
+			main_text(text_contents);
+			if(ball_count == 0){
+				ball_count = ball_count + 1;
+				document.getElementById('fbcount').style.display = "inline-block";
+			}else if(ball_count == 1){
+				ball_count = ball_count + 1;
+				document.getElementById('sbcount').style.display = "inline-block";
+			}else if(ball_count == 2){
+				ball_count = ball_count + 1;
+				document.getElementById('tbcount').style.display = "inline-block";
+			}else if(ball_count == 3){
+				ball_count_new();
+				ball_4();
+				next_hitter();
+				if(hoaw == 0){
+					ho_b = ho_b + 1;
+					document.getElementById("ho_b").textContent = ho_b;
+				}else if(hoaw == 1){
+					aw_b = aw_b + 1;
+					document.getElementById("aw_b").textContent = aw_b;
+				}
+			}
+		}
+		//foul 눌렀을 때
+		function foul_p(){
+			picture_count();
+			text_contents = text_contents + " F";
+			main_text(text_contents);
+			if(strike_count == 0){
+				strike_count = strike_count + 1;
+				document.getElementById('fscount').style.display = "inline-block";
+			}else if(strike_count == 1){
+				strike_count = strike_count + 1;
+				document.getElementById('sscount').style.display = "inline-block";
+			}
+		}
+		//out 눌렀을 때
+		function out_p(){
+			document.getElementById('nplay').innerHTML = "<tr><th onClick='out_how(1)'>땅볼</th><th onClick='out_how(2)'>뜬공</th><th onClick='out_how(3)'>파울플리이</th></tr>";
+		}
+		function out_how(v){
+			if(v == 1){
+				alert(1);
+			}else if(v ==2){
+				alert(2);
+			}else if(v == 3){
+				alert(3);
+			}
+			picture_count();
+			out();
+			change_text();
+		}
+		//타자 눌렀을 때
+		function hitter(){
+			document.getElementById('nplay').innerHTML = "<tr><th onClick='hit_hit()'>안타</th><th onClick='homerun()'>홈런</th><th onClick=''>희생타</th><th onClick=''>번트</th><th onClick=''>낫아웃</th><th onClick='change_player()'>교체</th></tr>";
+		}
+			//안타
+			function hit_hit(){
+				hit = 1;
+				picture_count();
+				ball_count_new();
+				text_contents = text_contents + " H"
+				main_text(text_contents);
+				document.getElementById('nplay').innerHTML = "<tr><th onClick=''>공이 떨어진 범위를 선택해 주세요</th></tr>";
+				if(hoaw == 1){
+					ho_h = ho_h + 1;
+					document.getElementById("ho_h").textContent = ho_h;
+				}else if(hoaw == 0){
+					aw_h = aw_h + 1;
+					document.getElementById("aw_h").textContent = aw_h;
+				}
+			}
+			
+				// 주루
+				function hit_run(how,v){
+					if(now_1base != ""){
+						befor_1base = now_1base;
+						now_1base = "";
+					}
+					if(now_2base != ""){
+						befor_2base = now_2base;
+						now_2base = "";
+					}
+					if(now_3base != ""){
+						befor_3base = now_3base;
+						now_3base = "";
+					}
+					
+					if(v != 4){
+						check_1base(now_hitter, v);
+					}else{
+						// 득점
+						change_text();
+					}
+					next_hitter();
+				}
+						// 주자 체크
+						function check_1base(who,v){
+							if(v == 1){
+								now_1base = who;
+							}else if(v == 2){
+								now_2base = who;
+							}else if(v == 3){
+								now_3base = who;
+							}
+							if(befor_1base == ""){
+								if(befor_2base != ""){
+									check_2base(befor_2base);
+								}else if(befor_3base != ""){
+									check_3base(befor_3base);
+								}else{
+									change_runner();
+								}
+							}else{
+								document.getElementById('nplay').innerHTML = "<tr><th onClick='go_1base(\""+ who +"\",\"2base\")'>2루</th><th onClick='go_1base(\""+ who +"\",\"3base\")'>3루</th><th onClick='go_1base(\""+ who +"\",\"home\")'>Home</th><th onClick='go_1base(\""+ who +"\",\"out\")'>Out</th></tr>";
+								main_text(befor_1base + '(1루 주자) 상황');
+							}
+						}
+						function go_1base(who,how){
+							if(how == "out"){
+								out();
+								if(befor_2base != ""){
+									check_2base(befor_2base);
+								}else if(befor_3base != ""){
+									check_3base(befor_3base);
+								}else{
+									change_runner();
+								}
+							}else if(how == "home"){
+								go_homebase('hit');
+								if(befor_2base != ""){
+									check_2base(befor_2base);
+								}else if(befor_3base != ""){
+									check_3base(befor_3base);
+								}else{
+									change_runner();
+								}
+							}else if(how == "2base"){
+								now_2base = befor_1base;
+								if(befor_2base != ""){
+									check_2base(befor_2base);
+								}else if(befor_3base != ""){
+									check_3base(befor_3base);
+								}else{
+									change_runner();
+								}
+							}else if(how == "3base"){							
+								now_3base = befor_1base;								
+								if(befor_2base != ""){
+									check_2base(befor_2base);
+								}else if(befor_3base != ""){
+									check_3base(befor_3base);
+								}else{
+									change_runner();
+								}
+							}
+						}
+						function check_2base(who){
+							if(befor_2base == ""){
+								now_2base = who;
+								if(befor_3base != ""){
+									check_3base(befor_3base);
+								}else{
+									change_runner();
+								}
+							}else{
+								document.getElementById('nplay').innerHTML = "<tr><th onClick='go_2base(\""+ who +"\",\"2base\")'>2루</th><th onClick='go_2base(\""+ who +"\",\"3base\")'>3루</th><th onClick='go_2base(\""+ who +"\",\"home\")'>Home</th><th onClick='go_2base(\""+ who +"\",\"out\")'>Out</th></tr>";
+								main_text(befor_2base + '(2루 주자) 상황');
+							}
+						}
+						function go_2base(who,how){
+							if(how == "out"){
+								out();
+								now_2base = who;
+								if(befor_3base != ""){
+									check_3base(befor_3base);
+								}else{
+									change_runner();
+								}
+							}else if(how == "home"){
+								go_homebase('hit');
+								now_2base = who;
+								if(befor_3base != ""){
+									check_3base(befor_3base);
+								}else{
+									change_runner();
+								}
+							}else if(how == "3base"){
+								now_3base = befor_2base;
+								now_2base = who;
+								if(befor_3base != ""){
+									check_3base(befor_3base);
+								}else{
+									change_runner();
+								}
+							}else if(how == "2base"){
+								now_2base = befor_2base;
+								if(befor_3base != ""){
+									check_3base(befor_3base);
+								}else{
+									change_runner();
+								}
+							}
+						}
+						function check_3base(who){
+							if(befor_3base == ""){
+								now_3base = who;
+							}else{
+								document.getElementById('nplay').innerHTML = "<tr><th onClick='go_3base(\""+ who +"\",\"3base\")'>3루</th><th onClick='go_3base(\""+ who +"\",\"home\")'>Home</th><th onClick='go_3base(\""+ who +"\",\"out\")'>Out</th></tr>";
+								main_text(befor_3base + '(3루 주자) 상황');
+							}
+						}
+						function go_3base(who,how){
+							if(how == "out"){
+								out();
+								now_3base = who;
+								change_runner();
+							}else if(how == "home"){
+								go_homebase('hit');
+								now_3base = who;
+								change_runner();
+							}else if(how == "3base"){
+								now_3base = befor_3base;
+								change_runner();
+							}
+						}
+						function change_runner(){
+							if(now_1base == ""){
+								document.getElementById("base1").textContent = "1루";
+							}else{
+								document.getElementById("base1").textContent = now_1base;
+							}
+							if(now_2base == ""){
+								document.getElementById("base2").textContent = "2루";
+							}else{
+								document.getElementById("base2").textContent = now_2base;
+							}
+							if(now_3base == ""){
+								document.getElementById("base3").textContent = "3루";
+							}else{
+								document.getElementById("base3").textContent = now_3base;
+							}
+							befor_1base = "";
+							befor_2base = "";
+							befor_3base = "";
+							change_text();
+						}
+						
+
+			//홈런
+			function homerun(){
+				picture_count();
+				ball_count_new();
+				go_homebase('homerun');
+				next_hitter();
+				change_text();
+				if(hoaw == 1){
+					ho_h = ho_h + 1;
+					document.getElementById("ho_h").textContent = ho_h;
+				}else if(hoaw == 0){
+					aw_h = aw_h + 1;
+					document.getElementById("aw_h").textContent = aw_h;
+				}
+			}
+
+		//투수 눌렀을 때
+		function picturer(){
+			document.getElementById('nplay').innerHTML = "<tr><th onClick='balk()'>보크</th><th onClick='change_player('p')'>교체</th></tr>";
+		}
+				function balk(){
+					if(now_3base != ""){
+						go_homebase('balk');
+						now_3base = "";
+						document.getElementById("base3").textContent = "3루";
+					}
+					if(now_2base != ""){
+						now_3base = now_2base;
+						document.getElementById("base3").textContent = now_3base;
+						now_2base = "";
+						document.getElementById("base2").textContent = "2루";
+					}
+					if(now_1base != ""){
+						now_2base = now_1base;
+						document.getElementById("base2").textContent = now_2base;
+						now_1base = "";
+						document.getElementById("base1").textContent = "1루";
+					}
+					change_text();
+				}
+		//1루 눌렀을 때
+		function base1(){
+			if(now_1base != ""){
+				document.getElementById('nplay').innerHTML = "<tr><th onClick='bs(1)'>도루</th><th onClick='pk(1)'>견제사</th><th onClick='runnig_out(2)'>주루사</th><th onClick='change_player(\"base1r\")'>교체</th></tr>";
+			}
+		}
+		//2루 눌렀을 때
+		function base2(){
+			if(now_2base != ""){
+				document.getElementById('nplay').innerHTML = "<tr><th onClick='bs(2)'>도루</th><th onClick='pk(2)'>견제사</th><th onClick='runnig_out(2)'>주루사</th><th onClick='change_player(\"base2r\")'>교체</th></tr>";
+			}
+		}
+		//3루 눌렀을 때
+		function base3(){
+			if(now_3base != ""){
+				document.getElementById('nplay').innerHTML = "<tr><th onClick='bs(3)'>도루</th><th onClick='pk(3)'>견제사</th><th onClick='runnig_out(2)'>주루사</th><th onClick='change_player(\"base3r\")'>교체</th></tr>";
+			}
+		}
+			//도루
+			function bs(v){
+				document.getElementById('nplay').innerHTML = "<tr><th onClick='sb(" + v + ")'>성공</th><th onClick='cs(" + v + ")'>실패</th></tr>";		
+			}
+			function sb(v){
+				if(v == 1){
+					if(now_2base == ""){
+						now_2base = now_1base;
+						document.getElementById("base2").textContent = now_2base;
+						now_1base = "";
+						document.getElementById("base1").textContent = '1루';
+						change_text();
+					}else{
+						document.getElementById('nplay').innerHTML = "<tr><th onClick='change_text()'>2루에 주자가 있습니다</th></tr>";
+					}
+				}else if(v == 2){
+					if(now_3base == ""){
+						now_3base = now_2base;
+						document.getElementById("base3").textContent = now_3base;
+						now_2base = "";
+						document.getElementById("base2").textContent = '2루';
+						change_text();
+					}else{
+						document.getElementById('nplay').innerHTML = "<tr><th onClick='change_text()'>3루에 주자가 있습니다</th></tr>";
+					}
+				}else if(v == 3){
+					now_3base = "";
+					document.getElementById("base3").textContent = '3루';
+					go_homebase('sb');
+					change_text();
+				}
+			}
+			function cs(v){
+				if(v == 1){
+					now_1base = "";
+					document.getElementById("base1").textContent = '1루';
+				}else if(v == 2){
+					now_2base = "";
+					document.getElementById("base2").textContent = '2루';				
+				}else if(v == 3){
+					now_3base = "";
+					document.getElementById("base3").textContent = '3루';
+				}
+				if(hoaw == 0){
+					aw_ht = aw_ht - 1;
+				}else if(hoaw == 1){
+					ho_ht = ho_ht - 1;
+				}
+				out();
+				change_text();
+			}
+			//견제사
+			function runnig_out(v){
+				if(v == 1){
+					now_1base = "";
+					document.getElementById("base1").textContent = '1루';
+				}else if(v == 2){
+					now_2base = "";
+					document.getElementById("base2").textContent = '2루';				
+				}else if(v == 3){
+					now_3base = "";
+					document.getElementById("base3").textContent = '3루';
+				}
+				if(hoaw == 0){
+					aw_ht = aw_ht - 1;
+				}else if(hoaw == 1){
+					ho_ht = ho_ht - 1;
+				}
+				out();
+				change_text();
+			}
+			//주루사
+			function pk(v){
+				if(v == 1){
+					now_1base = "";
+					document.getElementById("base1").textContent = '1루';
+				}else if(v == 2){
+					now_2base = "";
+					document.getElementById("base2").textContent = '2루';				
+				}else if(v == 3){
+					now_3base = "";
+					document.getElementById("base3").textContent = '3루';
+				}
+				if(hoaw == 0){
+					aw_ht = aw_ht - 1;
+				}else if(hoaw == 1){
+					ho_ht = ho_ht - 1;
+				}
+				out();
+				change_text();
+			}
+		//교체
+		function change_player(who){
+			change_text();
+		}
+		
+		function where_hit(how) {
+			if(hit == 1){
+				document.getElementById('nplay').innerHTML = "<tr><th onClick='hit_run(\"" + how + "\",1)'>1루타</th><th onClick='hit_run(\"" + how + "\",2)'>2루타</th><th onClick='hit_run(\"" + how + "\",3)'>3루타</th><th onClick='hit_run(\"" + how + "\",4)'>GH</th></tr>";
+				hit = 0;
+			}else{
+				if(how == 'b1r'){
+					base1();
+				}else if(how == 'b2r'){
+					base2();
+				}else if(how == 'b3r'){
+					base3();
+				}else if(how =='pict'){
+					picturer();
+				}else{
+					document.getElementById('nplay').innerHTML = "<tr><th onClick='change_player(\"" + how + "\")'>교체</th><th onClick='change_player(\"" + how + "\")'>실책</th></tr>";
+				}
+			}
+		}
+		//function where_hit(how) {
+		//	if(hit != 0){
+		//		hit = 0;
+		//		change_text();
+		//		window.open("where_hit.php?how=" + how,
+		//		"IDcheck","left=200, top=200, width=500, height=300, scrollbars=no,resizable=yes");
+		//		//document.getElementById("id").disabled = true;
+		//	}else{
+		//		document.getElementById('nplay').innerHTML = "<tr><th onClick='change_player('" + how + "')'>교체</th></tr>";
+		//	}
+		//}
+	</script>
+</head>
+<body onload="start_game()">
+	<table class="recode">
+		<tr>
+			<th>-</th>
+			<th>1</th>
+			<th>2</th>
+			<th>3</th>
+			<th>4</th>
+			<th>5</th>
+			<th>6</th>
+			<th>7</th>
+			<th>8</th>
+			<th>9</th>
+			<th>R</th>
+			<th>H</th>
+			<th>E</th>
+			<th>B</th>
+		</tr>
+		<tr>
+			<th>A</th>
+			<td><div id="inning_1_aw">0</div></td>
+			<td><div id="inning_2_aw"></div></td>
+			<td><div id="inning_3_aw"></div></td>
+			<td><div id="inning_4_aw"></div></td>
+			<td><div id="inning_5_aw"></div></td>
+			<td><div id="inning_6_aw"></div></td>
+			<td><div id="inning_7_aw"></div></td>
+			<td><div id="inning_8_aw"></div></td>
+			<td><div id="inning_9_aw"></div></td>
+			<td><div id="aw_r">0</div></td>
+			<td><div id="aw_h">0</div></td>
+			<td><div id="aw_e">0</div></td>
+			<td><div id="aw_b">0</div></td>
+		</tr>
+		<tr>
+			<th>H</th>
+			<td><div id="inning_1_ho"></div></td>
+			<td><div id="inning_2_ho"></div></td>
+			<td><div id="inning_3_ho"></div></td>
+			<td><div id="inning_4_ho"></div></td>
+			<td><div id="inning_5_ho"></div></td>
+			<td><div id="inning_6_ho"></div></td>
+			<td><div id="inning_7_ho"></div></td>
+			<td><div id="inning_8_ho"></div></td>
+			<td><div id="inning_9_ho"></div></td>
+			<td><div id="ho_r">0</div></td>
+			<td><div id="ho_h">0</div></td>
+			<td><div id="ho_e">0</div></td>
+			<td><div id="ho_b">0</div></td>
+		</tr>		
+	</table>
+	<table class="ballcount">
+		<tr>
+			<th>S</th>
+			<td>
+				<img src="images/scircle.png" id="fscount" style="display:none">
+				<img src="images/scircle.png" id="sscount" style="display:none">
+			</td>
+			<th>B</th>
+			<td>
+				<img src="images/bcircle.png" id="fbcount" style="display:none">
+				<img src="images/bcircle.png" id="sbcount" style="display:none">
+				<img src="images/bcircle.png" id="tbcount" style="display:none">
+			</td>
+			<th>O</th>
+			<td>
+				<img src="images/ocircle.png" id="focount" style="display:none">
+				<img src="images/ocircle.png" id="socount" style="display:none">
+			</td>
+			<th>P</th>
+			<td><div id="picture_count">0</div></td>
+		</tr>
+	</table>
+	<div class="row groundmap">
+		<div class="col-xs-1 hrzst" id="" onClick="where_hit('hr')"></div>
+		<div class="col-xs-1 hrzst" id="" onClick="where_hit('hr')"></div>
+		<div class="col-xs-1 hrzst" id="" onClick="where_hit('hr')"></div>
+		<div class="col-xs-1 hrzst" id="" onClick="where_hit('hr')"></div>
+		<div class="col-xs-1 hrzst" id="" onClick="where_hit('hr')"></div>
+		<div class="col-xs-1 hrzst" id="" onClick="where_hit('hr')"></div>
+		<div class="col-xs-1 hrzst" id="" onClick="where_hit('hr')"></div>
+		<div class="col-xs-1 hrzst" id="" onClick="where_hit('hr')"></div>
+		<div class="col-xs-1 hrzst" id="" onClick="where_hit('hr')"></div>
+		<div class="col-xs-1 hrzst" id="" onClick="where_hit('hr')"></div>
+		<div class="col-xs-1 hrzst" id="" onClick="where_hit('hr')"></div>
+		<div class="col-xs-1 hrzst" id="" onClick="where_hit('hr')"></div>
+		<br>
+		<div class="col-xs-1 hrzst" id="" onClick="where_hit('hr')"></div>
+		<div class="col-xs-1 hrzst" id="" onClick="where_hit('hr')"></div>
+		<div class="col-xs-1 lfzst" id="" onClick="where_hit('lf')"></div>
+		<div class="col-xs-1 lfzst" id="" onClick="where_hit('lf')"></div>
+		<div class="col-xs-1 cfzst" id="" onClick="where_hit('cf')"></div>
+		<div class="col-xs-1 cfzst" id="" onClick="where_hit('cf')"></div>
+		<div class="col-xs-1 cfzst" id="" onClick="where_hit('cf')"></div>
+		<div class="col-xs-1 cfzst" id="" onClick="where_hit('cf')"></div>
+		<div class="col-xs-1 rfzst" id="" onClick="where_hit('rf')"></div>
+		<div class="col-xs-1 rfzst" id="" onClick="where_hit('rf')"></div>
+		<div class="col-xs-1 hrzst" id="" onClick="where_hit('hr')"></div>
+		<div class="col-xs-1 hrzst" id="" onClick="where_hit('hr')"></div>
+		<br>
+		<div class="col-xs-1 hrzst" id="" onClick="where_hit('hr')"></div>
+		<div class="col-xs-1 lfzst" id="" onClick="where_hit('lf')"></div>
+		<div class="col-xs-1 lfzst" id="" onClick="where_hit('lf')"></div>
+		<div class="col-xs-1 lfzst" id="" onClick="where_hit('lf')"></div>
+		<div class="col-xs-1 cfzst" id="" onClick="where_hit('cf')"></div>
+		<div class="col-xs-2 cfst" id="cf" onClick="where_hit('cf')">중견수</div>
+		<div class="col-xs-1 cfzst" id="" onClick="where_hit('cf')"></div>
+		<div class="col-xs-1 rfzst" id="" onClick="where_hit('rf')"></div>
+		<div class="col-xs-1 rfzst" id="" onClick="where_hit('rf')"></div>
+		<div class="col-xs-1 rfzst" id="" onClick="where_hit('rf')"></div>
+		<div class="col-xs-1 hrzst" id="" onClick="where_hit('hr')"></div>
+		<br>
+		<div class="col-xs-1 lfzst" id="" onClick="where_hit('lf')"></div>
+		<div class="col-xs-2 lfst" id="lf" onClick="where_hit('lf')">좌익수</div>
+		<div class="col-xs-1 lfzst" id="" onClick="where_hit('lf')"></div>
+		<div class="col-xs-1 cfzst" id="" onClick="where_hit('cf')"></div>
+		<div class="col-xs-1 cfzst" id="" onClick="where_hit('cf')"></div>
+		<div class="col-xs-1 cfzst" id="" onClick="where_hit('cf')"></div>
+		<div class="col-xs-1 cfzst" id="" onClick="where_hit('cf')"></div>
+		<div class="col-xs-1 rfzst" id="" onClick="where_hit('rf')"></div>
+		<div class="col-xs-2 rfst" id="rf" onClick="where_hit('rf')">우익수</div>
+		<div class="col-xs-1 rfzst" id="" onClick="where_hit('rf')"></div>
+		<br>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 lfzst" id="" onClick="where_hit('lf')"></div>
+		<div class="col-xs-1 lfzst" id="" onClick="where_hit('lf')"></div>
+		<div class="col-xs-1 sszst" id="" onClick="where_hit('ss')"></div>
+		<div class="col-xs-2 ssst" id="ss" onClick="where_hit('ss')">유격수</div>
+		<div class="col-xs-2 b2st" id="b2er" onClick="where_hit('b2')">2루수</div>
+		<div class="col-xs-1 b2zst" id="" onClick="where_hit('b2')"></div>
+		<div class="col-xs-1 rfzst" id="" onClick="where_hit('rf')"></div>
+		<div class="col-xs-1 rfzst" id="" onClick="where_hit('rf')"></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<br>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-2 b3st" id="b3er" onClick="where_hit('b3')">3루수</div>
+		<div class="col-xs-1 sszst" id="" onClick="where_hit('ss')"></div>
+		<div class="col-xs-2 b2st" id="base2" onClick="where_hit('b2r')">2루</div>
+		<div class="col-xs-1 b2zst" id="" onClick="where_hit('b2')"></div>
+		<div class="col-xs-2 b1st" id="b1er" onClick="where_hit('b1')">1루수</div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<br>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-2 b3st" id="base3" onClick="where_hit('b3r')">3루</div>
+		<div class="col-xs-1 b3zst" id="" onClick="where_hit('b3')"></div>
+		<div class="col-xs-1 pzst" id="" onClick="where_hit('p')"></div>
+		<div class="col-xs-1 pzst" id="" onClick="where_hit('p')"></div>
+		<div class="col-xs-1 b1zst" id="" onClick="where_hit('b1')"></div>
+		<div class="col-xs-2 b1st" id="base1" onClick="where_hit('b1r')">1루</div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<br>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 b3zst" id="" onClick="where_hit('b3')"></div>
+		<div class="col-xs-1 b3zst" id="" onClick="where_hit('b3')"></div>
+		<div class="col-xs-2 pst" id="pic" onClick="where_hit('pict')">투수</div>
+		<div class="col-xs-1 b1zst" id="" onClick="where_hit('b1')"></div>
+		<div class="col-xs-1 b1zst" id="" onClick="where_hit('b1')"></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<br>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 czst" id="" onClick="where_hit('c')"></div>
+		<div class="col-xs-1 czst" id="" onClick="where_hit('c')"></div>
+		<div class="col-xs-1 czst" id="" onClick="where_hit('c')"></div>
+		<div class="col-xs-1 czst" id="" onClick="where_hit('c')"></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<br>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-2 hitter" id="hit" onClick="hitter()">타자</div><!-- 타자를 눌러야지 where_hit 가능-->
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-2 cst" id="cat" onClick="where_hit('c')">포수</div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<div class="col-xs-1 fzst" id=""></div>
+		<br>
+	</div>
+	<br>
+	<table class="pball" id="nplay">
+		<tr>
+			<th onClick="strike_p()">Strike</th>
+			<th onClick="ball_p()">Ball</th>
+			<th onClick="foul_p()">Foul</th>
+			<th onClick="out_p()">Out</th>
+		</tr>
+	</table>
+	<table class="menu">
+		<tr>
+			<th onClick="db_test()">test</th>
+			<th>메뉴</th>
+			<th>실행취소</th>
+		</tr>
+	</table>
+	<h6 style="text-align:center" id="now"></h6>
+</body>
+</html>

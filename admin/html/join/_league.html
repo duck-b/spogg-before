@@ -1,0 +1,60 @@
+<!DOCTYPE HTML>
+<html>
+<?
+	include "dbconn.php";
+	if($search){
+		if(!$_GET['option']){
+			$league_result = mysqli_query($conn,"SELECT * FROM league WHERE (name LIKE '%$search%' OR adrs LIKE '%$search%') AND state = '1' ORDER BY updated_at DESC");
+		}else if($_GET['option'] == 'league'){
+			$league_result = mysqli_query($conn,"SELECT * FROM league WHERE (name LIKE '%$search%' OR adrs LIKE '%$search%') AND state = '1' AND kinds = '1' ORDER BY updated_at DESC");
+		}else if($_GET['option'] == 'tour'){
+			$league_result = mysqli_query($conn,"SELECT * FROM league WHERE (name LIKE '%$search%' OR adrs LIKE '%$search%') AND state = '1' AND kinds = '2' ORDER BY updated_at DESC");
+		}else{
+			$league_result = mysqli_query($conn,"SELECT * FROM league WHERE state = '1' ORDER BY updated_at DESC");
+		}
+	}else{
+		$league_result = mysqli_query($conn,"SELECT * FROM league WHERE state = '1' ORDER BY updated_at DESC");
+	}
+?>
+	<body>
+	<section class="site-section">
+		<div class="container">
+			<div class="row justify-content-center mb-5 zindex_2000">
+				<div class="col-md-8">
+					<h2 class="text-center">리그 찾기</h2>
+					<form action="join.html" class="form-inline element-animate" id="search-form" method="get">
+						<button class="btn btn-outline-primary dropdown-toggle col-md-2" id="search_option" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">전체</button>
+						<div class="dropdown-menu">
+							<a class="dropdown-item" href="javascript:;" onclick="chang_option('전체','')">전체</a>
+							<a class="dropdown-item" href="javascript:;" onclick="chang_option('리그','league')">리그</a>
+							<a class="dropdown-item" href="javascript:;" onclick="chang_option('토너먼트','tour')">토너먼트</a>
+						</div>
+						<input type="hidden" name="join" value="league">
+						<input type="hidden" id="option" name="option" value="">
+						<input type="text" style="border:1px solid #dee2e6; border-right:0px;" name="search" class="form-control form-control-block search-input col-md-7" id="autocomplete" placeholder="지역 또는 리그 명으로 검색" required>
+						<button type="submit" class="btn btn-primary col-md-2">검색</button>
+					</form>
+				</div>
+			</div>
+			<div class="row top-destination">
+				<? 	if($league_result){
+					while($league_row = mysqli_fetch_array($league_result)){?>
+					<div class="col-lg-2 col-md-4 col-sm-6 col-12">
+						<!--<a href="javascript:;" class="place" onClick="new_info_page('<? echo $league_row['no']?>')"> 기존-->
+						<a href="league.html?league=page&no=<? echo $league_row['no']?>&page=home" class="place">
+							<?if($league_row['img']){?>
+							<img class="img-thumbnail" style="width:100%" src="<? echo $league_row['img'];?>" alt="<? echo $league_row['name']?>">
+							<? } else {?>
+							<img class="img-thumbnail" style="width:100%" src="images/none_player_img.png" alt="<? echo $league_row['name']?>">
+							<? } ?>
+							<h2><? echo $league_row['name'];?></h2>
+							<!--<p>test</p>-->
+						</a>
+					</div>
+				<? }
+				} ?>
+			</div>
+		</div>
+	</section>
+	</body>
+</html>

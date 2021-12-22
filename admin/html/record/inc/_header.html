@@ -1,0 +1,36 @@
+<!DOCTYPE HTML>
+<html>
+	<body>
+		<!-- Header -->
+		<header id="header">
+			<div class="inner">
+				<!-- Logo -->
+				<a href="index.html" class="logo">
+					<span class="symbol"><img src="images/logo.png" alt="" /></span><span class="title">TRYOUT RECORD</span>
+				</a>
+				<!-- Nav -->
+				<nav>
+					<ul>
+						<li><a href="#menu">Menu</a></li>
+					</ul>
+				</nav>
+			</div>
+		</header>
+		<!-- Menu -->
+		<nav id="menu">
+			<h2>Menu</h2>
+			<ul>
+				<li><a href="index.html">Home</a></li>
+				<?if(!$user_no){?>
+				<li><a href="#login">로그인 / 회원가입</a></li>
+				<?}else{?>
+				<li><a href="data.html">저장된 기록</a></li>
+				<li><a href="LogoutProc.php">로그아웃</a></li>
+				<? } ?>
+				<?if($_SESSION['admin']){?>
+				<li><a href="elements.html">Test Page</a></li>
+				<?}?>
+			</ul>
+		</nav>
+	</body>
+</html>

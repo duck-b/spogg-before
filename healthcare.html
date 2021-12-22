@@ -1,0 +1,607 @@
+<? include("header/header.html");?>
+<? include("header/menu.html"); ?>
+<?
+if(!$user_no){
+	echo "<script>alert('로그인이 필요한 기능입니다.');";
+	echo "window.location.replace('login.html');</script>";
+}else{
+    $isMobile = 0;
+
+    $mobileos = ["iPhone","iPod","Android","BlackBerry","Windows CE","Nokia","Webos","Opera Mini","SonyEricsson","Opera Mobi","IEMobile"];
+
+    for($i=0 ; $i<sizeof($mobileos); $i++) {
+        if(strpos($_SERVER['HTTP_USER_AGENT'],$mobileos[$i]) !== false) {
+            if(strpos($_SERVER['HTTP_USER_AGENT'],"iPhone") !== false) {
+                $isIphone = 1;
+            }
+            $isMobile = 1;
+            break;
+        }
+    }
+	include "dbconn.php";
+	$player_result = mysqli_query($conn,"SELECT * FROM user_player WHERE user='$user_no'");
+	$player_row = mysqli_fetch_array($player_result);
+	if($player_row['playercheck'] == 1){
+		$playercheck = "선출";
+	}else if($player_row['playercheck'] == 2){
+		$playercheck = "비선출";
+	}else{
+		$playercheck = "-";
+	}
+	if($player_row['playerclass'] == 1){
+		$playerclass = "사회인 1부";
+	}else if($player_row['playerclass'] == 2){
+		$playerclass = "사회인 2부";
+	}else if($player_row['playerclass'] == 3){
+		$playerclass = "사회인 3부";
+	}else if($player_row['playerclass'] == 4){
+		$playerclass = "사회인 4부";
+	}else{
+		$playerclass = "-";
+	}
+	if($player_row['position'] == 1){
+		$position = "내야수";
+	}else if($player_row['position'] == 2){
+		$position = "외야수";
+	}else if($player_row['position'] == 3){
+		$position = "투수";
+	}else{
+		$position = "-";
+	}
+	if($player_row['hitpitch'] == 1){
+		$hitpitch = "우투우타";
+	}else if($player_row['hitpitch'] == 2){
+		$hitpitch = "우투좌타";
+	}else if($player_row['hitpitch'] == 3){
+		$hitpitch = "좌투우타";
+	}else if($player_row['hitpitch'] == 4){
+		$hitpitch = "좌투좌타";
+	}else{
+		$hitpitch = "-";
+	}
+	if($user_row['birth'] == '0000-00-00' || $user_row['birth'] == null){
+		$birth = "-";
+	}else{
+		$birth = $user_row['birth'];
+	}
+	if($player_row['playertall'] == 0){
+		$playertall = "-";
+	}else{
+		$playertall = $player_row['playertall']."cm";
+	}
+	if($player_row['playerweight'] == 0){
+		$playerweight = "-";
+	}else{
+		$playerweight = $player_row['playerweight']."kg";
+	}
+	if($player_row['address']){
+		$address = $player_row['address'];
+	}else{
+		$address = "-";
+	}
+	mysqli_close($conn);
+}
+?>
+
+<!-- IE8 에서 HTML5 요소와 미디어 쿼리를 위한 HTML5 shim 와 Respond.js -->
+<!-- WARNING: Respond.js 는 당신이 file:// 을 통해 페이지를 볼 때는 동작하지 않습니다. -->
+<!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+<link href="css/dataTables.bootstrap.min.css" rel="stylesheet">
+
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
+<script src="https://cdn.datatables.net/fixedcolumns/3.3.0/js/dataTables.fixedColumns.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+    $('#recode_hitplay1').DataTable({
+    	// 표시 건수기능 숨기기
+        lengthChange: false,
+        // 검색 기능 숨기기
+        searching: false,
+        // 페이징 기능 숨기기
+        paging: false,
+
+    });
+    $('#recode_pitchplay').DataTable({
+        // 표시 건수기능 숨기기
+        lengthChange: false,
+        // 검색 기능 숨기기
+        searching: false,
+        // 페이징 기능 숨기기
+        paging: false,
+    });
+} );
+</script>
+
+<div class="ro_subpage ">
+	<div class="container-fluid ro_subpage_title_img ro_posi_r">
+		<img src="img/subpage_title/2019league_titleimg.jpg">
+		<div class="ro_subpage_nav">
+			<p>헬스케어</p>
+			<ul>
+				<li>Home</li>
+				<li>User</li>
+				<li>헬스케어</li>
+			</ul>
+		</div>
+	</div>
+	
+	<div class="container ro_subpage_content ro_subpage_recode">
+		<div class="ro_subpage_recode_tab">
+			<ul id="myTab" class="nav nav-tabs" role="tablist">
+				<li class="active"><a href="healthcare.html">부상케어</a></li>
+				<li class=""><a href="healthcare2.html">건강케어</a></li>
+				<!--<li role="presentation" class=""><a href="javascript:;">연습·용병기록</a></li>-->
+			</ul>
+			<div id="myTabContent" class="tab-content ">
+				<div role="tabpanel" class="tab-pane fade active in ro_color_b" id="injure" aria-labelledby="injure-tab">
+					<div class="to_titlebar">
+						선수정보
+					</div>
+					<hr>
+					<div class="to_page_content2 to_mb_30 table-responsive">
+						<table class="table recode_player_table">
+							<tr>
+								<th><img src="<?=$user_img?>"></th>
+								<td>
+									<div class="recode_player"><span><?=$player_row['back_num']?></span><?=$user_row['name']?></div>
+									<div class="recode_player_info_table table-responsive">
+										<table class="table">
+											<tr>
+												<th>주활동지역</th><td><?=$address?></td>
+												<th>주활동리그</th><td><?=$playerclass?></td>
+												<th>주포지션</th><td><?=$position?></td>
+											</tr>
+											<tr>
+												<th>생년월일</th><td><?=$birth?></td>
+												<th>신장/체중</th><td><?=$playertall?> / <?=$playerweight?></td>
+											</tr>
+											<tr>
+												<th>선출여부</th><td><?=$playercheck?></td>
+												<th>투/타</th><td><?=$hitpitch?></td>
+											</tr>
+										</table>
+									</div>
+								</td>
+							</tr>
+						</table>
+					</div><!-- 선수 정보 끝 -->
+					
+					<div class="to_titlebar">
+						부상가능성
+					</div>
+					<hr>
+					<div class="row to_mb_30">
+						<div class="col-md-3 col-xs-6" style="margin-bottom:30px">
+							<div class="to_border">
+								<canvas id="myChart" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+						<div class="col-md-3 col-xs-6" style="margin-bottom:30px">
+							<div class="to_border">
+								<canvas id="myChart2" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+						<div class="col-md-3 col-xs-6" style="margin-bottom:30px">
+							<div class="to_border">
+								<canvas id="myChart3" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+						<div class="col-md-3 col-xs-6" style="margin-bottom:30px">
+							<div class="to_border">
+								<canvas id="myChart4" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+						<div class="col-md-6 col-xs-12" style="margin-bottom:30px">
+							<div class="to_border">
+								<canvas id="myChart5" width="100%" height="50%"></canvas>
+							</div>
+						</div>
+						<div class="col-md-6 col-xs-12" style="margin-bottom:30px">
+							<div class="to_border">
+								<canvas id="myChart6" width="100%" height="50%"></canvas>
+							</div>
+						</div>
+					</div>
+					<div class="to_titlebar">
+						어깨 운동 방법 및 주의사항
+					</div>
+					<hr>
+					<div class="row to_mb_30">
+						<div class="col-md-4 col-12">
+							<h4 style="color:#333">어깨 부위 특성</h4>
+							어깨는 크게 8개의 인대와 삼각근(전방, 측방, 후방)으로 이루어져 있다. 전방 삼각근과 상완 이두근, 측·후방 삼각근과 삼두근은 밀접한 관련이 있다. 즉, 삼각근은 팔에 연결된 어깨와 해부학적으로 밀접한 관계가 있으며, 팔 운동을 하기 위해서는 어깨 근육 및 인대의 발달이 뒷받침 되어야 한다는 뜻이다. 어깨관절은 가동성이 큰 관절이며, 이러한 가동성 때문에 다른 관절에 비해 안정성이 낮다. 우리 눈에 보이지 않는 어깨 안쪽 부위에는 어깨 관절을 감싸는 근육들이 있는데, 어깨의 부상과 밀접한 관련이 있다. 따라서 이 부위의 인대 및 근육의 발달을 통해 관절의 불안정성을 극복하고 균형을 이루도록 하는 것이 중요하다.
+						</div>
+						<div class="col-md-4 col-12">
+							<h4 style="color:#333">권장 운동 방법</h4>
+                            차렷 자세에서 팔꿈치를 굽히고 밖으로 회전시키면 외회전, 안으로 회전시키면 내회전이다. 이와 같은 운동을 통해 어깨 안쪽의 근육과 인대를 발달시켜 어깨 부상 및 통증을 예방할 수 있다.<br><br>
+
+                            외전(팔을 드는 동작), 내전(팔을 내리는 동작)의 동작도 어깨 안쪽의 근육을 발달시킬 수 있으며 안정성을 향상시킬 수 있다. [그림4]의 운동은 외전과 내전을 동시에 할 수 있는 동작으로 효과적인 운동이라 할 수 있다. 이 외에도 밴드를 이용한 다양한 동작을 통해 운동 효과를 얻을 수 있다. 큰 근육인 삼각근의 전면, 측면, 후면의 경우는 상체 숙여 바벨 몸 쪽으로 당기기(upright row), 서서 덤벨 잡고 팔 벌리며 올리기(lateral raise) 등을 통해 발달시킬 수 있다.
+						</div>
+                        <div class="col-md-4 col-12">
+							<h4 style="color:#333">주의사항</h4>
+                            운동을 열심히 하는데도 효과를 얻지 못하는 이유는 한쪽으로 치우친 운동 방식 때문이다. 일반적인 어깨 운동에는 가슴, 팔 등의 근육이 동원되는 반면, 후면 삼각근은 거의 동원되지 않는다. 어깨 뒤쪽을 따로 운동시키지 않으면 삼각근 발달에 불균형을 초래하게 된다.<br><br>
+
+                            따라서 어깨를 균형 있게 발달시키려면 덤벨 잡고 머리 위로 올리기(shoulder press) 등 여러 가지 다양한 운동을 통해서 삼각근을 자극해야 한다. 또한 앞서 말했듯이 어깨는 안정성이 다른 부위에 비해 낮기 때문에 무리할 경우 탈골과 같은 상해를 입기 쉬우므로 무리하지 않는 범위에서 운동해야 한다.
+						</div>
+                        <b style="color:#515151"><br>[네이버 지식백과] 어깨 부위 운동 가이드 (운동가이드, 김광준, 국민체육진흥공단 체육과학연구원)</b>
+					</div>
+					<div class="to_titlebar">
+						추천 서비스
+					</div>
+					<hr>
+					<div class="swiper-container search_div_1">
+				        <div class="swiper-wrapper search_div_2">
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                        </div>
+                        <!-- Add Pagination -->
+                        <div class="swiper-pagination"></div>
+                        <!-- Add Arrows -->
+                        <div class="swiper-button-next"></div>
+                        <div class="swiper-button-prev"></div>
+                    </div>
+				</div>
+				<div role="tabpanel" class="tab-pane fade ro_color_b" id="health" aria-labelledby="health-tab">
+					
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="js/swiper.min.js"></script>
+<!-- Initialize Swiper -->
+<script>
+    var swiper = new Swiper('.swiper-container', {
+		slidesPerView: 4,
+		spaceBetween: 30,
+		pagination: {
+			el: '.swiper-pagination',
+			clickable: true,
+		},
+		navigation: {
+			nextEl: '.swiper-button-next',
+			prevEl: '.swiper-button-prev',
+		},
+    });
+</script>
+<script>
+function delete_event(no){
+	if (confirm("정말 삭제하시겠습니까?") == true){
+		location.href="LeagueRecordDeleteProc.php?no="+no;
+	}else{ 
+		return;
+	}
+}
+Chart.pluginService.register({
+	beforeDraw: function (chart) {
+		if (chart.config.options.elements.center) {
+			//Get ctx from string
+			var ctx = chart.chart.ctx;
+
+			//Get options from the center object in options
+			var centerConfig = chart.config.options.elements.center;
+			var fontStyle = centerConfig.fontStyle || 'Arial';
+			var txt = centerConfig.text;
+			var color = centerConfig.color || '#000';
+			var sidePadding = centerConfig.sidePadding || 20;
+			var sidePaddingCalculated = (sidePadding/100) * (chart.innerRadius * 2)
+			//Start with a base font of 30px
+			ctx.font = "30px " + fontStyle;
+
+			//Get the width of the string and also the width of the element minus 10 to give it 5px side padding
+			var stringWidth = ctx.measureText(txt).width;
+			var elementWidth = (chart.innerRadius * 2) - sidePaddingCalculated;
+
+			// Find out how much the font can grow in width.
+			var widthRatio = elementWidth / stringWidth;
+			var newFontSize = Math.floor(30 * widthRatio);
+			var elementHeight = (chart.innerRadius * 2);
+
+			// Pick a new font size so it will not be larger than the height of label.
+			var fontSizeToUse = Math.min(newFontSize, elementHeight);
+
+			//Set font settings to draw it correctly.
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			var centerX = ((chart.chartArea.left + chart.chartArea.right) / 2);
+			var centerY = ((chart.chartArea.top + chart.chartArea.bottom) / 2);
+			ctx.font = fontSizeToUse+"px " + fontStyle;
+			ctx.fillStyle = color;
+
+			//Draw text in center
+			ctx.fillText(txt, centerX, centerY);
+		}
+	}
+});
+var ctx = document.getElementById('myChart');
+var myDoughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+		datasets: [{
+			data: [25, 75],
+			backgroundColor: [
+                'blue'
+            ],
+		}]
+	},
+	options: {
+        legend: {
+            display: false
+		},
+		responsive: true,
+		display : "inline-block",
+		tooltips: {
+			enabled: false
+		},
+		elements: {
+			center: {
+			text: '안전',
+			color: 'blue', //Default black
+			fontStyle: 'Do Hyeon', //Default Arial
+			sidePadding: 15 //Default 20 (as a percentage)
+			}
+		},
+		title: {
+            display: true,
+            text: '손 / 손목',
+			fontFamily: 'Do Hyeon',
+			position: 'bottom',
+			fontSize: 20
+        }
+	}
+});
+var ctx = document.getElementById('myChart2');
+var myDoughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+		datasets: [{
+			data: [80, 30],
+			backgroundColor: [
+                'red'
+            ],
+		}]
+	},
+	options: {
+        legend: {
+            display: false
+		},
+		responsive: true,
+		display : "inline-block",
+		tooltips: {
+			enabled: false
+		},
+		elements: {
+			center: {
+			text: '위험',
+			color: 'red', //Default black
+			fontStyle: 'Do Hyeon', //Default Arial
+			sidePadding: 15 //Default 20 (as a percentage)
+			}
+		},
+		title: {
+            display: true,
+            text: '어깨 / 팔꿈치',
+			fontFamily: 'Do Hyeon',
+			position: 'bottom',
+			fontSize: 20
+        }
+	}
+});
+var ctx = document.getElementById('myChart3');
+var myDoughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+		datasets: [{
+			data: [45, 65],
+			backgroundColor: [
+                'green'
+            ],
+		}]
+	},
+	options: {
+        legend: {
+            display: false
+		},
+		responsive: true,
+		display : "inline-block",
+		tooltips: {
+			enabled: false
+		},
+		elements: {
+			center: {
+			text: '정상',
+			color: 'green', //Default black
+			fontStyle: 'Do Hyeon', //Default Arial
+			sidePadding: 15 //Default 20 (as a percentage)
+			}
+		},
+		title: {
+            display: true,
+            text: '허리 / 무릎',
+			fontFamily: 'Do Hyeon',
+			position: 'bottom',
+			fontSize: 20
+        }
+	}
+});
+var ctx = document.getElementById('myChart4');
+var myDoughnutChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+		datasets: [{
+			data: [65, 35],
+			backgroundColor: [
+                'yellow'
+            ],
+		}]
+	},
+	options: {
+        legend: {
+            display: false
+		},
+		responsive: true,
+		display : "inline-block",
+		tooltips: {
+			enabled: false
+		},
+		elements: {
+			center: {
+			text: '주의',
+			color: 'yellow', //Default black
+			fontStyle: 'Do Hyeon', //Default Arial
+			sidePadding: 15 //Default 20 (as a percentage)
+			}
+		},
+		title: {
+            display: true,
+            text: '발 / 발목',
+			fontFamily: 'Do Hyeon',
+			position: 'bottom',
+			fontSize: 20
+        }
+	}
+});
+var ctx2 = document.getElementById('myChart5');
+var myBarChart = new Chart(ctx2, {
+    type: 'horizontalBar',
+    data: {
+		datasets: [{
+			data: [10, 20, 70, 90],
+			label: '위험도',
+			backgroundColor : function(context) {
+				var index = context.dataIndex;
+				var value = context.dataset.data[index];
+				return value > 75  ? 'rgba(255, 0, 0, 0.9)' :
+					value > 50 ? 'rgba(255, 255, 0, 0.9)' :
+					value > 25 ? 'rgba(0, 128, 0, 0.9)' :
+					'rgba(0, 0, 255, 0.9)';
+			}
+		}],
+		labels: ['손', '손목', '팔꿈치', '어깨']
+	},
+	options: {
+		legend: {
+            display: false
+		},
+		title: {
+			display: true,
+			text: '상체 부상',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+		},
+		scales: {
+		   yAxes: [{
+				scaleLabel: {
+					display: true,
+					labelString: '부상 부위',
+				}
+		   }],
+		   xAxes: [{
+				scaleLabel: {
+					display: true,
+					labelString: '위험도'
+				},
+				ticks: {
+					min: 0,
+					max: 100
+				}
+		   }]
+	   }
+	}
+});
+var ctx2 = document.getElementById('myChart6');
+var myBarChart = new Chart(ctx2, {
+    type: 'horizontalBar',
+    data: {
+		datasets: [{
+			data: [40, 20, 80, 70],
+			label: '위험도',
+			backgroundColor : function(context) {
+				var index = context.dataIndex;
+				var value = context.dataset.data[index];
+				return value > 75  ? 'rgba(255, 0, 0, 0.9)' :
+					value > 50 ? 'rgba(255, 255, 0, 0.9)' :
+					value > 25 ? 'rgba(0, 128, 0, 0.9)' :
+					'rgba(0, 0, 255, 0.9)';
+			}
+		}],
+		labels: ['허리', '무릎', '발목', '발']
+	},
+	options: {
+		legend: {
+            display: false
+		},
+		title: {
+			display: true,
+			text: '하체 부상',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+		},
+		scales: {
+		   yAxes: [{
+				scaleLabel: {
+					display: true,
+					labelString: '부상 부위',
+				}
+		   }],
+		   xAxes: [{
+				scaleLabel: {
+					display: true,
+					labelString: '위험도'
+				},
+				ticks: {
+					min: 0,
+					max: 100
+				}
+		   }]
+	   }
+	}
+});
+</script>
+<? include("footer/footer.html"); ?>
+</body>
+</html>

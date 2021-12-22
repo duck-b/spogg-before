@@ -1,0 +1,150 @@
+<!DOCTYPE HTML>
+<html>
+<? 	
+	$nav = "board";
+	$board= $_GET["board"];
+	include("inc/_head.html");?>
+<body>
+	<? include("inc/_header.html");?>
+	
+	<? 	if(!$_GET['no']){
+			if($board == "fa"){
+				include("board/_fa.html");
+			}else if($board == "free"){
+				include("board/_free.html");
+			}else if($board == "write"){
+				if($user_no){
+					$kind = $_GET['kind'];
+					if($kind == "fa"){
+						include("board/_fawrite.html");
+					}else if($kind == "free"){
+						include("board/_freewrite.html");
+					}
+				}else{
+					echo "<script>alert('로그인이 필요한 기능입니다');";
+					echo "window.location.replace('user.html?user=login');</script>";
+				}
+			}
+		}else{
+			$no = $_GET['no'];
+			if($board == "fa"){
+				include("board/_faread.html");
+			}else if($board == "free"){
+				include("board/_freeread.html");
+			}else if ($board == "edit"){
+				include "dbconn.php";
+				if($_GET['kind'] == "fa"){
+					$writer_result = mysqli_query($conn,"SELECT * FROM board_fa WHERE no ='$no'");
+					$writer_row = mysqli_fetch_array($writer_result);
+					mysqli_close($conn);
+					if($user_no == $writer_row['user']){
+						include("board/_faedit.html");
+					}else{
+						echo "<script>alert('잘못된 접근입니다.');";
+						echo "window.location.replace('index.html');</script>";
+					}
+				}else if($_GET['kind']  == "free"){
+					$writer_result = mysqli_query($conn,"SELECT * FROM board_free WHERE no ='$no'");
+					$writer_row = mysqli_fetch_array($writer_result);
+					mysqli_close($conn);
+					if($user_no == $writer_row['user']){
+						include("board/_freeedit.html");
+					}else{
+						echo "<script>alert('잘못된 접근입니다.');";
+						echo "window.location.replace('index.html');</script>";
+					}
+				}
+			}
+		}?>
+		
+	<? include("inc/_footer.html");?>
+	
+    <? include("inc/_script.html");?>
+	<script>
+		var doubleSubmitFlag = false;
+		function doubleSubmitCheck(){
+			if(doubleSubmitFlag){
+				return doubleSubmitFlag;
+			}else{
+				doubleSubmitFlag = true;
+				return false;
+			}
+		}
+		function insert(){
+			var str = document.getElementById("contents").value;
+			str = str.replace(/(?:\r\n|\r|\n)/g, '<br>');
+			document.getElementById("contents").value = str;
+			if(doubleSubmitCheck()) return;
+		}
+		function read_contents(){
+			var str = document.getElementById("contents").textContent;
+			str = str.replaceAll("<br>", "\r\n");
+			document.getElementById("contents").textContent = str;
+		}
+		function edit_contents(){
+			var str = document.getElementById("contents").textContent;
+			str = str.replace(/<br>/g, "\r\n");
+			document.getElementById("contents").value = str;
+		}		
+		function chang_option(text, option){
+			document.getElementById("search_option").textContent = text;
+			document.getElementById("option").value = option;
+		}
+		function recomment_bt(no){
+			document.getElementById('blanks_' + no).style.display = "inline-block";
+			document.getElementById('recomment_' + no).style.display = "inline-block";
+		}
+		function comment_edit_bt(no,board){
+			document.getElementById('comment_edit_bt_' + no).style.display = "none";
+			comment_value = document.getElementById("comment_" + no).textContent;
+			document.getElementById('comment_' + no).innerHTML = "<form action='BoardUpdateProc.php' method='post'>" +
+				"<div class='input-group mb-3'>" +
+						"<input type='text' name='contents' value='" + comment_value + "' class='form-control' placeholder='수정할 내용을 입력해 주세요' aria-describedby='basic-addon2'>" + 
+						"<input type='hidden' name='kind' value='comment" + board + "'>" +
+						"<input type='hidden' name='no' value='" + no + "'>" +
+						"<div class='input-group-append'>" + 
+							"<button class='btn btn-outline-primary' type='submit'>댓글 수정</button>" +
+						"</div>" +
+				"</div>" +
+		"</form>";
+		}
+		function recomment_edit_bt(no,board){
+			document.getElementById('recomment_edit_bt_' + no).style.display = "none";
+			recomment_value = document.getElementById("recomment_contents_" + no).textContent;
+			document.getElementById('recomment_contents_' + no).innerHTML = "<form action='BoardUpdateProc.php' method='post'>" +
+				"<div class='input-group mb-3'>" +
+						"<input type='text' name='contents' value='" + recomment_value + "' class='form-control' placeholder='수정할 내용을 입력해 주세요' aria-describedby='basic-addon2'>" + 
+						"<input type='hidden' name='kind' value='recomment" + board + "'>" +
+						"<input type='hidden' name='no' value='" + no + "'>" +
+						"<div class='input-group-append'>" + 
+							"<button class='btn btn-outline-primary' type='submit'>답글 수정</button>" +
+						"</div>" +
+				"</div>" +
+		"</form>";
+		}
+		function imageURL(input) {
+			if (input.files && input.files[0]) {
+				var reader = new FileReader();
+
+				reader.onload = function(e) {
+					$('#replaceMe').attr('src', e.target.result)
+				}
+
+				reader.readAsDataURL(input.files[0]);
+			}
+		}
+		function fa_search_option(){
+				window.open("fa_board_search.php",
+				"IDcheck","left=200, top=200, width=800, height=500, scrollbars=no,resizable=yes");
+				//document.getElementById("id").disabled = true;
+		}
+		function delete_event(no,kind){
+			if (confirm("정말 삭제하시겠습니까?") == true){
+				location.href="BoardDeleteProc.php?no=" + no + "&kind=" + kind;
+			}else{ 
+				return;
+			}
+		}
+	</script>
+  </body>
+</html>

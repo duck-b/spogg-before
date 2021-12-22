@@ -1,0 +1,15 @@
+<script language='javascript' src='http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js'></script>
+<script>
+$(document).ready(function(){
+	jQuery.ajax({
+	type:"POST",
+	url:"test.html",
+	success:function(msg){
+		alert(msg); 
+	}, error: function(xhr,status,error){
+		alert(error);
+	}
+	}); 
+});
+</script>
+명월의 개발일지

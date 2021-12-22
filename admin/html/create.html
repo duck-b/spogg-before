@@ -1,0 +1,81 @@
+<!DOCTYPE HTML>
+<html>
+<? 	
+	$nav = "create";
+	$create = $_GET["create"];
+	include("inc/_head.html");?>
+<body>
+	<? include("inc/_header.html");?>
+	
+	<? 	if($create == "team"){
+			if($user_no){
+				if($my_row['states'] == 1 || $my_row['states'] == 3){
+					include("create/_team.html");
+				}else{
+					echo "<script>alert('잘못된 접근입니다.');";
+					echo "window.location.replace('index.html');</script>";
+				}
+			}else{
+				echo "<script>alert('로그인이 필요한 기능입니다.');";
+				echo "window.location.replace('user.html?user=login');</script>";
+			}
+		}else if($create == "league"){
+			if($user_no){
+				if($my_row['states'] == 2 || $my_row['states'] == 3){
+					include("create/_league.html");
+				}else{
+					echo "<script>alert('잘못된 접근입니다.');";
+					echo "window.location.replace('index.html');</script>";
+				}
+			}else{
+				echo "<script>alert('로그인이 필요한 기능입니다.');";
+				echo "window.location.replace('user.html?user=login');</script>";
+			}
+		}else if($user == "agree"){
+			if($user_no){
+				echo "<script>alert('잘못된 접근입니다.');";
+				echo "window.location.replace('index.html');</script>";
+			}else{
+				include("user/_agree.html");
+			}
+		}else if($user == "regist"){
+			if($_POST['agree1'] == null || $_POST['agree2'] == null){
+				echo "<script>alert('모두 동의해야 회원가입이 가능합니다');";
+				echo "window.location.replace('user.html?user=agree');</script>";
+			}else{
+				include("user/_regist.html");
+			}
+		}else if($user == "edit"){
+			if(!$user_no){
+				echo "<script>alert('로그인이 필요한 기능입니다');";
+				echo "window.location.replace('user.html?user=login');</script>";
+			}else{
+				include("user/_edit.html");
+			}
+		}?>
+		
+	<? include("inc/_footer.html");?>
+    
+    <? include("inc/_script.html");?>
+	<script>
+		function check_id(){
+			var regex = /^[A-Za-z0-9]{6,12}$/;
+			if(regex.test(document.user_form.id.value) == false) {
+				alert("ID 형식이 올바르지 않습니다.");
+				document.user_form.id.value = "";
+				return flase;
+			}else{
+				window.open("check_id.php?id=" +
+				document.user_form.id.value,
+				"IDcheck","left=200, top=200, width=500, height=300, scrollbars=no,resizable=yes");
+				//document.getElementById("id").disabled = true;
+			}
+		}
+		function edit_password()
+			{ window.open("edit_password.php",
+						"PWedit","left=200, top=200, width=500, height=450, scrollbars=no,resizable=yes");
+						//document.getElementById("id").disabled = true;
+			}
+	</script>
+  </body>
+</html>

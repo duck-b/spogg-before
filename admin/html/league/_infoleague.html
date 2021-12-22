@@ -1,0 +1,154 @@
+<!DOCTYPE HTML>
+<html>
+<?
+	include "dbconn.php";
+?>
+	<body>
+		<div class="row" id="read_table">
+			<table class="table table-bordered" style="vertical-align: middle;">
+				<thead>
+					<tr>
+						<th colspan="1" style="width:20%">리그 명</th>
+						<td colspan="3" style="width:80%"><? echo $league_row['name'];?></td>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<th colspan="1" style="width:20%">개설인</th>
+						<td colspan="1" style="width:30%"><a><? echo $pro_row['name'];?></td>
+						<th colspan="1" style="width:10%">개설일</th>
+						<td colspan="1" style="width:30%;"><? echo $league_row['found'];?></td>
+					</tr>
+					<tr>
+						<th colspan="1" style="width:20%">리그수준</th>
+						<td colspan="1" style="width:30%"><? echo $class;?></td>
+						<th colspan="1" style="width:20%">경기종류</th>
+						<td colspan="1" style="width:30%"><? echo $kinds;?></td>
+					</tr>
+					<tr>
+						<th colspan="1" style="width:20%">연고지</th>
+						<td colspan="1" style="width:30%;"><? echo $league_row['adrs'];?></td>
+						<th colspan="1" style="width:20%">참가 팀</th>
+						<td colspan="1" style="width:30%"><? echo $team_count_row['count'];?>개</td>
+					</tr>
+					<tr>
+						<th colspan="1" style="width:20%">리그 소개</th>
+						<td colspan="3" style="width:80%">
+							<p id="leagueread"><? echo $league_row['contents'];?></p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<? if($user_no == $pro_row['no']){?>
+			<div class="col-md-10"></div>
+			<div class="col-md-2">
+				<a class="btn btn-primary" href="javascript:;" onclick="edit_form_call()" role="button">수정</a>
+			</div>
+			<? } ?>
+		</div>
+		<? if($user_no == $pro_row['no']){?>
+		<div id="edit_league_info" style="display:none">
+			<form name="league_team_info" id="league_team_info" action="LeagueUpdateProc.php?no=<? echo $no?>" method="post">
+				<div class="row">
+					<div class="col-md-2 form-group">
+						<label for="boss">개설인</label>
+					</div>
+					<div class="col-md-10 form-group">
+						<input type="text" id="boss" class="form-control " value="<? echo $pro_row['name'];?>" disabled>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-2 form-group">
+						<label for="name">리그명</label>
+					</div>
+					<div class="col-md-10 form-group">
+						<input type="text" id="name" class="form-control " value="<? echo $league_row['name']?>" disabled>
+					</div>
+				</div>
+				<input type="hidden" value="<? echo $league_row['name']?>" name="name">
+				<div class="row">
+					<div class="col-md-2 form-group">
+						<label for="adrs">연고지</label>
+					</div>
+					<div class="col-md-10 form-group">
+						<input type="text" name="adrs" id="adrs" class="form-control " placeholder="주 활동지역을 입력해주세요. ex) 부산광역시 금정구" value="<? echo $league_row['adrs']?>" required>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-2 form-group">
+						<label for="found">개설일</label>
+					</div>
+					<div class="col-md-10 form-group">
+						<input type="text" id="found" class="form-control " value="<? echo $league_row['found']?>" disabled>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-2 form-group">
+						<label for="league_class">리그 수준</label>
+					</div>
+					<div class="row col-md-10" style="padding-left:30px">
+						<div class="col-md-4 custom-control custom-radio">
+							<input type="radio" id="league_class_1" name="league_class" value="1" class="custom-control-input" <?=$class_1c?>>
+							<label class="custom-control-label" for="league_class_1">사회인 1부</label>
+						</div>
+						<div class="col-md-4 custom-control custom-radio">
+							<input type="radio" id="league_class_2" name="league_class" value="2" class="custom-control-input" <?=$class_2c?>>
+							<label class="custom-control-label" for="league_class_2">사회인 2부</label>
+						</div>
+					</div>
+					<div class="col-md-2"></div>
+					<div class="row col-md-10" style="padding-left:30px">
+						<div class="col-md-4 custom-control custom-radio">
+							<input type="radio" id="league_class_3" name="league_class" value="3" class="custom-control-input" <?=$class_3c?>>
+							<label class="custom-control-label" for="league_class_3">사회인 3부</label>
+						</div>
+						<div class="col-md-4 custom-control custom-radio">
+							<input type="radio" id="league_class_4" name="league_class" value="4" class="custom-control-input" <?=$class_4c?>>
+							<label class="custom-control-label" for="league_class_4">사회인 4부</label>
+						</div>
+					</div>
+				</div><br>
+				<div class="row">
+					<div class="col-md-2 form-group">
+						<label for="kind">리그 종류</label>
+					</div>
+					<div class="row col-md-10" style="padding-left:30px">
+						<div class="col-md-4 custom-control custom-radio">
+							<input type="radio" id="kind_1" name="kind" value="1" class="custom-control-input" <?=$kind_1c?>>
+							<label class="custom-control-label" for="kind_1">리그</label>
+						</div>
+						<div class="col-md-4 custom-control custom-radio">
+							<input type="radio" id="kind_2" name="kind" value="2" class="custom-control-input" <?=$kind_2c?>>
+							<label class="custom-control-label" for="kind_2">토너먼트</label>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-2 form-group">
+						<label for="leagueedit">리그 소개</label>
+					</div>
+					<div class="col-md-10 form-group">
+						<textarea class="form-control" style="resize: none;" name="leagueedit" rows="8" id="leagueedit" aria-label="With textarea"><? echo $league_row['contents'];?></textarea>
+					</div>
+				</div>
+				<div class="row">
+					<div class="col-md-2 form-group">
+						<label for="img">리그 로고</label>
+					</div>
+					<div class="col-md-10 form-group">
+						<input type="file" id="img" name="img" multiple accept='image/*'>
+					</div>
+				</div>
+				<input type="hidden" name="com" value="info">
+				<hr>							
+				<div class="row">
+					<div class="col-md-10"></div>
+					<div class="col-md-2 form-group">
+						<input type="submit" value="수정" class="btn btn-primary" onclick="league_edit()">
+					</div>
+				</div>
+			</form>
+		</div>
+		<? } ?>
+	</body>
+</html>

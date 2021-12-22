@@ -1,0 +1,259 @@
+<!DOCTYPE HTML>
+<html>
+<?
+	include "dbconn.php";
+	$read_result = mysqli_query($conn,"SELECT * FROM board_fa WHERE no = '$no'");
+	$read_row = mysqli_fetch_array($read_result);
+	if($read_row['deleted_at']){
+		echo "<script>alert('삭제된 게시글 입니다');";
+		echo "window.location.replace('board.html?board=fa');</script>";
+	}else{
+		mysqli_query($conn,"UPDATE board_fa_view SET views = views + 1 WHERE board = '$no'");
+	}
+	$board_activiy_result = mysqli_query($conn, "SELECT * FROM user_activity where user = '$user_no' AND board = '$no' AND board_table = 'board_fa'");
+	$board_activiy_row = mysqli_fetch_array($board_activiy_result);
+	if($board_activiy_row){
+		$activity_no = $board_activiy_row['no'];
+		mysqli_query($conn,"UPDATE user_activity SET count = '0' WHERE no = '$activity_no'");
+	}
+	$writer_no = $read_row['user'];
+	$board_no = $read_row['no'];
+	$writer_result = mysqli_query($conn,"SELECT * FROM user WHERE no = '$writer_no'");
+	$writer_row = mysqli_fetch_array($writer_result);
+	$view_result = mysqli_query($conn,"SELECT * FROM board_fa_view WHERE board='$board_no'");
+	$view_row = mysqli_fetch_array($view_result);
+	$comments = mysqli_query($conn,"SELECT COUNT(*) as count FROM board_fa_comment WHERE board='$board_no'");
+	$comments_count = mysqli_fetch_array($comments);
+	if($comments_count['count'] >= 1){
+		$comments = mysqli_query($conn,"SELECT * FROM board_fa_comment WHERE board='$board_no'");
+	}else{
+		$comments = null;
+	}
+	$position = explode("|",$read_row['position']);
+	for ($i=0; $i < count($position); $i++) {
+		switch ($position[$i]) {
+			case '1':
+			$pos1 = "투수 ";break;
+			case '2':
+			$pos2 = "포수 ";break;
+			case '3':
+			$pos3 = "1루수 ";break;
+			case '4':
+			$pos4 = "2루수 ";break;
+			case '5':
+			$pos5 = "3루수 ";break;
+			case '6':
+			$pos6 = "유격수 ";break;
+			case '7':
+			$pos7 = "좌익수 ";break;
+			case '8':
+			$pos8 = "중견수 ";break;
+			case '9':
+			$pos9 = "우익수 ";break;
+		}
+	}
+	if($read_row['adrs'] == 1){
+		$adrs = '서울';
+	}elseif($read_row['adrs'] == 2){
+		$adrs = '부산';
+	}elseif($read_row['adrs'] == 3){
+		$adrs = '대구';
+	}elseif($read_row['adrs'] == 4){
+		$adrs = '인천';
+	}elseif($read_row['adrs'] == 5){
+		$adrs = '광주';
+	}elseif($read_row['adrs'] == 6){
+		$adrs = '대전';
+	}elseif($read_row['adrs'] == 7){
+		$adrs = '울산';
+	}
+
+?>
+	<body onload="read_contents()">
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-lg-2"></div>
+					<div class="col-lg-8 col-md-12 mb-5 element-animate">
+						<div class="row">
+							<div class="col-md-12">
+								<h3 class="mb-5" style="vertical-align: middle;">FA 시장</h3>
+							</div>
+							<table class="table table-bordered" style="vertical-align: middle;">
+								<thead>
+									<tr>
+										<th colspan="1" style="width:10%">제목</th>
+										<td colspan="5" style="width:90%"><? echo $read_row['title'];?></td>
+									</tr>
+								</thead>
+								<tbody>
+									<tr>
+										<th colspan="1" style="width:10%">작성자</th>
+										<td colspan="1" style="width:20%"><a href="user.html?user=info&no=<? echo $writer_no;?>"><? echo $writer_row['name'];?></a></td>
+										<th colspan="1" style="width:10%">시간</th>
+										<? if ($read_row['created_at'] == $read_row['updated_at']){?>
+										<td colspan="1"  style="vertical-align: middle;width:40%;"><? echo $read_row['created_at'];?>에 작성됨</td>
+										<? } else {?>
+										<td colspan="1"  style="vertical-align: middle;width:40%"><? echo $read_row['updated_at'];?>에 수정됨</td>
+										<? } ?>
+										<th colspan="1" style="width:10%">조회수</th>
+										<td colspan="1" style="width:10%"><? echo $view_row['views']?></td>
+									</tr>
+									<tr>
+										<th colspan="2" style="width:30%">
+										<? if ($read_row['img']){?>
+										<a href="javascript:;"><img src="<? echo $read_row['img'];?>" style="width:100%" class="img-thumbnail" alt="<? echo $read_row['name']?>"></a>
+										<? } else { ?>
+										<a href="javascript:;"><img class="img-thumbnail" style="width:100%" src="images/none_player_img.png" alt="<? echo $read_row['name']?>"></a>
+										<? } ?>
+										</th>
+										<td colspan="4" style="width:70%">
+											<P>포지션 : <? echo $pos1 ?><? echo $pos2 ?><? echo $pos3 ?><? echo $pos4 ?><? echo $pos5 ?><? echo $pos6 ?><? echo $pos7 ?><? echo $pos8 ?><? echo $pos9 ?><br>활동지역 : <? echo $adrs;?><br>나이 : 만 <? echo $read_row['age'];?>세</p>
+											<P><? echo $read_row['contents'];?></p>
+										</td>
+									</tr>
+									<tr>
+										<th colspan="1" style="width:10%">댓글</th>
+										<td colspan="5" style="width:90%"><? echo $comments_count['count'];?> 개</td>
+									</tr>
+									<? if ($comments != null){
+										while($comments_row = mysqli_fetch_array($comments)){
+											$commenter_no = $comments_row['user'];
+											$commenter_result = mysqli_query($conn,"SELECT * FROM user WHERE no = '$commenter_no'");
+											$commenter_row = mysqli_fetch_array($commenter_result);		
+											$comment_no = $comments_row['no'];
+											$recomment_result = mysqli_query($conn,"SELECT * FROM board_fa_recomment WHERE comment = '$comment_no'");
+											$comment_activiy_result = mysqli_query($conn, "SELECT * FROM user_activity where user = '$user_no' AND board = '$comment_no' AND board_table = 'board_fa_comment'");
+											$comment_activiy_row = mysqli_fetch_array($comment_activiy_result);
+											if($comment_activiy_row){
+												$activity_no = $comment_activiy_row['no'];
+												mysqli_query($conn,"UPDATE user_activity SET count = '0' WHERE no = '$activity_no'");
+											}	
+									?>
+									<tr>
+										<td colspan="6" style="width:100%">
+											<div class = "row">
+												<div class="col-md-2">
+													<a href="user.html?user=info&no=<? echo $commenter_no;?>"><? echo $commenter_row['name'];?></a>
+												</div>
+												<div class="col-md-5">
+													<? if(!$comments_row['deleted_at']){?>
+														<? if ($comments_row['created_at'] == $comments_row['updated_at']){?>
+													<p style="font-size:80%"><? echo $comments_row['created_at'];?>에 작성됨</p>
+														<? } else {?>
+													<p style="font-size:80%"><? echo $comments_row['updated_at'];?>에 수정됨</p>
+														<? } ?>
+													<? }else{?>
+													<p style="font-size:80%"><? echo $comments_row['deleted_at'];?>에 삭제됨</p>
+													<? } ?>
+												</div>
+												<div class="col-md-2"></div>
+												<div class="col-md-3">
+													<a href="javascript:;" style="text-align:right" onclick="recomment_bt('<? echo $comments_row['no'];?>','fa')">답글</a>
+													<? if($user_no == $commenter_no && $comments_row['deleted_at'] == null){?>
+													<a href="javascript:;" style="text-align:right" id="comment_edit_bt_<? echo $comments_row['no'];?>" onclick="comment_edit_bt('<? echo $comments_row['no'];?>','fa')">수정</a>
+													<a href="javascript:;" style="text-align:right;color:red" onclick="delete_event('<? echo $comments_row['no'];?>','commentfa')">삭제</a>
+													<? } ?>
+												</div>
+												<? if(!$comments_row['deleted_at']){?>
+												<div class="col-md-12" id="comment_<? echo $comments_row['no']?>"><? echo $comments_row['contents'];?></div>
+												<? } else { ?>
+												<div class="col-md-12">삭제된 댓글 입니다</div>
+												<? } ?>
+												<div class ="col-md-2" id="blanks_<? echo $comments_row['no']?>" style="display: none"></div>
+												<div class ="col-md-10" id="recomment_<? echo $comments_row['no']?>" style="display: none">
+													<form action="BoardInsertProc.php" method="post">
+														<div class="input-group">
+															<input type="text" name="contents" class="form-control" placeholder="답글을 작성해 주세요" aria-describedby="basic-addon2">
+															<input type="hidden" name="kind" value="recommentfa">
+															<input type="hidden" name="comment" value="<? echo $comment_no;?>">
+															<input type="hidden" name="board" value="<? echo $board_no;?>">
+															<div class="input-group-append">
+																<button class="btn btn-outline-primary" type="submit">답글 작성</button>
+															</div>
+														</div>
+													</form>
+													<br>
+												</div>
+												<? while($recomments_row = mysqli_fetch_array($recomment_result)){ 
+												$recommenter_no = $recomments_row['user'];
+												$recommenter_result = mysqli_query($conn,"SELECT * FROM user WHERE no = '$recommenter_no'");
+												$recommenter_row = mysqli_fetch_array($recommenter_result);	
+												?>
+												<div class ="col-md-2" style="margin-top:3%;padding-left:5%"><i class="fas fa-level-up-alt fa-rotate-90"></i></div>
+												<div class ="row col-md-10" style="border-top:1px solid #dee2e6;">
+													<div class="col-md-2">
+														<a href="user.html?user=info&no=<? echo $recommenter_no;?>"><? echo $recommenter_row['name'];?></a>
+													</div>
+													<div class="col-md-5">
+														<? if(!$recomments_row['deleted_at']){?>
+															<? if ($recomments_row['created_at'] == $recomments_row['updated_at']){?>
+														<p style="font-size:80%"><? echo $recomments_row['created_at'];?>에 작성됨</p>
+															<? } else {?>
+														<p style="font-size:80%"><? echo $recomments_row['updated_at'];?>에 수정됨</p>
+															<? } ?>
+														<? }else{ ?>
+														<p style="font-size:80%"><? echo $recomments_row['deleted_at'];?>에 삭제됨</p>
+														<? } ?>
+													</div>
+													<div class="col-md-2"></div>
+													<div class="col-md-3">
+														<? if($user_no == $recommenter_no && $recomments_row['deleted_at'] == null){?>
+														<a href="javascript:;" id="recomment_edit_bt_<? echo $recomments_row['no'];?>" onclick="recomment_edit_bt('<? echo $recomments_row['no'];?>','fa')">수정</a>
+														<a href="javascript:;" style="color:red" onclick="delete_event('<? echo $recomments_row['no'];?>','recommentfa')">삭제</a>
+														<? } ?>
+													</div>
+													<? if(!$recomments_row['deleted_at']){?>
+													<div class="col-md-12" id="recomment_contents_<? echo $recomments_row['no']?>"><? echo $recomments_row['contents'];?></div>
+													<? } else {?>
+													<div class="col-md-12">삭제된 답글 입니다</div>
+													<? } ?>
+												</div>
+												<? } ?>
+											</div>
+										</td>
+									</tr>
+									<? }
+									} ?>
+									<? 	mysqli_close($conn); ?>
+									<tr>
+										<th colspan="6" style="width:100%">
+											<form action="BoardInsertProc.php" method="post">
+												<div class="input-group mb-3">
+													<input type="text" name="contents" class="form-control" placeholder="댓글을 작성해 주세요" aria-describedby="basic-addon2">
+													<input type="hidden" name="kind" value="commentfa">
+													<input type="hidden" name="board" value="<? echo $board_no;?>">
+													<div class="input-group-append">
+														<button class="btn btn-outline-primary" type="submit">댓글 작성</button>
+													</div>
+												</div>
+											</form>
+										</th>
+									</tr>
+								</tbody>
+							</table>
+							<div class="col-md-4"></div>
+							<div class="col-md-2">
+								<? if($user_no == $writer_no){?>
+								<a class="btn btn-danger" href="javascript:;" role="button" onclick="delete_event('<? echo $board_no;?>','fa')">삭&nbsp;&nbsp;&nbsp;제</a>
+								<? } ?>
+							</div>
+							<div class="col-md-2">
+								<? if($user_no == $writer_no){?>
+								<a class="btn btn-primary" href="board.html?board=edit&kind=fa&no=<? echo $board_no;?>" role="button">수&nbsp;&nbsp;&nbsp;정</a>
+								<? } ?>
+							</div>
+							<div class="col-md-2">
+								<a class="btn btn-primary" href="board.html?board=fa" role="button">목&nbsp;&nbsp;&nbsp;록</a>
+							</div>
+							<div class="col-md-2">
+								<a class="btn btn-primary" href="board.html?board=write&kind=fa" role="button">글쓰기</a>
+							</div>
+						</div>
+					</div>
+					<div class="col-lg-2"></div>
+				</div>
+			</div>
+		</section>
+	</body>
+</html>

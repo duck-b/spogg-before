@@ -1,0 +1,53 @@
+<!DOCTYPE HTML>
+<?
+	include "dbconn.php";
+	if($_GET['search']){
+		$search = $_GET['search'];
+		$query = "SELECT team.*, user.name as mastername FROM league_team JOIN team JOIN user WHERE league_team.league='$no' AND league_team.team = team.no AND league_team.states = '1' AND team.manager = user.no AND (team.name LIKE '%$search%' OR user.name LIKE '%$search%') ORDER BY league_team.created_at ASC";
+	}else{
+		$query = "SELECT team.*, user.name as mastername FROM league_team JOIN team JOIN user WHERE league_team.league='$no' AND league_team.team = team.no AND league_team.states = '1' AND team.manager = user.no ORDER BY league_team.created_at ASC";
+	}
+	$team_result = mysqli_query($conn, $query);
+?>
+<html>
+	<body>
+		<div class="row top-destination">
+			<div class="col-md-12" style="margin-bottom:10px">
+				<form action="league.html?league=page&no=3&page=teamlist" class="form-inline element-animate" id="search-form" method="get">
+					<input type="hidden" name="league" value="page">
+					<input type="hidden" name="no" value="<? echo $no;?>">
+					<input type="hidden" name="page" value="teamlist">
+					<input type="text" style="border:1px solid #dee2e6; border-right:0px;" name="search" class="form-control form-control-block search-input col-md-9" id="autocomplete" placeholder="팀 이름 또는 감독 이름으로 검색" required>
+					<button type="submit" class="btn btn-primary col-md-3">검색</button>		
+				</form>
+			</div>
+			<br><br><br>
+			<? while($team_row = mysqli_fetch_array($team_result)){
+			$team_no = $team_row['no'];
+			$team_league_record_query = "SELECT count(CASE WHEN play_result.playresult = 1 THEN 1 END) AS win, 
+			 count(CASE WHEN play_result.playresult = 2 THEN 1 END) AS lose,
+			 count(CASE WHEN play_result.playresult = 3 THEN 1 END) AS draw,
+			 ROUND((count(CASE WHEN play_result.playresult = 1 THEN 1 END))/(count(CASE WHEN play_result.playresult = 1 THEN 1 END)+count(CASE WHEN play_result.playresult = 2 THEN 1 END)), 3) as mean
+			 FROM play JOIN play_result WHERE play.league = '$no' AND play_result.play = play.no AND play_result.team = '$team_no'";
+			$team_league_record_result = mysqli_query($conn, $team_league_record_query);
+			$team_league_record_row = mysqli_fetch_array($team_league_record_result);			?>		
+			<div class="col-md-4">
+				<a href="javascript:;" onclick="new_page('<? echo $team_no;?>')" class="place">
+				<!-- <a href="$player_row no" class="place"> -->
+					<?if($team_row['img']){?>
+					<img class="img-thumbnail" style="width:100%;height:200px" src="<? echo $team_row['img'];?>" alt="<? echo $team_row['name']?>">
+					<? } else {?>
+					<img class="img-thumbnail" style="width:100%;height:200px" src="images/none_player_img.png" alt="<? echo $team_row['name']?>">
+					<? } ?>
+					<h5><? echo $team_row['name']?></h5>
+					<?if($league_row ['kinds'] == 2){?>
+					<p>감독 : <? echo $team_row['mastername'];?> | <? echo $team_league_record_row['win'];?>승 <? echo $team_league_record_row['lose'];?>패</p>
+					<? }else{ ?>
+					<p>감독 : <? echo $team_row['mastername'];?> | <? echo $team_league_record_row['win'];?>승 <? echo $team_league_record_row['lose'];?>패 <? echo $team_league_record_row['draw'];?>무</p>
+					<? } ?>
+				</a>
+			</div>
+			<? } ?>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE HTML>
+<html>
+<? 	
+	session_start();
+	$nav = "search";
+	$no = $_GET['no'];
+	$team = $_GET['team'];
+	include "dbconn.php";
+	$player_no = $_SESSION['player_no'];
+	$member_check_result = mysqli_query($conn,"SELECT * FROM team_members where player='$player_no' AND team='$no'");
+	$member_check_row = mysqli_fetch_array($member_check_result);
+	mysqli_close($conn);
+	include("inc/_head.html");
+?>
+	<body>
+	<? include("inc/_header.html");?>
+	
+	<?	if($team == 'info'){
+			include("team/_info.html");
+		}else if($team == 'page'){
+			include("team/_page.html");
+		}else if($team == 'regist'){
+			if($user_no){
+				include("team/_regist.html");
+			}else{
+				echo "<script>alert('로그인이 필요한 기능입니다');";
+				echo "window.location.replace('user.html?user=login');</script>";
+			}
+		}
+	?>
+	
+	<? include("inc/_footer.html");?>
+    
+    <? include("inc/_script.html");?>
+	<script>
+		function new_page(no){
+			window.open("user.html?user=info&no=" + no,
+			"user-info","left=200, top=200, width=1200, height=700, scrollbars=no,resizable=yes");
+		}
+		function new_info_page(no){
+			window.open("read_member_info.php?no=" + no,
+			"user-info","left=200, top=200, width=500, height=625, scrollbars=no,resizable=yes");
+		}
+		function new_change_img_page(no, what){
+			window.open("read_teamimg_change.php?no=" + no + "&what=" + what,
+			"user-info","left=200, top=200, width=900, height=400, scrollbars=no,resizable=yes");
+		}
+		function entry_page(no, hoaw){
+			window.open("entry_edit.php?no=" + no + "&hoaw=" + hoaw,
+			"user-info","left=200, top=200, width=900, height=800, scrollbars=no,resizable=yes");
+		}
+		function team_read_contents(){
+			var str_trc = document.getElementById("teamread").textContent;
+			str_trc = str_trc.replaceAll("<br>", "\r\n");
+			document.getElementById("teamread").textContent = str_trc;
+		}
+		function free_read_contents(){
+			var str_frc = document.getElementById("freeread").textContent;
+			str_frc = str_frc.replaceAll("<br>", "\r\n");
+			document.getElementById("freeread").textContent = str_frc;
+		}
+		function member_edit_contents(){
+			var str_mec = document.getElementById("memberedit").textContent;
+			str_mec = str_mec.replace(/<br>/g, "\r\n");
+			document.getElementById("memberedit").value = str_mec;
+		}
+		function free_edit_contents(){
+			var str_fec = document.getElementById("freeedit").textContent;
+			str_fec = str_fec.replace(/<br>/g, "\r\n");
+			document.getElementById("freeedit").value = str_fec;
+		}	
+		function members_event(no, comment, com){
+			if (confirm("정말 "+ comment +"하시겠습니까?") == true){
+				location.href="TeamMembersUpdateProc.php?no=" + no + "&com=" + com;
+			}else{ 
+				return;
+			}
+		}
+		function chang_option(text, option){
+			document.getElementById("search_option").textContent = text;
+			document.getElementById("option").value = option;
+		}
+		function chang_notice(){
+			var board = document.getElementById("notice").value;
+			if(board == '1'){
+				document.getElementById('tag_input').style.display = "none";
+			}else{
+				document.getElementById('tag_input').style.display = "block";
+			}
+		}
+		var doubleSubmitFlag = false;
+		function doubleSubmitCheck(){
+			if(doubleSubmitFlag){
+				return doubleSubmitFlag;
+			}else{
+				doubleSubmitFlag = true;
+				return false;
+			}
+		}
+		function member_insert(){
+			var str_mi = document.getElementById("memberinsert").value;
+			str_mi = str_mi.replace(/(?:\r\n|\r|\n)/g, '<br>');
+			document.getElementById("memberinsert").value = str_mi;
+			if(doubleSubmitCheck()) return;
+		}
+		function free_insert(){
+			var str_fi = document.getElementById("freeinsert").value;
+			str_fi = str_fi.replace(/(?:\r\n|\r|\n)/g, '<br>');
+			document.getElementById("freeinsert").value = str_fi;
+			if(doubleSubmitCheck()) return;
+		}
+		function member_edit(){
+			var str_me = document.getElementById("memberedit").value;
+			str_me = str_me.replace(/(?:\r\n|\r|\n)/g, '<br>');
+			document.getElementById("memberedit").value = str_me;
+			if(doubleSubmitCheck()) return;
+		}
+		function team_edit(){
+			var str_te = document.getElementById("teamedit").value;
+			str_te = str_te.replace(/(?:\r\n|\r|\n)/g, '<br>');
+			document.getElementById("teamedit").value = str_te;
+			if(doubleSubmitCheck()) return;
+		}
+		function free_edit(){
+			var str_fe = document.getElementById("freeedit").value;
+			str_fe = str_fe.replace(/(?:\r\n|\r|\n)/g, '<br>');
+			document.getElementById("freeedit").value = str_fe;
+			if(doubleSubmitCheck()) return;
+		}
+		
+		function edit_form_call(){
+			document.getElementById('read_table').style.display = "none";
+			document.getElementById('edit_team_info').style.display = "inline-block";
+			var str_tec = document.getElementById("teamedit").textContent;
+			str_tec = str_tec.replace(/<br>/g, "\r\n");
+			document.getElementById("teamedit").value = str_tec;
+		}
+		function recomment_bt(no){
+			document.getElementById('blanks_' + no).style.display = "inline-block";
+			document.getElementById('recomment_' + no).style.display = "inline-block";
+		}
+		function comment_edit_bt(no,board){
+			document.getElementById('comment_edit_bt_' + no).style.display = "none";
+			comment_value = document.getElementById("comment_" + no).textContent;
+			document.getElementById('comment_' + no).innerHTML = "<form action='BoardUpdateProc.php' method='post'>" +
+				"<div class='input-group mb-3'>" +
+						"<input type='text' name='contents' value='" + comment_value + "' class='form-control' placeholder='수정할 내용을 입력해 주세요' aria-describedby='basic-addon2'>" + 
+						"<input type='hidden' name='kind' value='comment" + board + "'>" +
+						"<input type='hidden' name='no' value='" + no + "'>" +
+						"<div class='input-group-append'>" + 
+							"<button class='btn btn-outline-primary' type='submit'>댓글 수정</button>" +
+						"</div>" +
+				"</div>" +
+		"</form>";
+		}
+		function recomment_edit_bt(no,board){
+			document.getElementById('recomment_edit_bt_' + no).style.display = "none";
+			recomment_value = document.getElementById("recomment_contents_" + no).textContent;
+			document.getElementById('recomment_contents_' + no).innerHTML = "<form action='BoardUpdateProc.php' method='post'>" +
+				"<div class='input-group mb-3'>" +
+						"<input type='text' name='contents' value='" + recomment_value + "' class='form-control' placeholder='수정할 내용을 입력해 주세요' aria-describedby='basic-addon2'>" + 
+						"<input type='hidden' name='kind' value='recomment" + board + "'>" +
+						"<input type='hidden' name='no' value='" + no + "'>" +
+						"<div class='input-group-append'>" + 
+							"<button class='btn btn-outline-primary' type='submit'>답글 수정</button>" +
+						"</div>" +
+				"</div>" +
+		"</form>";
+		}
+		function imageURL(input) {
+			if (input.files && input.files[0]) {
+				var reader = new FileReader();
+
+				reader.onload = function(e) {
+					$('#replaceMe').attr('src', e.target.result)
+				}
+
+				reader.readAsDataURL(input.files[0]);
+			}
+		}
+		
+		function delete_event(no,kind){
+			if (confirm("정말 삭제하시겠습니까?") == true){
+				location.href="BoardDeleteProc.php?no=" + no + "&kind=" + kind;
+			}else{ 
+				return;
+			}
+		}
+		function close_col(num){
+			document.getElementById("close_col_"+num).style.display = "none";
+		}
+		function record_new_page(no){
+			window.open("team_record.html?no=" + no,
+			"user-info","left=200, top=200, width=1200, height=700, scrollbars=no,resizable=yes");
+		}
+	</script>
+	<!--
+		$(document).ready(function() {
+			SelectTab();
+			$('#v-pills-tab a').click(function (e) {
+				e.preventDefault()
+				location.hash = $(this).attr("href");
+				$(this).tab('show');
+			})
+			window.addEventListener("popstate", function(e) {
+				SelectTab();
+			});
+		});
+		function SelectTab() {
+			var activeTab = $("[href=\\" + location.hash + "]");
+			if (activeTab.length) {
+				activeTab.tab('show');
+			} else {
+				$('#v-pills-tab a:first').tab('show');
+			}
+		}
+		-->
+	</body>
+</html>

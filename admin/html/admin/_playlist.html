@@ -1,0 +1,65 @@
+<!DOCTYPE HTML>
+<html>
+<?
+	include "dbconn.php";
+	$today = date("Y-m-d");
+	$query_play_count = "SELECT COUNT(*) AS count FROM play WHERE play_datetime LIKE '%$today%' ORDER BY play_datetime ASC";
+	$play_count_result = mysqli_query($conn, $query_play_count);
+	$play_count_row = mysqli_fetch_array($play_count_result);
+	
+?>
+	<body>
+		<section class="site-section" style="margin-right:5px;margin-left:5px">
+			<div class="container">
+				<div class="row">
+					<div class="col-12">
+						<h3>경기 목록</h3>
+						<h6>(<? echo date("Y-m-d")?> 경기)</h6>
+					</div>
+					<? if($play_count_row['count'] >= 1){
+					$query_play = "SELECT * FROM play WHERE play_datetime LIKE '%$today%' ORDER BY play_datetime ASC";
+					$play_result = mysqli_query($conn, $query_play);
+					while($play_row = mysqli_fetch_array($play_result)){
+						$play_league_no = $play_row['league'];
+						$play_league_result = mysqli_query($conn,"SELECT * FROM league where no='$play_league_no'");
+						$play_league_row = mysqli_fetch_array($play_league_result);
+						$play_home_no = $play_row['home_team'];
+						$play_home_result = mysqli_query($conn,"SELECT * FROM team where no='$play_home_no'");
+						$play_home_row = mysqli_fetch_array($play_home_result);
+						$play_away_no = $play_row['away_team'];
+						$play_away_result = mysqli_query($conn,"SELECT * FROM team where no='$play_away_no'");
+						$play_away_row = mysqli_fetch_array($play_away_result);?>
+					<div class="col-12" style="text-align:center; border:1px solid #dee2e6;padding:4px 0px;margin-bottom:5px">
+						<table style="width:100%">
+							<thead>
+								<tr>
+									<th scope="col" colspan="3"><? echo $play_league_row['name'];?> (<? echo $play_row['name'];?>)<br><? echo date( 'H시 i분', strtotime($play_row['play_datetime']));?> 경기</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td style="width:40%">
+										<? echo $play_home_row['name'];?><br>(Home)
+									</td>
+									<td style="width:20%"><p style="font-size:200%">vs</p></td>
+									<td style="width:40%">
+										<? echo $play_away_row['name']?><br>(Away)
+									</td>
+								</tr>
+							</tbody>
+						</table>
+						<a class="btn btn-primary" href="javascript:;" onclick="record_event('<? echo $play_row['no'];?>')">경기 시작</a>
+						<a class="btn btn-primary" href="admin.html?admin=play&no=<? echo $play_row['no'];?>">상세 보기</a>
+					</div>
+						<? } ?>
+					<? } else {?>
+					<div class="col-12">
+						<h4>오늘은 경기가 없습니다</h4>
+					</div>
+					<? } ?>
+				</div>
+			</div>
+		</section>
+		<? mysqli_close($conn); ?>
+	</body>
+</html>

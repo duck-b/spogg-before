@@ -1,0 +1,1431 @@
+<!DOCTYPE HTML>
+<html>
+<?
+	include("inc/_head.html");
+	include "dbconn.php";
+	$no = $_GET['no'];
+	if($_GET['kind'] == null || $_GET['kind'] == 't'){
+		$kind = 2;
+		$t_act = "active";
+	}else if($_GET['kind'] == 'p'){
+		$kind = 3;
+		$p_act = "active";
+	}else if($_GET['kind'] == 'b'){
+		$kind = 4;
+		$b_act = "active";
+	}else{
+		$kind = 1;
+	}
+	// 선수 정보
+	$search_user_result = mysqli_query($conn, "SELECT user.name as user_name, player.no as player_no, player.class as class, player.img as player_img, player.position as position, player.none_player as none_player, player.leri_hit as leri_hit, player.leri_pic as leri_pic FROM user JOIN player WHERE user.no = '$no' AND user.no = player.user");
+	$search_user_row = mysqli_fetch_array($search_user_result);
+	if($search_user_row['class'] == 1){
+		$class = '사회인 1부';
+	}elseif($search_user_row['class'] == 2){
+		$class = '사회인 2부';
+	}elseif($search_user_row['class'] == 3){
+		$class = '사회인 3부';
+	}elseif($search_user_row['class'] == 4){
+		$class = '사회인 4부';
+	}elseif($search_user_row['class'] == 5){
+		$class = '프로';
+	}
+	if($search_user_row['leri_pic'] == 1){
+		$leri_pic = '좌투';
+	}elseif($search_user_row['leri_pic'] == 2){
+		$leri_pic = '우투';
+	}
+	if($search_user_row['leri_hit'] == 1){
+		$leri_hit = '좌타';
+	}elseif($search_user_row['leri_hit'] == 2){
+		$leri_hit = '우타';
+	}
+	if($search_user_row['none_player'] == 1){
+		$none_player = '비선출';
+	}elseif($search_user_row['none_player'] == 2){
+		$none_player = '선출';
+	}
+	if($search_user_row['position'] == 1){
+		$position = '투수';
+	}elseif($search_user_row['position'] == 2){
+		$position = '내야수';
+	}elseif($search_user_row['position'] == 3){
+		$position = '외야수';
+	}
+	// 소속 팀
+	$player_no = $search_user_row['player_no'];
+	$search_team_result = mysqli_query($conn, "SELECT team.name as team_name, team_members.no as team_members_no FROM player JOIN team JOIN team_members WHERE player.no = '$player_no' AND player.no = team_members.player AND team.no = team_members.team AND team_members.states = 1 ORDER BY team_members.created_at");
+	$league_list = "<a class='nav-link ".$t_act."' style='text-align:center; border:1px solid #dee2e6;' href='user_record.html?no=$no&kind=t'>토너먼트</a>
+					<a class='nav-link ".$p_act."' style='text-align:center; border:1px solid #dee2e6;' href='user_record.html?no=$no&kind=p'>연습경기</a>
+					<a class='nav-link disabled' style='text-align:center; border:1px solid #dee2e6;' href='javascript:;'>리그경기</a>
+					<a class='nav-link ".$b_act."' style='text-align:center; border:1px solid #dee2e6;' href='user_record.html?no=$no&kind=b'>이전기록</a>";
+					//<a class='nav-link' style='text-align:center; border:1px solid #dee2e6;' href='javascript:;' onclick='print_button()'><i class='fas fa-print'></i> 출력하기</a>
+					//<a class='nav-link disabled' style='text-align:center; border:1px solid #dee2e6;' href='javascript:;'><i class='fab fa-facebook-square'></i> 공유하기</a>
+	$hit_table = "";
+	$total_hit_table = "<table class='table table-striped table-bordered' style='text-align:center;font-size:80%'>
+							<thead>
+								<tr>
+									<th colspan='10' style='text-align:center;vertical-align:middle;font-size:120%'>총 누적 기록</th>
+								</tr>
+							</thead>
+						<tbody>";
+	$pic_table = "";
+	$total_pic_table = "<table class='table table-striped table-bordered' style='text-align:center;font-size:80%'>
+							<thead>
+								<tr>
+									<th colspan='10' style='text-align:center;vertical-align:middle;font-size:120%'>총 누적 기록</th>
+								</tr>
+							</thead>
+						<tbody>";
+	$to_game = 0;
+	$to_at_play = 0;
+	$to_at_bat = 0;
+	$to_hit1 = 0;
+	$to_hit2 = 0;
+	$to_hit3 = 0;
+	$to_hr = 0;
+	$to_rbi = 0;
+	$to_rs = 0;
+	$to_sb = 0;
+	$to_b4 = 0;
+	$to_hbp = 0;
+	$to_so = 0;
+	$to_sh = 0;
+	$to_sf = 0;
+	$to_gout = 0;
+	$to_fout = 0;
+	$to_gdp = 0;
+	$to_gtp = 0;
+	$to_cs = 0;
+	$to_oob = 0;
+	$to_pko = 0;
+	$to_p_game = 0;
+	$to_p_at_play = 0;
+	$to_p_at_bat = 0;
+	$to_p_sh = 0;
+	$to_p_sf = 0;
+	$to_p_gout = 0;
+	$to_p_fout = 0;
+	$to_p_gdp = 0;
+	$to_p_gtp = 0;
+	$to_inning = 0;
+	$to_pitcher_count = 0;
+	$to_p_so = 0;
+	$to_p_hit1 = 0;
+	$to_p_hit2 = 0;
+	$to_p_hit3 = 0;
+	$to_p_hr = 0;
+	$to_p_b4 = 0;
+	$to_p_hbp = 0;
+	$to_p_er = 0;
+	$to_p_uer = 0;
+	$to_p_win = 0;
+	$to_p_lose = 0;
+	$to_p_save = 0;
+	$to_p_hold = 0 ;
+	$i2 = 0;
+	if($kind != 4){
+		while($search_team_row = mysqli_fetch_array($search_team_result)){
+			$team_members_no = $search_team_row['team_members_no'];
+			// 타자 기록 검색
+			if($kind == 2 || $kind == 3){
+				$search_play_hit_count_result = mysqli_query($conn, "SELECT COUNT(*) as count FROM play_result_hit JOIN play_entry JOIN play WHERE play_entry.team_member = '$team_members_no' AND play_entry.play = play.no AND play_result_hit.entry = play_entry.no AND play.kind = '$kind' ORDER BY play.play_datetime");
+				$search_play_hit_count_row = mysqli_fetch_array($search_play_hit_count_result);
+			}
+			if($search_play_hit_count_row['count'] >= 1 && $kind != 4){
+				$hit_table_t = 1;
+				$i = 0;
+				$at_play = 0;
+				$at_bat = 0;
+				$hit1 = 0;
+				$hit2 = 0;
+				$hit3 = 0;
+				$hr = 0;
+				$rbi = 0;
+				$rs = 0;
+				$sb = 0;
+				$b4 = 0;
+				$hbp = 0;
+				$so = 0;
+				$sh = 0;
+				$sf = 0;
+				$gout = 0;
+				$fout = 0;
+				$gdp = 0;
+				$gtp = 0;
+				$cs = 0;
+				$oob = 0;
+				$pko = 0;
+				
+				if($kind == 2 || $kind == 3){
+					$search_play_result = mysqli_query($conn, "SELECT play_result_hit.*, play.play_datetime as play_datetime, ROUND((play_result_hit.hit1 + play_result_hit.hit2 + play_result_hit.hit3 + play_result_hit.hr)/play_result_hit.at_bat,3) as avg FROM play_result_hit JOIN play_entry JOIN play WHERE play_entry.team_member = '$team_members_no' AND play_entry.play = play.no AND play_result_hit.entry = play_entry.no AND play.kind = '$kind' ORDER BY play.play_datetime");
+				}
+				$hit_table = $hit_table."<table class='table table-striped table-bordered' style='font-size:80%;margin-top:10px'>
+											<thead>
+												<tr>
+													<th colspan='20' style='text-align:center;vertical-align:middle;font-size:120%'>".$search_team_row['team_name']."</th>
+												</tr>
+												<tr>
+													<th colspan='2' style='width:20%;padding:0px;text-align:center;vertical-align:middle'>날짜</th>
+													<th colspan='1' style='width:12%;padding:0px;text-align:center;vertical-align:middle' title='타율'>AVG</th>
+													<td colspan='1' style='width:4%;padding:0px;text-align:center;vertical-align:middle' title='타석'>PA</td>
+													<td colspan='1' style='width:4%;padding:0px;text-align:center;vertical-align:middle' title='타수'>AB</td>
+													<td colspan='1' style='width:4%;padding:0px;text-align:center;vertical-align:middle' title='안타'>H</td>
+													<td colspan='1' style='width:4%;padding:0px;text-align:center;vertical-align:middle' title='2루타'>2B</td>
+													<td colspan='1' style='width:4%;padding:0px;text-align:center;vertical-align:middle' title='3루타'>3B</td>
+													<td colspan='1' style='width:4%;padding:0px;text-align:center;vertical-align:middle' title='홈런'>HR</td>
+													<td colspan='1' style='width:4%;padding:0px;text-align:center;vertical-align:middle' title='도루'>SB</td>
+													<td colspan='1' style='width:4%;padding:0px;text-align:center;vertical-align:middle' title='볼넷'>BB</td>
+													<td colspan='1' style='width:4%;padding:0px;text-align:center;vertical-align:middle' title='사사구'>HBP</td>
+													<td colspan='1' style='width:4%;padding:0px;text-align:center;vertical-align:middle' title='타점'>RBI</td>
+													<td colspan='1' style='width:4%;padding:0px;text-align:center;vertical-align:middle' title='득점'>R</td>
+													<td colspan='1' style='width:4%;padding:0px;text-align:center;vertical-align:middle' title='희생번트'>SH</td>
+													<td colspan='1' style='width:4%;padding:0px;text-align:center;vertical-align:middle' title='희생플라이'>SF</td>
+													<td colspan='1' style='width:4%;padding:0px;text-align:center;vertical-align:middle' title='삼진'>SO</td>
+													<td colspan='1' style='width:4%;padding:0px;text-align:center;vertical-align:middle' title='땅볼'>GO</td>
+													<td colspan='1' style='width:4%;padding:0px;text-align:center;vertical-align:middle' title='뜬공'>AO</td>
+													<td colspan='1' style='width:4%;padding:0px;text-align:center;vertical-align:middle' title='병살'>GDP</td>
+												</tr>
+											</thead>
+											<tbody>";
+				while($search_play_row = mysqli_fetch_array($search_play_result)){
+					$i++;
+					$at_play = $at_play + $search_play_row['at_play'];
+					$at_bat = $at_bat + $search_play_row['at_bat'];
+					$hit1 = $hit1 + $search_play_row['hit1'];
+					$hit2 = $hit2 + $search_play_row['hit2'];
+					$hit3 = $hit3 + $search_play_row['hit3'];
+					$hr = $hr + $search_play_row['hr'];
+					$rbi = $rbi + $search_play_row['rbi'];
+					$rs = $rs + $search_play_row['rs'];
+					$sb = $sb + $search_play_row['sb'];
+					$b4 = $b4 + $search_play_row['b4'];
+					$hbp = $hbp + $search_play_row['hbp'];
+					$so = $so + $search_play_row['so'];
+					$sh = $sh + $search_play_row['sh'];
+					$sf = $sf + $search_play_row['sf'];
+					$gout = $gout + $search_play_row['gout'];
+					$fout = $fout + $search_play_row['fout'];
+					$gdp = $gdp + $search_play_row['gdp'];
+					$gtp = $gtp + $search_play_row['gtp'];
+					$cs = $cs + $search_play_row['cs'];
+					$oob = $oob + $search_play_row['oob'];
+					$pko = $pko + $search_play_row['pko'];
+					$to_game++;
+					$to_at_play = $to_at_play + $search_play_row['at_play'];
+					$to_at_bat = $to_at_bat + $search_play_row['at_bat'];
+					$to_hit1 = $to_hit1 + $search_play_row['hit1'];
+					$to_hit2 = $to_hit2 + $search_play_row['hit2'];
+					$to_hit3 = $to_hit3 + $search_play_row['hit3'];
+					$to_hr = $to_hr + $search_play_row['hr'];
+					$to_rbi = $to_rbi + $search_play_row['rbi'];
+					$to_rs = $to_rs + $search_play_row['rs'];
+					$to_sb = $to_sb + $search_play_row['sb'];
+					$to_b4 = $to_b4 + $search_play_row['b4'];
+					$to_hbp = $to_hbp + $search_play_row['hbp'];
+					$to_so = $to_so + $search_play_row['so'];
+					$to_sh = $to_sh + $search_play_row['sh'];
+					$to_sf = $to_sf + $search_play_row['sf'];
+					$to_gout = $to_gout + $search_play_row['gout'];
+					$to_fout = $to_fout + $search_play_row['fout'];
+					$to_gdp = $to_gdp + $search_play_row['gdp'];
+					$to_gtp = $to_gtp + $search_play_row['gtp'];
+					$to_cs = $to_cs + $search_play_row['cs'];
+					$to_oob = $to_oob + $search_play_row['oob'];
+					$to_pko = $to_pko + $search_play_row['pko'];
+					$play_datetime = date( 'Y-m-d', strtotime($search_play_row['play_datetime']));
+					if($search_play_row['avg']){
+						$avg = $search_play_row['avg'];
+					}else{
+						$avg = "-";
+					}
+					$hit_table = $hit_table."<tr>
+												<th colspan='2' style='padding:0px;text-align:center;vertical-align:middle'>".$play_datetime."</th>
+												<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$avg."</th>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['at_play']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['at_bat']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($search_play_row['hit1'] + $search_play_row['hit2'] + $search_play_row['hit3'] + $search_play_row['hr'])."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['hit2']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['hit3']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['hr']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['sb']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['b4']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['hbp']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['rbi']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['rs']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['sh']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['sf']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['so']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['gout']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['fout']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['gdp']."</td>
+											</tr>";
+				}
+				if($at_bat != 0){
+					$mean = number_format(($hit1 + $hit2 + $hit3 + $hr)/$at_bat,3);
+					$slg = number_format(($hit1*1 + $hit2*2 + $hit3*3 + $hr*4)/$at_bat,3);
+					$iso = number_format(($hit2*2 + $hit3*3 + $hr*4)/$at_bat,3);
+				}else{
+					$mean = "-";
+					$slg = "-";
+					$iso = "-";
+				}
+				if($sb + $cs != 0){
+					$sba = number_format($sb/($sb + $cs),3);
+				}else{
+					$sba = "-";
+				}
+				if($at_bat + $b4 + $hbp + $sf != 0){
+					$obp = number_format(($hit1 + $hit2 + $hit3 + $hr + $b4 + $hbp)/($at_bat + $b4 + $hbp + $sf),3);
+				}else{
+					$obp = "-";
+				}
+				if($slg != "-" && $obp != "-"){
+					$ops = number_format($slg + $obp,3);
+					$gpa = number_format((1.8*$slg + $obp)/4,3);
+				}else{
+					$ops = "-";
+					$gpa = "-";
+				}
+				if($fout != 0){
+					$goao = number_format($gout / $fout,2);
+				}else{
+					$goao = "-";
+				}
+				if($so != 0){
+					$b4so = number_format($b4/$so,2);
+				}else{
+					$b4so = "-";
+				}
+				if($hr != 0){
+					$abhr = number_format($at_bat/$hr,1);
+				}else{
+					$abhr = "-";
+				}
+				$xr = number_format((0.49 * $hit1) + (0.79 * $hit2) + (1.06 * $hit3) + (1.42 * $hr) + (0.34 * ($hbp + $b4)) - (0.090 * ($at_bat - ($hit1 + $hit2 + $hit3 + $hr) - $so)) - (0.098 * $so) + (0.18 * $sb) - (0.32 * $cs) - (0.37 * ($gdp + $gtp)) + (0.37 * $sf) + (0.04 * $sh),1);
+				$hit_table = $hit_table."<tr>
+											<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>누적</th>
+											<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$i."경기</th>
+											<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$mean."</th>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$at_play."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$at_bat."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".($hit1 + $hit2 + $hit3 + $hr)."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$hit2."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$hit3."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$hr."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$sb."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$b4."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$hbp."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$rbi."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$rs."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$sh."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$sf."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$so."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$gout."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$fout."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$gdp."</td>
+										</tr>
+									</tbody>
+								</table>";
+				$total_hit_table = $total_hit_table."<tr>
+														<th rowspan='8' style='padding:0px;text-align:center;vertical-align:middle;width:10%'>".$search_team_row['team_name']."</th>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='경기 수'>G</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='타석'>PA</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='타수'>AB</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='타율'>AVG</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='타점'>RBI</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='득점'>R</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='안타'>H</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='2루타'>2B</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='3루타'>3B</td>
+													</tr>
+													<tr>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$i."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$at_play."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$at_bat."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$mean."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$rbi."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$rs."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($hit1 + $hit2 + $hit3 + $hr)."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$hit2."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$hit3."</td>
+													</tr>
+													<tr>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='홈런'>HR</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='루타'>TB</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='희생번트'>SAC</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='희생플라이'>SF</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='볼넷'>BB</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='사사구'>HBP</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='삼진'>SO</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='땅볼'>GO</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='뜬공'>AO</td>
+													</tr>
+													<tr>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$hr."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($hit1*1 + $hit2*2 + $hit3*3 + $hr*4)."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$sh."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$sf."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$b4."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$hbp."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$so."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$gout."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$fout."</td>
+													</tr>
+													<tr>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='병살'>GDP</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='삼중살'>GTP</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='장타'>XBH</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='장타율'>SLG</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='출루율'>OBP</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='출루율 + 장타율'>OPS</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='땅볼/뜬공'>GO/AO</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='볼넷/삼진'>BB/K</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='홈런당 평균타수'>AB/HR</td>
+													</tr>
+													<tr>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$gdp."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$gtp."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($hit2 + $hit3 + $hr)."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$slg."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$obp."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$ops."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$goao."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$b4so."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$abhr."</td>
+													</tr>
+													<tr>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='순장타율'>ISO</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='추정득점'>XR</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='(1.8*출루율+장타율)/4'>GPA</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='도루 시도'>SBA</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='도루 성공'>SB</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='도루 실패'>CS</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='도루 성공율'>SB%</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='주루사'>OOB</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='견제사'>PKO</td>
+													</tr>
+													<tr>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle%'>".$iso."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$xr."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$gpa."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($sb + $cs)."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$sb."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$cs."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$sba."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$oob."</td>
+														<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$pko."</td>
+													</tr>";
+			}
+			// 투수 기록 생성
+			if($kind == 2 || $kind == 3){
+				$search_play_pic_count_result = mysqli_query($conn, "SELECT COUNT(*) as count FROM play_result_pic JOIN play_entry JOIN play WHERE play_entry.team_member = '$team_members_no' AND play_entry.play = play.no AND play_result_pic.entry = play_entry.no AND play.kind = '$kind' ORDER BY play.play_datetime");
+				$search_play_pic_count_row = mysqli_fetch_array($search_play_pic_count_result);
+			}
+			if($search_play_pic_count_row['count'] >= 1 && $kind != 4){
+				$pic_table_t = 1;
+				if($kind == 2 || $kind == 3){
+					$search_play_pic_result = mysqli_query($conn, "SELECT play_result_pic.*, ROUND((play_result_pic.er * 7)/(play_result_pic.inning/3),2) as era, play.play_datetime as play_datetime FROM play_result_pic JOIN play_entry JOIN play WHERE play_entry.team_member = '$team_members_no' AND play_entry.play = play.no AND play_result_pic.entry = play_entry.no AND play.kind = '$kind' ORDER BY play.play_datetime");
+				}
+				$j = 0;
+				$inning = 0;
+				$p_at_play = 0;
+				$p_at_bat = 0;
+				$p_sh = 0;
+				$p_sf = 0;
+				$p_gout = 0;
+				$p_fout = 0;
+				$p_gdp = 0;
+				$p_gtp = 0;
+				$pitcher_count = 0;
+				$p_so = 0;
+				$p_hit1 = 0;
+				$p_hit2 = 0;
+				$p_hit3 = 0;
+				$p_hr = 0;
+				$p_b4 = 0;
+				$p_hbp = 0;
+				$p_er = 0;
+				$p_uer = 0;
+				$p_win = 0;
+				$p_lose = 0;
+				$p_save = 0;
+				$p_hold = 0 ;
+				$pic_table = $pic_table."<table class='table table-striped table-bordered' style='font-size:80%;margin-top:10px'>
+											<thead>
+												<tr>
+													<th colspan='16' style='text-align:center;vertical-align:middle;font-size:120%'>".$search_team_row['team_name']."</th>
+												</tr>
+												<tr>
+													<th colspan='2' style='width:19%;padding:0px;text-align:center;vertical-align:middle'>날짜</th>
+													<th colspan='1' style='width:8%;padding:0px;text-align:center;vertical-align:middle' title='평균자책점'>ERA</th>
+													<td colspan='1' style='width:8%;padding:0px;text-align:center;vertical-align:middle' title='이닝'>IP</td>
+													<td colspan='1' style='width:8%;padding:0px;text-align:center;vertical-align:middle' title='투구수'>NC</td>
+													<td colspan='1' style='width:7%;padding:0px;text-align:center;vertical-align:middle' title='탈 삼진'>SO</td>
+													<td colspan='1' style='width:7%;padding:0px;text-align:center;vertical-align:middle' title='피안타'>H</td>
+													<td colspan='1' style='width:7%;padding:0px;text-align:center;vertical-align:middle' title='피 홈런'>HR</td>
+													<td colspan='1' style='width:7%;padding:0px;text-align:center;vertical-align:middle' title='볼넷'>BB</td>
+													<td colspan='1' style='width:7%;padding:0px;text-align:center;vertical-align:middle' title='사사구'>HBP</td>
+													<td colspan='1' style='width:7%;padding:0px;text-align:center;vertical-align:middle' title='자책점'>ER</td>
+													<td colspan='1' style='width:7%;padding:0px;text-align:center;vertical-align:middle' title='실점'>R</td>
+													<th colspan='1' style='width:8%;padding:0px;text-align:center;vertical-align:middle' title='결과'>RE</th>
+												</tr>
+											</thead>
+										<tbody>";
+				while($search_play_pic_row = mysqli_fetch_array($search_play_pic_result)){
+					$pic_result_no = $search_play_pic_row['no'];
+					$pic_re_result = mysqli_query($conn, "SELECT * FROM play_result_picr WHERE play_result_pic='$pic_result_no'");
+					$pic_re_row = mysqli_fetch_array($pic_re_result);
+					if($pic_re_row['pic_result'] == 1){
+						$pic_re = "승";
+						$p_win = $p_win + 1;
+						$to_p_win = $to_p_win + 1;
+					}else if($pic_re_row['pic_result'] == 2){
+						$pic_re = "패";
+						$p_lose = $p_lose + 1;
+						$to_p_lose = $to_p_lose + 1;
+					}else if($pic_re_row['pic_result'] == 3){
+						$pic_re = "세";
+						$p_save = $p_save + 1;
+						$to_p_save = $to_p_save + 1;
+					}else if($pic_re_row['pic_result'] == 4){
+						$pic_re = "홀";
+						$p_hold = $p_hold + 1;
+						$to_p_hold = $to_p_hold + 1;
+					}else{
+						$pic_re = "-";
+					}
+					$j++;
+					$inning = $inning + $search_play_pic_row['inning'];
+					$p_at_play = $p_at_play + $search_play_pic_row['at_play'];
+					$p_at_bat = $p_at_bat + $search_play_pic_row['at_bat'];
+					$p_sh = $p_sh + $search_play_pic_row['sh'];
+					$p_sf = $p_sf + $search_play_pic_row['sf'];
+					$p_gout = $p_gout + $search_play_pic_row['gout'];
+					$p_fout = $p_fout + $search_play_pic_row['fout'];
+					$p_gdp = $p_gdp + $search_play_pic_row['gdp'];
+					$p_gtp = $p_gtp + $search_play_pic_row['gtp'];
+					$pitcher_count = $pitcher_count + $search_play_pic_row['pitcher_count'];
+					$p_so = $p_so + $search_play_pic_row['so'];
+					$p_hit1 = $p_hit1 + $search_play_pic_row['hit1'];
+					$p_hit2 = $p_hit2 + $search_play_pic_row['hit2'];
+					$p_hit3 = $p_hit3 + $search_play_pic_row['hit3'];
+					$p_hr = $p_hr + $search_play_pic_row['hr'];
+					$p_b4 = $p_b4 + $search_play_pic_row['b4'];
+					$p_hbp = $p_hbp + $search_play_pic_row['hbp'];
+					$p_er = $p_er + $search_play_pic_row['er'];
+					$p_uer = $p_uer + $search_play_pic_row['uer'];
+					$to_p_game++;
+					$to_p_at_play = $to_p_at_play + $search_play_pic_row['at_play'];
+					$to_p_at_bat = $to_p_at_bat + $search_play_pic_row['at_bat'];
+					$to_p_sh = $to_p_sh + $search_play_pic_row['sh'];
+					$to_p_sf = $to_p_sf + $search_play_pic_row['sf'];
+					$to_p_gout = $to_p_gout + $search_play_pic_row['gout'];
+					$to_p_fout = $to_p_fout + $search_play_pic_row['fout'];
+					$to_p_gdp = $to_p_gdp + $search_play_pic_row['gdp'];
+					$to_p_gtp = $to_p_gtp + $search_play_pic_row['gtp'];
+					$to_inning = $to_inning + $search_play_pic_row['inning'];
+					$to_pitcher_count = $to_pitcher_count + $search_play_pic_row['pitcher_count'];
+					$to_p_so = $to_p_so + $search_play_pic_row['so'];
+					$to_p_hit1 = $to_p_hit1 + $search_play_pic_row['hit1'];
+					$to_p_hit2 = $to_p_hit2 + $search_play_pic_row['hit2'];
+					$to_p_hit3 = $to_p_hit3 + $search_play_pic_row['hit3'];
+					$to_p_hr = $to_p_hr + $search_play_pic_row['hr'];
+					$to_p_b4 = $to_p_b4 + $search_play_pic_row['b4'];
+					$to_p_hbp = $to_p_hbp + $search_play_pic_row['hbp'];
+					$to_p_er = $to_p_er + $search_play_pic_row['er'];
+					$to_p_uer = $to_p_uer + $search_play_pic_row['uer'];
+					$play_datetime = date( 'Y-m-d', strtotime($search_play_pic_row['play_datetime']));
+					$h_inning = ($search_play_pic_row['inning'] - ($search_play_pic_row['inning'] % 3)) / 3;
+					if($search_play_pic_row['inning'] % 3 == 0){
+						$f_inning = "";
+					}else if($search_play_pic_row['inning'] % 3 == 1){
+						$f_inning = "⅓";
+					}else if($search_play_pic_row['inning'] % 3 == 2){
+						$f_inning = "⅔";
+					}
+					$pic_table = $pic_table."<tr>
+												<th colspan='2' style='padding:0px;text-align:center;vertical-align:middle'>".$play_datetime."</th>
+												<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_pic_row['era']."</th>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$h_inning.$f_inning."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_pic_row['pitcher_count']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_pic_row['so']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($search_play_pic_row['hit1'] + $search_play_pic_row['hit2'] + $search_play_pic_row['hit3'] + $search_play_pic_row['hr'])."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_pic_row['hr']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_pic_row['b4']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_pic_row['hbp']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_pic_row['er']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($search_play_pic_row['er'] + $search_play_pic_row['uer'])."</td>
+												<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$pic_re."</th>
+											</tr>";
+				}
+				if($inning != 0){
+					$era = number_format(($p_er * 7)/($inning/3),2);
+				}else{
+					$era = "-";
+				}
+				$h_inning = ($inning - ($inning % 3)) / 3;
+				if($inning % 3 == 0){
+					$f_inning = "";
+				}else if($inning % 3 == 1){
+					$f_inning = "⅓";
+				}else if($inning % 3 == 2){
+					$f_inning = "⅔";
+				}
+				if($p_win + $p_lose != 0){
+					$p_wptc = number_format(($p_win)/($p_win + $p_lose),3);
+				}else{
+					$p_wptc = "-";
+				}
+				$k7 = number_format(($p_so/($inning/3))*7,2);
+				$bb7 = number_format(($p_b4/($inning/3))*7,2);
+				if($p_b4 != 0){
+					$p_kbb = number_format($p_so/$p_b4,2);
+				}else{
+					$p_kbb = "-";
+				}
+				$pcg = number_format($pitcher_count/$j,1);
+				if($inning != 0){
+					$pcin = number_format($pitcher_count/($inning/3),1);
+					$whip = number_format(($p_hit1 + $p_hit2 + $p_hit3 + $p_hr + $p_b4 + $p_hbp)/($inning/3),2);
+				}else{
+					$pcin = "-";
+					$whip = "-";
+				}
+				if($p_fout != 0){
+					$p_goao = number_format($p_gout/($p_fout),2);
+				}else{
+					$p_goao = "-";
+				}
+				if($p_at_bat != 0){
+					$p_avg = number_format(($p_hit1 + $p_hit2 + $p_hit3 + $p_hr)/($p_at_bat),3);
+					$p_slg = number_format(($p_hit1*1 + $p_hit2*2 + $p_hit3*3 + $p_hr*4)/($p_at_bat),3);
+				}else{
+					$p_avg = "-";
+					$p_slg = "-";
+				}
+				if($p_at_bat + $p_b4 + $p_hbp + $p_sf != 0){
+					$p_obp = number_format(($p_hit1 + $p_hit2 + $p_hit3 + $p_hr + $p_b4 + $p_hbp)/($p_at_bat + $p_b4 + $p_hbp + $p_sf),3);
+				}else{
+					$p_obp = "-";
+				}
+				if($p_slg != "-" && $p_obp != "-"){
+					$p_ops = number_format($p_slg + $p_obp,3);
+				}else{
+					$p_ops = "-";
+				}
+				$pic_table = $pic_table."<tr>
+											<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>누적</th>
+											<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$j."경기</th>
+											<th colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$era."</th>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$h_inning.$f_inning."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$pitcher_count."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$p_so."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".($p_hit1 + $p_hit2 + $p_hit3 + $p_hr)."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$p_hr."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$p_b4."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$p_hbp."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".$p_er."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6'>".($p_uer + $p_er)."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;border-top:2px solid #dee2e6' title='승률'>".$p_wptc."</td>
+										</tr>
+									</tbody>
+								</table>";
+				$total_pic_table = $total_pic_table."<tr>
+										<th rowspan='8' style='padding:0px;text-align:center;vertical-align:middle;width:10%'>".$search_team_row['team_name']."</th>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='경기 수'>G</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='평균자책점'>ERA</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='승리'>W</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='패배'>L</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='세이브'>SV</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='홀드'>HLD</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='승률'>WPCT</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='이닝'>IP</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='투구수'>NC</td>
+									</tr>
+									<tr>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$j."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$era."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_win."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_lose."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_save."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_hold."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_wptc."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$h_inning.$f_inning."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$pitcher_count."</td>
+									</tr>
+									<tr>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피안타'>H</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피2루타'>2B</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피3루타'>3B</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피홈런'>HR</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='볼넷'>BB</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='사사구'>HBP</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='탈삼진'>SO</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='실점'>R</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='자책점'>ER</td>
+									</tr>
+									<tr>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($p_hit1 + $p_hit2 + $p_hit3 + $p_hr)."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_hit2."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_hit3."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_hr."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_b4."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_hbp."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_so."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($p_er + $p_uer)."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_er."</td>
+									</tr>
+									<tr>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='타자수'>TBF</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='희생번트'>SAC</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='희생플라이'>SF</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='땅볼'>GO</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='뜬공'>AO</td>							
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='땅볼/뜬공'>GO/AO</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='병살'>GDP</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='삼중살'>GTP</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='이닝당 출루 허용율'>WHIP</td>
+									</tr>
+									<tr>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_at_play."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_sh."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_sf."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_gout."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_fout."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_goao."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_gdp."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_gtp."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$whip."</td>
+									</tr>
+									<tr>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='7이닝당 삼진'>K/7</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='7이낭당 볼넷'>BB/7</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='삼진/볼넷'>K/BB</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='경기당 투구수'>P/G</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='이닝당 투구수'>P/IP</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피안타율'>AVG</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피출루율'>OBP</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피장타율'>SLG</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피출루율 + 피장타율'>OPS</td>
+									</tr>
+									<tr>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$k7."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$bb7."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_kbb."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$pcg."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$pcin."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_avg."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_obp."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_slg."</td>
+										<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$p_ops."</td>
+									</tr>";
+			}
+		}
+	}else{
+		$search_play_hit_count_result = mysqli_query($conn, "SELECT COUNT(*) as count FROM data_before_hit WHERE player_no = '$player_no'");
+		$search_play_hit_count_row = mysqli_fetch_array($search_play_hit_count_result);
+		if($search_play_hit_count_row['count'] >= 1){
+			$hit_table_t = 1;
+			$hit_table = $hit_table."<table class='table table-striped table-bordered' style='font-size:80%;margin-top:10px'>";
+			$search_play_result = mysqli_query($conn, "SELECT * FROM data_before_hit WHERE player_no = '$player_no'");
+			while($search_play_row = mysqli_fetch_array($search_play_result)){
+				if(!$search_play_row['sh'] && $search_play_row['sh'] != 0){
+					$sh = "-";
+				}else{
+					$sh = $search_play_row['sh'];
+				}
+				if(!$search_play_row['sf'] && $search_play_row['sf'] != 0){
+					$sf = "-";
+				}else{
+					$sf = $search_play_row['sf'];
+				}
+				if(!$search_play_row['hbp'] && $search_play_row['hbp'] != 0){
+					$hbp = "-";
+				}else{
+					$hbp = $search_play_row['hbp'];
+				}
+				if($search_play_row['at_bat'] != 0){
+					$avg = number_format(($search_play_row['hit1'] + $search_play_row['hit2'] + $search_play_row['hit3'] + $search_play_row['hr'])/$search_play_row['at_bat'],3);
+					$slg = number_format(($search_play_row['hit1']*1 + $search_play_row['hit2']*2 + $search_play_row['hit3']*3 + $search_play_row['hr']*4)/$search_play_row['at_bat'],3);
+					$iso = number_format(($search_play_row['hit2']*2 + $search_play_row['hit3']*3 + $search_play_row['hr']*4)/$search_play_row['at_bat'],3);
+				}else{
+					$avg = "-";
+					$slg = "-";
+					$iso = "-";
+				}
+				if($search_play_row['at_bat'] + $search_play_row['b4'] + $search_play_row['hbp'] + $search_play_row['sf'] != 0){
+					$obp = number_format(($search_play_row['hit1'] + $search_play_row['hit2'] + $search_play_row['hit3'] + $search_play_row['hr'] + $search_play_row['b4'] + $search_play_row['hbp'])/($search_play_row['at_bat'] + $search_play_row['b4'] + $search_play_row['hbp'] + $search_play_row['sf']),3);
+				}else{
+					$obp = "-";
+				}
+				if($slg != "-" && $obp != "-"){
+					$ops = number_format($slg + $obp,3);
+					$gpa = number_format((1.8*$slg + $obp)/4,3);
+				}else{
+					$ops = "-";
+					$gpa = "-";
+				}
+				if($search_play_row['so'] != 0){
+					$b4so = number_format($search_play_row['b4']/$search_play_row['so'],2);
+				}else{
+					$b4so = "-";
+				}
+				if($search_play_row['hr'] != 0){
+					$abhr = number_format($search_play_row['at_bat']/$search_play_row['hr'],1);
+				}else{
+					$abhr = "-";
+				}
+				$hit_table = $hit_table."<thead>
+											<tr>
+												<th colspan='9' style='text-align:center;vertical-align:middle;font-size:120%'>".$search_play_row['league_name']."</th>
+											</tr>
+										</thead>
+										<tbody>
+											<tr>
+												<td colspan='2' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='팀 명'>Team</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='경기 수'>G</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='타석'>PA</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='타수'>AB</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='타율'>AVG</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='타점'>RBI</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='득점'>R</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='안타'>H</td>
+											</tr>
+											<tr>
+												<td colspan='2' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['team_name']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['at_game']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['at_play']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['at_bat']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$avg."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['rbi']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['rs']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($search_play_row['hit1'] + $search_play_row['hit2'] + $search_play_row['hit3'] + $search_play_row['hr'])."</td>
+											</tr>
+											<tr>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='2루타'>2B</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='3루타'>3B</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='홈런'>HR</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='루타'>TB</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='희생번트'>SAC</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='희생플라이'>SF</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='볼넷(사사구 포함)'>BB</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='사사구'>HBP</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='삼진'>SO</td>
+											</tr>
+											<tr>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['hit2']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['hit3']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['hr']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($search_play_row['hit1']*1 + $search_play_row['hit2']*2 + $search_play_row['hit3']*3 + $search_play_row['hr']*4)."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$sh."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$sf."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($search_play_row['b4'] + $search_play_row['hbp'])."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$hbp."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['so']."</td>
+											</tr>
+											<tr>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='도루'>SB</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='장타'>XBH</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='장타율'>SLG</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='출루율'>OBP</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='출루율 + 장타율'>OPS</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='볼넷/삼진'>BB/K</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='홈런당 평균타수'>AB/HR</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='순장타율'>ISO</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='(1.8*출루율+장타율)/4'>GPA</td>
+											</tr>
+											<tr>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_row['sb']."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($search_play_row['hit2'] + $search_play_row['hit3'] + $search_play_row['hr'])."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$slg."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$obp."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$ops."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$b4so."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$abhr."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle%'>".$iso."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$gpa."</td>
+											</tr>
+										</tbody>";
+			}
+		}
+		$search_play_pic_count_result = mysqli_query($conn, "SELECT COUNT(*) as count FROM data_before_pic WHERE player_no = '$player_no'");
+		$search_play_pic_count_row = mysqli_fetch_array($search_play_pic_count_result);
+		if($search_play_pic_count_row['count'] >=1){
+			$pic_table_t = 1;
+			$pic_table = $pic_table."<table class='table table-striped table-bordered' style='font-size:80%;margin-top:10px'>";
+			$search_play_pic_result = mysqli_query($conn, "SELECT * FROM data_before_pic WHERE player_no = '$player_no'");
+			while($search_play_pic_row = mysqli_fetch_array($search_play_pic_result)){
+			if(!$search_play_pic_row['sh'] && $search_play_pic_row['sh'] != 0){
+				$sh = "-";
+			}else{
+				$sh = $search_play_pic_row['sh'];
+			}
+			if(!$search_play_pic_row['sf'] && $search_play_pic_row['sf'] != 0){
+				$sf = "-";
+			}else{
+				$sf = $search_play_pic_row['sf'];
+			}
+			if(!$search_play_pic_row['hbp'] && $search_play_pic_row['hbp'] != 0){
+				$hbp = "-";
+			}else{
+				$hbp = $search_play_pic_row['hbp'];
+			}
+			if(!$search_play_pic_row['hit2'] && $search_play_pic_row['hit2'] != 0){
+				$hit2 = "-";
+			}else{
+				$hit2 = $search_play_pic_row['hit2'];
+			}
+			if(!$search_play_pic_row['hit3'] && $search_play_pic_row['hit3'] != 0){
+				$hit3 = "-";
+			}else{
+				$hit3 = $search_play_pic_row['hit3'];
+			}
+			if(!$search_play_pic_row['at_play'] && $search_play_pic_row['at_play'] != 0){
+				$at_play = "-";
+			}else{
+				$at_play = $search_play_pic_row['at_play'];
+			}
+			if(!$search_play_pic_row['pitcher_count'] && $search_play_pic_row['pitcher_count'] != 0){
+				$pitcher_count = "-";
+				$pcg = "-";
+				$pcin = "-";
+			}else{
+				$pitcher_count = $search_play_pic_row['pitcher_count'];
+				$pcg = number_format($search_play_pic_row['pitcher_count']/$search_play_pic_row['at_game'],1);
+				$pcin = number_format($search_play_pic_row['pitcher_count']/($search_play_pic_row['inning']/3),1);
+			}
+			if($search_play_pic_row['inning'] != 0){
+				$era = number_format(($search_play_pic_row['er'] * 7)/($search_play_pic_row['inning']/3),2);
+				$whip = number_format(($search_play_pic_row['hit1'] + $search_play_pic_row['hit2'] + $search_play_pic_row['hit3'] + $search_play_pic_row['hr'] + $search_play_pic_row['b4'] + $search_play_pic_row['hbp'])/($search_play_pic_row['inning']/3),2);
+			}else{
+				$era = "-";
+				$whip = "-";
+			}
+			$h_inning = ($search_play_pic_row['inning'] - ($search_play_pic_row['inning'] % 3)) / 3;
+			if($search_play_pic_row['inning'] % 3 == 0){
+				$f_inning = "";
+			}else if($search_play_pic_row['inning'] % 3 == 1){
+				$f_inning = "⅓";
+			}else if($search_play_pic_row['inning'] % 3 == 2){
+				$f_inning = "⅔";
+			}
+			if($search_play_pic_row['play_win'] + $search_play_pic_row['play_lose'] != 0){
+				$wptc = number_format(($search_play_pic_row['play_win'])/($search_play_pic_row['play_win'] + $search_play_pic_row['play_lose']),3);
+			}else{
+				$wptc = "-";
+			}
+			if($search_play_pic_row['b4'] + $search_play_pic_row['hbp'] != 0){
+				$kbb = number_format($search_play_pic_row['so']/($search_play_pic_row['b4'] + $search_play_pic_row['hbp']),2);
+			}else{
+				$kbb = "-";
+			}
+			if($search_play_pic_row['at_bat'] != 0){
+				$avg = number_format(($search_play_pic_row['hit1'] + $search_play_pic_row['hit2'] + $search_play_pic_row['hit3'] + $search_play_pic_row['hr'])/($search_play_pic_row['at_bat']),3);
+			}else{
+				$avg = "-";
+			}
+			$pic_table = $pic_table."<thead>
+										<tr>
+											<th colspan='9' style='text-align:center;vertical-align:middle;font-size:120%'>".$search_play_pic_row['league_name']."</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr>
+											<td colspan='2' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='팀 명'>Team</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='경기 수'>G</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='평균자책점'>ERA</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='승리'>W</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='패배'>L</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='세이브'>SV</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='홀드'>HLD</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='승률'>WPCT</td>
+										</tr>
+										<tr>
+											<td colspan='2' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_pic_row['team_name']."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_pic_row['at_game']."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$era."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_pic_row['play_win']."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_pic_row['play_lose']."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_pic_row['play_save']."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_pic_row['play_hold']."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$wptc."</td>
+										</tr>
+										<tr>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='이닝'>IP</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='투구수'>NC</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피안타'>H</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피2루타'>2B</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피3루타'>3B</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피홈런'>HR</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='볼넷(사사구 포함)'>BB</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='사사구'>HBP</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='탈삼진'>SO</td>
+										</tr>
+										<tr>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$h_inning.$f_inning."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$pitcher_count."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($search_play_pic_row['hit1'] + $search_play_pic_row['hit2'] + $search_play_pic_row['hit3'] + $search_play_pic_row['hr'])."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$hit2."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$hit3."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_pic_row['hr']."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($search_play_pic_row['b4'] + $search_play_pic_row['hbp'])."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$hbp."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_pic_row['so']."</td>
+										</tr>
+										<tr>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='실점 또는 자책점'>R</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='희생번트'>SAC</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='희생플라이'>SF</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='타자수'>TBF</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='삼진/볼넷'>K/BB</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='경기당 투구수'>P/G</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='이닝당 투구수'>P/IP</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피안타율'>AVG</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='이닝당 출루 허용율'>WHIP</td>
+										</tr>
+										<tr>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$search_play_pic_row['er']."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$sh."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$sf."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$at_play."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$kbb."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$pcg."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$pcin."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle%'>".$avg."</td>
+											<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$whip."</td>
+										</tr>
+									</tbody>";
+			}
+		}
+	}
+	if($to_at_bat != 0){
+		$to_mean = number_format(($to_hit1 + $to_hit2 + $to_hit3 + $to_hr)/$to_at_bat,3);
+		$to_slg = number_format(($to_hit1*1 + $to_hit2*2 + $to_hit3*3 + $to_hr*4)/$to_at_bat,3);
+		$to_iso = number_format(($to_hit2*2 + $to_hit3*3 + $to_hr*4)/$to_at_bat,3);
+	}else{
+		$to_mean = "-";
+		$to_slg = "-";
+		$to_iso = "-";
+	}
+	if($to_sb + $to_cs != 0){
+		$to_sba = number_format($to_sb/($to_sb + $to_cs),3);
+	}else{
+		$to_sba = "-";
+	}
+	if($to_at_bat + $to_b4 + $to_hbp + $to_sf != 0){
+		$to_obp = number_format(($to_hit1 + $to_hit2 + $to_hit3 + $to_hr + $to_b4 + $to_hbp)/($to_at_bat + $to_b4 + $to_hbp + $to_sf),3);
+	}else{
+		$to_obp = "-";
+	}
+	if($to_slg != "-" && $to_obp != "-"){
+		$to_ops = number_format($to_slg + $to_obp,3);
+		$to_gpa = number_format((1.8*$to_slg + $to_obp)/4,3);
+	}else{
+		$to_ops = "-";
+		$to_gpa = "-";
+	}
+	if($to_fout != 0){
+		$to_goao = number_format($to_gout + $to_fout,2);
+	}else{
+		$to_goao = "-";
+	}
+	if($to_so != 0){
+		$to_b4so = number_format($to_b4/$to_so,2);
+	}else{
+		$to_b4so = "-";
+	}
+	if($to_hr != 0){
+		$to_abhr = number_format($to_at_bat/$to_hr,1);
+	}else{
+		$to_abhr = "-";
+	}
+	$to_xr = number_format((0.49 * $to_hit1) + (0.79 * $to_hit2) + (1.06 * $to_hit3) + (1.42 * $to_hr) + (0.34 * ($to_hbp + $to_b4)) - (0.090 * ($to_at_bat - ($to_hit1 + $to_hit2 + $to_hit3 + $to_hr) - $to_so)) - (0.098 * $to_so) + (0.18 * $to_sb) - (0.32 * $to_cs) - (0.37 * ($to_gdp + $to_gtp)) + (0.37 * $to_sf) + (0.04 * $to_sh),1);
+	if($to_inning != 0){
+		$to_era = number_format(($to_p_er * 7)/($to_inning/3),2);
+	}else{
+		$to_era = "-";
+	}
+	$h_inning = ($to_inning - ($to_inning % 3)) / 3;
+	if($to_inning % 3 == 0){
+		$f_inning = "";
+	}else if($to_inning % 3 == 1){
+		$f_inning = "⅓";
+	}else if($to_inning % 3 == 2){
+		$f_inning = "⅔";
+	}
+	if($to_p_win + $to_p_lose != 0){
+		$to_p_wptc = number_format(($to_p_win)/($to_p_win + $to_p_lose),3);
+	}else{
+		$to_p_wptc = "-";
+	}
+	if($to_inning != 0){
+		$to_k7 = number_format(($to_p_so/($to_inning/3))*7,2);
+		$to_bb7 = number_format(($to_p_b4/($to_inning/3))*7,2);
+	}else{
+		$to_k7 = "-";
+		$to_bb7 = "-";
+	}
+	if($to_p_b4 != 0){
+		$to_p_kbb = number_format($to_p_so/$to_p_b4,2);
+	}else{
+		$to_p_kbb = "-";
+	}
+	if($to_p_game !=0){
+		$to_pcg = number_format($to_pitcher_count/$to_p_game,1);
+	}else{
+		$to_pcg = "-";
+	}
+	if($to_inning != 0){
+		$to_pcin = number_format($to_pitcher_count/($to_inning/3),1);
+		$to_whip = number_format(($to_p_hit1 + $to_p_hit2 + $to_p_hit3 + $to_p_hr + $to_p_b4 + $to_p_hbp)/($to_inning/3),2);
+	}else{
+		$to_pcin = "-";
+		$to_whip = "-";
+	}
+	if($to_p_fout != 0){
+		$to_p_goao = number_format($to_p_gout/($to_p_fout),2);
+	}else{
+		$to_p_goao = "-";
+	}
+	if($to_p_at_bat != 0){
+		$to_p_avg = number_format(($to_p_hit1 + $to_p_hit2 + $to_p_hit3 + $to_p_hr)/($to_p_at_bat),3);
+		$to_p_slg = number_format(($to_p_hit1*1 + $to_p_hit2*2 + $to_p_hit3*3 + $to_p_hr*4)/($to_p_at_bat),3);
+	}else{
+		$to_p_avg = "-";
+		$to_p_slg = "-";
+	}
+	if($to_p_at_bat + $to_p_b4 + $to_p_hbp + $to_p_sf != 0){
+		$to_p_obp = number_format(($to_p_hit1 + $to_p_hit2 + $to_p_hit3 + $to_p_hr + $to_p_b4 + $to_p_hbp)/($to_p_at_bat + $to_p_b4 + $to_p_hbp + $to_p_sf),3);
+	}else{
+		$to_p_obp = "-";
+	}
+	if($to_p_slg != "-" && $to_p_obp != "-"){
+		$to_p_ops = number_format($to_p_slg + $to_p_obp,3);
+	}else{
+		$to_p_ops = "-";
+	}
+	if($kind != 4){
+		$total_hit_table = $total_hit_table."<tr>
+												<th rowspan='8' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6'>총 누적</th>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6' title='경기 수'>G</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6' title='타석'>PA</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6' title='타수'>AB</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6' title='타율'>AVG</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6' title='타점'>RBI</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6' title='득점'>R</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6' title='안타'>H</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6' title='2루타'>2B</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6' title='3루타'>3B</td>
+											</tr>
+											<tr>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_game."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_at_play."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_at_bat."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_mean."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_rbi."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_rs."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($to_hit1 + $to_hit2 + $to_hit3 + $to_hr)."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_hit2."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_hit3."</td>
+											</tr>
+											<tr>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='홈런'>HR</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='루타'>TB</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='희생번트'>SAC</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='희생플라이'>SF</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='볼넷'>BB</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='사사구'>HBP</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='삼진'>SO</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='땅볼'>GO</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='뜬공'>AO</td>
+											</tr>
+											<tr>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_hr."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($to_hit1*1 + $to_hit2*2 + $to_hit3*3 + $to_hr*4)."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_sh."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_sf."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_b4."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_hbp."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_so."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_gout."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_fout."</td>
+											</tr>
+											<tr>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='병살'>GDP</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='삼중살'>GTP</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='장타'>XBH</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='장타율'>SLG</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='출루율'>OBP</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='출루율 + 장타율'>OPS</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='땅볼/뜬공'>GO/AO</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='볼넷/삼진'>BB/K</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='홈런당 평균타수'>AB/HR</td>
+											</tr>
+											<tr>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_gdp."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_gtp."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($to_hit2 + $to_hit3 + $to_hr)."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_slg."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_obp."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_ops."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_goao."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_b4so."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_abhr."</td>
+											</tr>
+											<tr>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='순장타율'>ISO</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='추정득점'>XR</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='(1.8*출루율+장타율)/4'>GPA</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='도루 시도'>SBA</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='도루 성공'>SB</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='도루 실패'>CS</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='도루 성공율'>SB%</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='주루사'>OOB</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='견제사'>PKO</td>
+											</tr>
+											<tr>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_iso."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_xr."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_gpa."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($to_sb + $to_cs)."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_sb."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_cs."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_sba."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_oob."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_pko."</td>
+											</tr>
+										</tbody>
+									</table>";
+		$total_pic_table = $total_pic_table."<tr>
+												<th rowspan='8' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6'>총 누적</th>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6' title='경기 수'>G</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6' title='평균자책점'>ERA</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6' title='승리'>W</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6' title='패배'>L</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6' title='세이브'>SV</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6' title='홀드'>HLD</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6' title='승률'>WPCT</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6' title='이닝'>IP</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%;border-top:3px solid #dee2e6' title='투구수'>NC</td>
+											</tr>
+											<tr>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_game."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_era."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_win."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_lose."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_save."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_hold."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_wptc."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$h_inning.$f_inning."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_pitcher_count."</td>
+											</tr>
+											<tr>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피안타'>H</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피2루타'>2B</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피3루타'>3B</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피홈런'>HR</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='볼넷'>BB</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='사사구'>HBP</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='탈삼진'>SO</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='실점'>R</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='자책점'>ER</td>
+											</tr>
+											<tr>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($to_p_hit1 + $to_p_hit2 + $to_p_hit3 + $to_p_hr)."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_hit2."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_hit3."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_hr."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_b4."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_hbp."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_so."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($to_p_er + $to_p_uer)."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_er."</td>
+											</tr>
+											<tr>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='타자수'>TBF</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='희생번트'>SAC</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='희생플라이'>SF</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='땅볼'>GO</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='뜬공'>AO</td>							
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='땅볼/뜬공'>GO/AO</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='병살'>GDP</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='삼중살'>GTP</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='이닝당 출루 허용율'>WHIP</td>
+											</tr>
+											<tr>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_at_play."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_sh."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_sf."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_gout."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_fout."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_goao."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_gdp."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_gtp."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_whip."</td>
+											</tr>
+											<tr>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='7이닝당 삼진'>K/7</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='7이낭당 볼넷'>BB/7</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='삼진/볼넷'>K/BB</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='경기당 투구수'>P/G</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='이닝당 투구수'>P/IP</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피안타율'>AVG</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피출루율'>OBP</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피장타율'>SLG</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='피출루율 + 피장타율'>OPS</td>
+											</tr>
+											<tr>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_k7."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_bb7."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_kbb."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_pcg."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_pcin."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_avg."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_obp."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_slg."</td>
+												<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$to_p_ops."</td>
+											</tr>
+										</tbody>
+									</table>";
+	}else if($kind == 4){
+		$hit_table = $hit_table."</tbody>
+							</table>";
+		$pic_table = $pic_table."</tbody>
+							</table>";
+	}
+	session_start();
+?>
+<body>
+    <section class="site-section" style="padding-top:50px">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-1 element-animate "></div>
+				<div class="col-md-10 element-animate ">
+					<table class="table table-bordered" >
+						<tbody style="text-align:center">
+							<tr>
+								<th colspan="1" style="width:12.5%;">선수 명</th>
+								<td colspan="1" style="width:12.5%;"><?=$search_user_row['user_name']?></td>
+								<th colspan="1" style="width:12.5%;">리그 수준</th>
+								<td colspan="1" style="width:12.5%;"><?=$class?></td>
+								<th colspan="1" style="width:12.5%;">선수 정보</th>
+								<td colspan="1" style="width:12.5%;"><?=$position?></td>
+								<td colspan="1" style="width:12.5%;"><?=$none_player?></td>
+								<td colspan="1" style="width:12.5%;"><?=$leri_pic.$leri_hit?></td>
+							</tr>
+						</tbody>
+					</table>
+					<div class="row">
+						<div class="col-md-3 element-animate">
+							<? if ($search_user_row['player_img']){?>
+							<img src="<? echo $search_user_row['player_img'];?>" style="width:100%;" class="img-thumbnail">
+							<? } else { ?>
+							<img class="img-thumbnail" style="width:100%" src="images/none_player_img.png">
+							<? } ?>
+							<!--
+							<div style="text-align:center">
+								<i class="fas fa-heart" style="color:red"></i>
+								<i class="far fa-heart" style="color:red"></i>
+								<i class="fas fa-thumbs-up" style="color:blue"></i>
+								<i class="far fa-thumbs-up" style="color:blue"></i>
+								<i class="fas fa-star" style="color:yellow"></i>
+								<i class="far fa-star" style="color:yellow"></i>
+							</div>
+							-->
+							<hr>
+							<div style="text-align:center;">
+								<div class="nav flex-column nav-pills" role="tablist" aria-orientation="vertical">
+									<?=$league_list?>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-9 element-animate">
+							<div class="tab-content">
+								<div class="tab-pane fade active show">
+									<nav style="padding-left:15px;width:101.9%">
+										<div class="nav nav-tabs row col-md-12" id="nav-tab" role="tablist" style="text-align:center;padding:0px">
+											<a class="nav-item nav-link active col-md-6" style="text-align:center" id="nav-hit-tab" data-toggle="tab" href="#nav-hit" role="tab" aria-controls="nav-hit" aria-selected="true">타자</a>
+											<a class="nav-item nav-link col-md-6" style="text-align:center" id="nav-pic-tab" data-toggle="tab" href="#nav-pic" role="tab" aria-controls="nav-pic" aria-selected="false">투수</a>
+										</div>
+									</nav>
+									<div class="tab-content" id="nav-tabContent">
+										<div class="tab-pane fade show active" id="nav-hit" role="tabpanel" aria-labelledby="nav-hit-tab">
+											<? if($hit_table_t == 1){?>
+												<?=$hit_table;?>
+												<? if($kind == 4 && $no == $_SESSION['user_no']){?>	
+												<hr>
+												<div style="text-align:center; border:1px solid #dee2e6;margin-top:10px">
+													<br>
+													<b>지난 리그 기록이 있으신가요?</b>
+													<br><br>
+													<a class="btn btn-primary" href="javascript:;" role="button" onclick="insert_record('<?=$_SESSION['user_no']?>','hit')">기록 입력</a>
+													<br><br>
+												</div>
+												<? } else if($kind !=4){ ?>
+												<hr>
+												<?=$total_hit_table;?>
+												<? } ?>
+											<? } else {?>
+											<div style="text-align:center; border:1px solid #dee2e6;margin-top:10px">
+												<br>
+												<b>타자 기록이 없습니다</b>
+												<br><br>
+												<? if($kind == 4 && $no == $_SESSION['user_no']){?>	
+												<a class="btn btn-primary" href="javascript:;" role="button" onclick="insert_record('<?=$_SESSION['user_no']?>','hit')">기록 입력</a>
+												<br><br>
+												<? } ?>
+											</div>
+											<? } ?>
+										</div>
+										<div class="tab-pane fade show" id="nav-pic" role="tabpanel" aria-labelledby="nav-pic-tab">
+											<?if($pic_table_t == 1){?>
+												<?=$pic_table;?>
+												<? if($kind == 4 && $no == $_SESSION['user_no']){?>	
+													<hr>
+													<div style="text-align:center; border:1px solid #dee2e6;margin-top:10px">
+														<br>
+														<b>지난 리그 기록이 있으신가요?</b>
+														<br><br>
+														<a class="btn btn-primary" href="javascript:;" role="button" onclick="insert_record('<?=$_SESSION['user_no']?>','pic')">기록 입력</a>
+														<br><br>
+													</div>
+												<? } else if($kind !=4){ ?>
+												<hr>
+												<?=$total_pic_table;?>
+												<? } ?>
+											<? } else {?>
+											<div style="text-align:center; border:1px solid #dee2e6;margin-top:10px">
+												<br>
+												<b>투수 기록이 없습니다</b>
+												<br><br>
+												<? if($kind == 4 && $no == $_SESSION['user_no']){?>	
+												<a class="btn btn-primary" href="javascript:;" role="button" onclick="insert_record('<?=$_SESSION['user_no']?>','pic')">기록 입력</a>
+												<br><br>
+												<? } ?>
+											</div>
+											<? } ?>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-1 element-animate "></div>
+			</div>
+		</div>
+	</section>
+	<? mysqli_close($conn);?>
+	<? include("inc/_script.html");?>
+	<script>
+		function print_button(){
+			window.print();
+		}
+		function insert_record(no, pos){
+			window.open("insert_record.php?no=" + no + "&pos=" + pos,
+			"Insert Record","left=200, top=200, width=1200, height=720, scrollbars=no,resizable=yes");
+		}
+	</script>
+</body>
+</html>

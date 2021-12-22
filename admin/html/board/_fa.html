@@ -1,0 +1,276 @@
+<!DOCTYPE HTML>
+<?
+	include "dbconn.php";
+	$option = $_GET['option'];
+	if($_GET['pn'] == null || $_GET['pn'] <=0){
+		$pn = 1;
+	}else{
+		$pn = $_GET['pn'];
+	}
+	$pn_count = 10; //페이지 개수
+	$start_pn = $pn_count * ($pn - 1);
+	$page_query = "LIMIT ".$pn_count." OFFSET ".$start_pn;
+	if(!$option){
+		$query = "SELECT * FROM board_fa WHERE deleted_at is null ORDER BY created_at DESC ".$page_query;
+		$query_count = "SELECT COUNT(*) as count FROM board_fa WHERE deleted_at is null ORDER BY created_at DESC";
+	}else if($option == 'title'){
+		$search = $_GET['search'];
+		$query = "SELECT * FROM board_fa WHERE title LIKE '%$search%' AND deleted_at is null ORDER BY created_at DESC ".$page_query;
+		$query_count = "SELECT COUNT(*) as count FROM board_fa WHERE title LIKE '%$search%' AND deleted_at is null ORDER BY created_at DESC";
+	}else if($option == 'search'){
+		if($_GET['position'] != null || $_GET['adrs'] || $_GET['age']){
+			if($_GET['position']){
+				$position_option = explode("|",$_GET['position']);
+				for ($i=0; $i < count($position_option); $i++) {
+					switch ($position_option[$i]) {
+						case '1':
+						$pos_option[$i] = "position LIKE '%1%'";break;
+						case '2':
+						$pos_option[$i] = "position LIKE '%2%'";break;
+						case '3':
+						$pos_option[$i] = "position LIKE '%3%'";break;
+						case '4':
+						$pos_option[$i] = "position LIKE '%4%'";break;
+						case '5':
+						$pos_option[$i] = "position LIKE '%5%'";break;
+						case '6':
+						$pos_option[$i] = "position LIKE '%6%'";break;
+						case '7':
+						$pos_option[$i] = "position LIKE '%7%'";break;
+						case '8':
+						$pos_option[$i] = "position LIKE '%8%'";break;
+						case '9':
+						$pos_option[$i] = "position LIKE '%9%'";break;
+					}
+				}
+				$search_position = " AND (".implode(" OR ", $pos_option).")";
+			}else{
+				$search_position = "";
+			}
+			if($_GET['adrs']){
+				$search_adrs = " AND adrs = ".$_GET['adrs'];
+			}else{
+				$search_adrs = "";
+			}
+			if($_GET['age'] == 0){
+				$search_age = "";
+			}else if($_GET['age'] <= 50){
+				$search_age = " AND age < ".$_GET['age'];
+			}else if($_GET['age'] == 51){
+				$search_age = " AND age >= 50";
+			}else{
+				$search_age = "";
+			}
+			$query = "SELECT * FROM board_fa WHERE deleted_at is null ".$search_position.$search_adrs.$search_age." ORDER BY created_at DESC ".$page_query;
+			$query_count = "SELECT COUNT(*) as count FROM board_fa WHERE deleted_at is null ".$search_position.$search_adrs.$search_age." ORDER BY created_at DESC";
+		}else{
+			$query = "SELECT * FROM board_fa WHERE deleted_at is null ORDER BY created_at DESC ".$page_query;
+			$query_count = "SELECT COUNT(*) as count FROM board_fa WHERE deleted_at is null ORDER BY created_at DESC";
+		}
+	}
+	$board_result = mysqli_query($conn, $query);
+	$count_result = mysqli_query($conn, $query_count);
+	$count_row = mysqli_fetch_array($count_result);
+	$page_count = ceil($count_row['count']/$pn_count);
+	if(!$option){
+		$page_url = "board.html?board=fa&pn=";
+	}else{
+		$page_url = "board.html?board=fa&option=".$option."&search=".$search."&pn=";
+	}
+	if($pn == 1){
+		$page_li = "<li class='page-item disabled'><a class='page-link' href='javascript:;'><i class='fas fa-angle-double-left'></i></a></li>";
+	}else{
+		$page_li = "<li class='page-item'><a class='page-link' href='".$page_url."1'><i class='fas fa-angle-double-left'></i></a></li>";
+	}
+	if($page_count < 5){
+		for ($i=1; $i<=$page_count; $i++) {
+			if($i != $pn){
+				$page_li = $page_li."<li class='page-item'><a class='page-link' href='".$page_url."$i'>$i</a></li>";
+			}else{
+				$page_li = $page_li."<li class='page-item disabled'><a class='page-link' href='javascript:;'>$i</a></li>";
+			}
+		}
+	}else{
+		if($pn <= 3){
+			for ($i=1; $i<=5; $i++) {
+				if($i != $pn){
+					$page_li = $page_li."<li class='page-item'><a class='page-link' href='".$page_url."$i'>$i</a></li>";
+				}else{
+					$page_li = $page_li."<li class='page-item disabled'><a class='page-link' href='javascript:;'>$i</a></li>";
+				}
+			}
+		}else if($pn >= $page_count - 2){	
+			for ($i=$page_count-4; $i<=$page_count; $i++) {
+				if($i != $pn){
+					$page_li = $page_li."<li class='page-item'><a class='page-link' href='".$page_url."$i'>$i</a></li>";
+				}else{
+					$page_li = $page_li."<li class='page-item disabled'><a class='page-link' href='javascript:;'>$i</a></li>";
+				}
+			}
+		}else{
+			for ($i=$pn -2; $i<=$pn+2; $i++) {
+				if($i != $pn){
+					$page_li = $page_li."<li class='page-item'><a class='page-link' href='".$page_url."$i'>$i</a></li>";
+				}else{
+					$page_li = $page_li."<li class='page-item disabled'><a class='page-link' href='javascript:;'>$i</a></li>";
+				}
+			}
+		}
+	}
+	if($pn == $page_count){
+		$page_li = $page_li."<li class='page-item disabled'><a class='page-link' href='javascript:;'><i class='fas fa-angle-double-right'></i></a></li>";
+	}else{
+		$page_li = $page_li."<li class='page-item'><a class='page-link' href='".$page_url."$page_count'><i class='fas fa-angle-double-right'></i></a></li>";
+	}
+?>
+<html>
+	<body>
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-12">
+						<h3 class="mb-5" style="vertical-align: middle;">FA 시장</h3>
+					</div>
+					<div class="col-md-2">
+						<a class="btn btn-primary" href="board.html?board=write&kind=fa" role="button">글쓰기</a>
+					</div>
+					<div class="col-md-2"></div>
+					<div class="col-md-6">
+						<form action="board.html" class="form-inline element-animate" id="search-form" method="get">
+							<!--<button class="btn btn-outline-primary dropdown-toggle col-md-2" id="search_option" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">선택</button>
+							<div class="dropdown-menu">
+								<a class="dropdown-item" href="javascript:;" onclick="chang_option('작성자','user')">작성자</a>
+								<a class="dropdown-item" href="javascript:;" onclick="chang_option('제목','title')">제목</a>
+								<a class="dropdown-item" href="javascript:;" onclick="chang_option('태그','tag')">태그</a>
+								<div role="separator" class="dropdown-divider"></div>
+								<a class="dropdown-item" href="javascript:;" onclick="chang_option('선택','')">취소</a>
+							</div>-->
+							<input type="hidden" name="board" value="fa">
+							<input type="hidden" id="option" name="option" value="title">
+							<input type="text" style="border:1px solid #dee2e6; border-right:0px;" name="search" class="form-control form-control-block search-input col-md-10" id="autocomplete" placeholder="제목으로 검색" required>
+							<button type="submit" class="btn btn-primary col-md-2">검색</button>		
+						</form>
+					</div>
+					<div class="col-md-2">
+						<a class="btn btn-primary" href="javascript:;" role="button" onclick="fa_search_option()">상세 검색</a>
+					</div>
+				</div><br>
+				<table class="table">
+					<thead>
+						<tr>
+							<th scope="col-2" style="width:5%">번호</th>
+							<th scope="col-2" style="width:15%">프로필</th>
+							<th scope="col-2" style="width:35%">제목</th>
+							<th scope="col-2" style="width:10%">작성자</th>
+							<th scope="col-2" style="width:25%">작성일</th>
+							<th scope="col-2" style="width:10%">조회수</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<th scope="row" style="vertical-align: middle;">공지</th>
+							<td style="vertical-align: middle"></td>
+							<td style="vertical-align: middle;color:red"><a href="notice.html?notice=fa" style="color:red;">※ FA 시장 공지사항 필독</a></td>
+							<td style="vertical-align: middle;">관리자(TRYOUT)</td>
+							<td style="vertical-align: middle;">2019-01-01 00:00:00에 작성됨</td>
+							<td style="vertical-align: middle;">-</td>
+						</tr>
+					<? 	if($board_result){
+							while($board_row = mysqli_fetch_array($board_result)){
+							$pos1 = "";
+							$pos2 = "";
+							$pos3 = "";
+							$pos4 = "";
+							$pos5 = "";
+							$pos6 = "";
+							$pos7 = "";
+							$pos8 = "";
+							$pos9 = "";
+							$writer_no = $board_row['user'];
+							$board_no = $board_row['no'];
+							$writer_result = mysqli_query($conn,"SELECT * FROM user where no='$writer_no'");
+							$writer_row = mysqli_fetch_array($writer_result);
+							$view_result = mysqli_query($conn,"SELECT * FROM board_fa_view where board='$board_no'");
+							$view_row = mysqli_fetch_array($view_result);
+							$position = explode("|",$board_row['position']);
+							for ($i=0; $i < count($position); $i++) {
+								switch ($position[$i]) {
+									case '1':
+									$pos1 = "투수 ";break;
+									case '2':
+									$pos2 = "포수 ";break;
+									case '3':
+									$pos3 = "1루수 ";break;
+									case '4':
+									$pos4 = "2루수 ";break;
+									case '5':
+									$pos5 = "3루수 ";break;
+									case '6':
+									$pos6 = "유격수 ";break;
+									case '7':
+									$pos7 = "좌익수 ";break;
+									case '8':
+									$pos8 = "중견수 ";break;
+									case '9':
+									$pos9 = "우익수 ";break;
+								}
+							}
+							if($board_row['adrs'] == 1){
+								$adrs = '서울';
+							}elseif($board_row['adrs'] == 2){
+								$adrs = '부산';
+							}elseif($board_row['adrs'] == 3){
+								$adrs = '대구';
+							}elseif($board_row['adrs'] == 4){
+								$adrs = '인천';
+							}elseif($board_row['adrs'] == 5){
+								$adrs = '광주';
+							}elseif($board_row['adrs'] == 6){
+								$adrs = '대전';
+							}elseif($board_row['adrs'] == 7){
+								$adrs = '울산';
+							}
+							?>
+						<tr>
+							<th scope="row" style="vertical-align: middle;"><? echo $board_row['no'];?></th>
+							<th style="vertical-align: middle;">
+							<? if ($board_row['img']){?>
+							<a href="board.html?board=fa&no=<? echo $board_row['no'];?>"><img src="<? echo $board_row['img'];?>" style="width:150px;height:150px;" class="img-thumbnail" alt="<? echo $board_row['name']?>"></a>
+							<? } else { ?>
+							<a href="board.html?board=fa&no=<? echo $board_row['no'];?>"><img class="img-thumbnail" style="width:100%" src="images/none_player_img.png" alt="<? echo $board_row['name']?>"></a>
+							<? } ?>
+							</th>
+							<td style="vertical-align: middle;">
+								<a href="board.html?board=fa&no=<? echo $board_row['no'];?>"><? echo $board_row['title'];?></a>
+							</td>
+							<td style="vertical-align: middle;"><a href="user.html?user=info&no=<? echo $writer_row['no'];?>"><? echo $writer_row['name'];?>(<? echo $writer_row['id'];?>)</a></td>
+							<? if ($board_row['created_at'] == $board_row['updated_at']){?>
+							<td style="vertical-align: middle;"><? echo $board_row['created_at'];?>에 작성됨</td>
+							<? } else {?>
+							<td style="vertical-align: middle;"><? echo $board_row['updated_at'];?>에 수정됨</td>
+							<? } ?>
+							<td scope="row" style="vertical-align: middle;"><? echo $view_row['views'];?></th>
+						</tr>
+						<? } 
+					}?>
+					</tbody>
+				</table>
+				<? if($page_count >= 1){?>
+				<hr>
+				<div class="row">
+					<div class="col-md-4"></div>
+					<div class="col-md-4">
+						<nav aria-label="Page navigation example" style="padding-left:15px">
+							<ul class="pagination">
+								<?=$page_li;?>
+							</ul>
+						</nav>
+					</div>
+					<div class="col-md-4"></div>
+				</div>
+				<? } ?>
+				<? 	mysqli_close($conn); ?>
+			</div>
+		</section>
+	</body>
+</html>

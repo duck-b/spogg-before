@@ -1,0 +1,65 @@
+<!DOCTYPE HTML>
+<html>
+<? 	include "dbconn.php";
+	$no = $_GET['no'];
+	$question_result = mysqli_query($conn,"SELECT * FROM question WHERE no = '$no'");
+	$question_row = mysqli_fetch_array($question_result);
+	mysqli_close($conn);
+	if($question_row['answer']){
+		$answer = $question_row['answer'];
+	}else{
+		$answer = "아직 답변이 없습니다. 최대한 빨리 답변 드리겠습니다.";
+	}
+?>
+<body onload="answer_contents()">
+	<section class="site-section">
+		<div class="container">
+			<div class="row">
+				<div class="col-lg-2"></div>
+				<div class="col-lg-8 col-md-12 mb-5 element-animate">
+					<div class="row">
+						<div class="col-md-12">
+							<h3 class="mb-5" style="vertical-align: middle;">답변</h3>
+						</div>
+						<table class="table table-bordered" style="vertical-align: middle;">
+							<thead>
+								<tr>
+									<th colspan="1" style="width:20%">문의 제목</th>
+									<td colspan="3" style="width:80%"><? echo $question_row['title'];?></td>
+								</tr>
+							</thead>
+							<tbody>
+								<form action="QuestionUpdateProc.php" method="post">
+									<tr>
+										<th colspan="1" style="width:20%">문의 내용</th>
+										<td colspan="3" style="width:80%">
+											<? echo $question_row['contents'];?>
+										</td>
+									</tr>
+									<tr>
+										<th colspan="1" style="width:20%">답변 내용</th>
+										<td colspan="3" style="width:80%">
+											<textarea class="form-control" style="resize: none;" name="contents" rows="8" id="contents" aria-label="With textarea"><? echo $question_row['answer'];?></textarea>
+											<input type="hidden" name="no" value="<? echo $no?>">
+										</td>
+									</tr>
+									<tr>
+										<td colspan="4" style="width:100%;text-align:center">
+											<? if(!$question_row['answer']){?>
+											<input type="submit" value="완료" class="btn btn-primary" onclick="insert()">
+											<? } else {?>
+											<input type="submit" value="수정" class="btn btn-danger" onclick="insert()">
+											<? } ?>
+										</td>
+									</tr>
+								</form>
+							</tbody>
+						</table>
+					</div>
+				</div>
+				<div class="col-lg-2"></div>
+			</div>
+		</div>
+	</section>
+  </body>
+</html>

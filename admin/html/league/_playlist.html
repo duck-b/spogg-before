@@ -1,0 +1,830 @@
+<!DOCTYPE HTML>
+<html>
+	<body>
+	<?
+		include "dbconn.php";
+		$play_no = $_GET['play'];
+		$query_play = "SELECT * FROM play WHERE no = '$play_no'";
+		$hp_result = mysqli_query($conn, $query_play);
+		$hp_row = mysqli_fetch_array($hp_result);
+		$hp_league_no = $hp_row['league'];
+		$hp_league_result = mysqli_query($conn,"SELECT * FROM league where no='$hp_league_no'");
+		$hp_league_row = mysqli_fetch_array($hp_league_result);
+		$hp_home_no = $hp_row['home_team'];
+		$hp_home_result = mysqli_query($conn,"SELECT * FROM team where no='$hp_home_no'");
+		$hp_home_row = mysqli_fetch_array($hp_home_result);
+		$hp_away_no = $hp_row['away_team'];
+		$hp_away_result = mysqli_query($conn,"SELECT * FROM team where no='$hp_away_no'");
+		$hp_away_row = mysqli_fetch_array($hp_away_result);
+		$link_home = "<a href='javascript:;' onclick='new_page(".$hp_home_no.")'>".$hp_home_row['name']."</a>";
+		$link_away = "<a href='javascript:;' onclick='new_page(".$hp_away_no.")'>".$hp_away_row['name']."</a>";
+		$player_no = $_SESSION['player_no'];
+		$ho_manager = mysqli_query($conn,"SELECT * FROM team_members WHERE team='$hp_home_no' AND player = '$player_no' AND (class = 1 OR class = 2)");
+		$ho_manager_check = mysqli_fetch_array($ho_manager);
+		$aw_manager = mysqli_query($conn,"SELECT * FROM team_members WHERE team='$hp_away_no' AND player = '$player_no' AND (class = 1 OR class = 2)");
+		$aw_manager_check = mysqli_fetch_array($aw_manager);
+		if($ho_manager_check){
+			$hoaw = "1";
+		}
+		if($aw_manager_check){
+			$hoaw = "0";
+		}
+		if($hp_row['kind'] == 1){
+			$kind = "리그 경기";
+		}else if($hp_row['kind'] == 2){
+			$kind = "토너먼트";
+		}else if($hp_row['kind'] == 3){
+			$kind = "연습 경기";
+		}
+	?>
+		<div class="row" style="text-align:center; border:1px solid #dee2e6;padding:10px; margin-bottom:10px">
+			<table style="width:100%">
+				<thead>
+					<tr>
+						<th scope="col" colspan="3"><? echo $kind?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td style="width:40%">
+							<?if($hp_home_row['img']){?>
+							<img src="<? echo $hp_home_row['img'];?>" style="width:50%;" class="img-thumbnail" alt="<? echo $hp_home_row['name']?>"><br><? echo $link_home;?><br>(Home)
+							<? } else {?>
+							<img class="img-thumbnail" style="width:50%;height:65%" src="images/none_team_img.png" alt="<? echo $hp_home_row['name']?>"><br><? echo $link_home;?><br>(Home)
+							<? } ?>
+						</td>
+						<td style="width:20%"><p style="font-size:200%">vs</p></td>
+						<td style="width:40%">
+							<?if($hp_away_row['img']){?>
+							<img src="<? echo $hp_away_row['img'];?>" style="width:50%;" class="img-thumbnail" alt="<? echo $hp_away_row['name']?>"><br><? echo $link_away?><br>(Away)
+							<? } else {?>
+							<img class="img-thumbnail" style="width:50%;height:65%" src="images/none_team_img.png" alt="<? echo $hp_away_row['name']?>"><br><? echo $link_away?><br>(Away)
+							<? } ?>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+			<? if(strtotime(date("Y-m-d H:i:s")) < strtotime($hp_row['play_datetime'])){?>
+			<table class="table table-bordered">
+				<thead>
+					<tr>
+						<th scope="col" colspan="4">경기 상세 정보</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<th scope="row" colspan="1">장소</th>
+						<td colspan="3"><? echo $hp_row['stadium'];?></td>
+					</tr>
+					<tr>
+						<th scope="row" colspan="1">경기 일시</th>
+						<td colspan="3"><? echo date( 'Y년 m월 d일 H시 i분', strtotime($hp_row['play_datetime']));?></td>
+					</tr>
+					<tr>
+						<th scope="row" colspan="1">리그 명</th>
+						<td colspan="1"><? echo $hp_league_row['name'];?></td>
+						<th colspan="1">경기 명</th>
+						<td colspan="1"><? echo $hp_row['name'];?></td>
+					</tr>
+					<tr>
+						<th scope="row" colspan="1">심판</th>
+						<td colspan="1"><? echo $hp_row['umpc'];?></td>
+						<th colspan="1">기록원</th>
+						<td colspan="1"><? echo $hp_row['scoa'];?></td>
+					</tr>
+				</tbody>
+			</table>
+			<? if($ho_manager_check != null || $aw_manager_check != null){?>
+			<div class="col-md-12" style="text-align:center">
+				<a class="btn btn-primary" href="javascritp:;" onclick="entry_page('<? echo $play_no?>','<? echo $hoaw;?>')">엔트리 작성</a>
+			</div>
+			<? } ?>
+			<? } else { ?>
+				<? 
+				$end_play_result = mysqli_query($conn,"SELECT COUNT(*) as count FROM play_end WHERE play='$play_no'");
+				$end_play_row = mysqli_fetch_array($end_play_result);
+				?>
+				<table class="table table-bordered">
+					<thead>
+						<tr>
+							<th scope="col" colspan="4">경기 상세 정보</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<th scope="row" colspan="1">장소</th>
+							<td colspan="3"><? echo $hp_row['stadium'];?></td>
+						</tr>
+						<tr>
+							<th scope="row" colspan="1">경기 일시</th>
+							<td colspan="3"><? echo date( 'Y년 m월 d일 H시 i분', strtotime($hp_row['play_datetime']));?></td>
+						</tr>
+						<tr>
+							<th scope="row" colspan="1">리그 명</th>
+							<td colspan="1"><? echo $hp_league_row['name'];?></td>
+							<th colspan="1">경기 명</th>
+							<td colspan="1"><? echo $hp_row['name'];?></td>
+						</tr>
+						<tr>
+							<th scope="row" colspan="1">심판</th>
+							<td colspan="1"><? echo $hp_row['umpc'];?></td>
+							<th colspan="1">기록원</th>
+							<td colspan="1"><? echo $hp_row['scoa'];?></td>
+						</tr>
+						<? if($end_play_row['count'] == 0){?>
+						<tr>
+							<th scope="row" colspan="1">경기 결과</th>
+							<? 
+							$start_play_result = mysqli_query($conn,"SELECT COUNT(*) as count FROM play_entry JOIN play_hit WHERE play_entry.play='$play_no' AND play_hit.entry = play_entry.no");
+							$start_play_row = mysqli_fetch_array($start_play_result);
+							if($start_play_row['count'] == 0){?>
+							<td colspan="3"><b style="color:red">경기 취소</b></td>
+							<? } else {?>
+							<td colspan="3"><b style="color:green">진행중</b></td>
+							<? } ?>
+						</tr>
+					</tbody>
+				</table>
+						<? } else {
+							$play_result = mysqli_query($conn,"SELECT team.name as name FROM play_result JOIN team WHERE play_result.play='$play_no' AND play_result.playresult = '1' AND play_result.team = team.no");
+							$play_row = mysqli_fetch_array($play_result);
+							if($play_row){
+								$team_result = "<b>".$play_row['name']."</b>";
+							}else{
+								$team_result = "-";
+							}
+						?>
+						<tr>
+							<th scope="row" colspan="1">종료 시간</th>
+							<td colspan="1"><? echo date( 'H시 i분', strtotime($play_row['end_play']));?> 경기 종료</td>
+							<th scope="row" colspan="1">승리 팀</th>
+							<td colspan="1"><? echo $team_result;?></td>
+						</tr>
+					</tbody>
+				</table>
+				<?
+				if(mb_strlen($hp_home_row['name'], 'UTF-8') <= 7){
+					$home_play_name = $hp_home_row['name'];
+				}else{
+					$home_play_name = mb_substr($hp_home_row['name'], 0, 6, 'UTF-8')."...";
+				}
+				if(mb_strlen($hp_away_row['name'], 'UTF-8') <= 7){
+					$away_play_name = $hp_away_row['name'];
+				}else{
+					$away_play_name = mb_substr($hp_away_row['name'], 0, 6, 'UTF-8')."...";
+				}
+				$home_play_result = mysqli_query($conn, "SELECT play_result.* FROM play_result WHERE play_result.play='$play_no' AND play_result.team='$hp_home_no'");
+				$home_play_row = mysqli_fetch_array($home_play_result);
+				$away_play_result = mysqli_query($conn,"SELECT play_result.* FROM play_result WHERE play_result.play='$play_no' AND play_result.team='$hp_away_no'");
+				$away_play_row = mysqli_fetch_array($away_play_result);
+				if($home_play_row['playresult'] == 1){
+					$home_team_result = "<a style='color:blue'>승</a>";
+					$home_text_color = "color:blue;";
+					$home_back_color = "background-color:blue;";
+				}else if($home_play_row['playresult'] == 2){
+					$home_team_result = "<a style='color:red'>패</a>";
+					$home_text_color = "color:red;";
+					$home_back_color = "background-color:red;";
+				}else if($home_play_row['playresult'] == 3){
+					$home_team_result = "<a style='color:green'>무</a>";
+					$home_text_color = "color:green;";
+					$home_back_color = "background-color:green;";
+				}
+				if($away_play_row['playresult'] == 1){
+					$away_team_result = "<a style='color:blue'>승</a>";
+					$away_text_color = "color:blue;";
+					$away_back_color = "background-color:blue;";
+				}else if($away_play_row['playresult'] == 2){
+					$away_team_result = "<a style='color:red'>패</a>";
+					$away_text_color = "color:red;";
+					$away_back_color = "background-color:red;";
+				}else if($away_play_row['playresult'] == 3){
+					$away_team_result = "<a style='color:green'>무</a>";
+					$away_text_color = "color:green;";
+					$away_back_color = "background-color:green;";
+				}
+				$home_inning_query = "";
+				for($i=1; $i<= $home_play_row['inning']; $i++) {
+					if($i == $home_play_row['inning']){
+						$home_inning_query = $home_inning_query."count(CASE WHEN play_hit.inning = ".$i." AND play_run.result_base = 4 THEN 1 END) AS inning".$i." ";
+					}else{
+						$home_inning_query = $home_inning_query."count(CASE WHEN play_hit.inning = ".$i." AND play_run.result_base = 4 THEN 1 END) AS inning".$i.", ";
+					}
+				}
+				$home_score_query = "SELECT ".$home_inning_query."
+				FROM play_result JOIN play_entry JOIN play_hit JOIN play_run 
+				WHERE play_entry.hoaw = '1' AND play_entry.no = play_hit.entry AND play_hit.no = play_run.play_hit AND play_result.play='$play_no' AND play_result.team='$hp_home_no'";
+				$home_score_result = mysqli_query($conn, $home_score_query);
+				$home_score_row = mysqli_fetch_array($home_score_result);
+				$away_inning_query = "";
+				for($i=1; $i<= $away_play_row['inning']; $i++) {
+					if($i == $away_play_row['inning']){
+						$away_inning_query = $away_inning_query."count(CASE WHEN play_hit.inning = ".$i." AND play_run.result_base = 4 THEN 1 END) AS inning".$i." ";
+					}else{
+						$away_inning_query = $away_inning_query."count(CASE WHEN play_hit.inning = ".$i." AND play_run.result_base = 4 THEN 1 END) AS inning".$i.", ";
+					}
+				}
+				$away_score_query = "SELECT ".$away_inning_query."
+				FROM play_result JOIN play_entry JOIN play_hit JOIN play_run 
+				WHERE play_entry.hoaw = '0' AND play_entry.no = play_hit.entry AND play_hit.no = play_run.play_hit AND play_result.play='$play_no' AND play_result.team='$hp_away_no'";
+				$away_score_result = mysqli_query($conn, $away_score_query);
+				$away_score_row = mysqli_fetch_array($away_score_result);
+				if($home_play_row['hit'] >= 11){
+					$home_text_hit = "col-md-2";
+					$home_bar_hit = "col-md-10";
+				}else{
+					$home_text_hit = "col-md-".(12 - $home_play_row['hit']);
+					if($home_play_row['hit'] != 0){
+						$home_bar_hit = "col-md-".$home_play_row['hit'];
+					}
+				}
+				if($away_play_row['hit'] >= 11){
+					$away_text_hit = "col-md-2";
+					$away_bar_hit = "col-md-10";
+				}else{
+					if($away_play_row['hit'] > 1){
+						$away_text_hit = "col-md-".(12 - $away_play_row['hit']);
+						$away_bar_hit = "col-md-".$away_play_row['hit'];
+					}else if($away_play_row['hit'] == 1){
+						$away_text_hit ="col-md-10";
+						$away_bar_hit ="col-md-1";
+					}else{
+						$away_text_hit = "col-md-".(12 - $away_play_row['hit']);
+					}
+				}
+				if($home_play_row['hr'] >= 11){
+					$home_text_hr = "col-md-2";
+					$home_bar_hr = "col-md-10";
+				}else{
+					$home_text_hr = "col-md-".(12 - $home_play_row['hr']);
+					if($home_play_row['hr'] != 0){
+						$home_bar_hr = "col-md-".$home_play_row['hr'];
+					}
+				}
+				if($away_play_row['hr'] >= 11){
+					$away_text_hr = "col-md-2";
+					$away_bar_hr = "col-md-10";
+				}else{
+					if($away_play_row['hr'] > 1){
+						$away_text_hr = "col-md-".(12 - $away_play_row['hr']);
+						$away_bar_hr = "col-md-".$away_play_row['hr'];
+					}else if($away_play_row['hr'] == 1){
+						$away_text_hr ="col-md-10";
+						$away_bar_hr ="col-md-1";
+					}else{
+						$away_text_hr = "col-md-".(12 - $away_play_row['hr']);
+					}
+				}
+				if($home_play_row['sb'] >= 11){
+					$home_text_sb = "col-md-2";
+					$home_bar_sb = "col-md-10";
+				}else{
+					$home_text_sb = "col-md-".(12 - $home_play_row['sb']);
+					if($home_play_row['sb'] != 0){
+						$home_bar_sb = "col-md-".$home_play_row['sb'];
+					}
+				}
+				if($away_play_row['sb'] >= 11){
+					$away_text_sb = "col-md-2";
+					$away_bar_sb = "col-md-10";
+				}else{
+					if($away_play_row['sb'] > 1){
+						$away_text_sb = "col-md-".(12 - $away_play_row['sb']);
+						$away_bar_sb = "col-md-".$away_play_row['sb'];
+					}else if($away_play_row['sb'] == 1){
+						$away_text_sb ="col-md-10";
+						$away_bar_sb ="col-md-1";
+					}else{
+						$away_text_sb = "col-md-".(12 - $away_play_row['sb']);
+					}
+				}
+				if($home_play_row['so'] >= 11){
+					$home_text_so = "col-md-2";
+					$home_bar_so = "col-md-10";
+				}else{
+					$home_text_so = "col-md-".(12 - $home_play_row['so']);
+					if($home_play_row['so'] != 0){
+						$home_bar_so = "col-md-".$home_play_row['so'];
+					}
+				}
+				if($away_play_row['so'] >= 11){
+					$away_text_so = "col-md-2";
+					$away_bar_so = "col-md-10";
+				}else{
+					if($away_play_row['so'] > 1){
+						$away_text_so = "col-md-".(12 - $away_play_row['so']);
+						$away_bar_so = "col-md-".$away_play_row['so'];
+					}else if($away_play_row['so'] == 1){
+						$away_text_so ="col-md-10";
+						$away_bar_so ="col-md-1";
+					}else{
+						$away_text_so = "col-md-".(12 - $away_play_row['so']);
+					}
+				}
+				if($home_play_row['error'] >= 11){
+					$home_text_error = "col-md-2";
+					$home_bar_error = "col-md-10";
+				}else{
+					$home_text_error = "col-md-".(12 - $home_play_row['error']);
+					if($home_play_row['error'] != 0){
+						$home_bar_error = "col-md-".$home_play_row['error'];
+					}
+				}
+				if($away_play_row['error'] >= 11){
+					$away_text_error = "col-md-2";
+					$away_bar_error = "col-md-10";
+				}else{
+					if($away_play_row['error'] > 1){
+						$away_text_error = "col-md-".(12 - $away_play_row['error']);
+						$away_bar_error = "col-md-".$away_play_row['error'];
+					}else if($away_play_row['error'] == 1){
+						$away_text_error ="col-md-10";
+						$away_bar_error ="col-md-1";
+					}else{
+						$away_text_error = "col-md-".(12 - $away_play_row['error']);
+					}
+				}
+				?>
+				<table class="table table-bordered">
+					<thead>
+						<tr>
+							<th scope="col" colspan="15">스코어 보드</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<th scope="row" colspan="1" style="width:16%">Team</th>
+							<td colspan="1" style="width:6%">1</td>
+							<td colspan="1" style="width:6%">2</td>
+							<td colspan="1" style="width:6%">3</td>
+							<td colspan="1" style="width:6%">4</td>
+							<td colspan="1" style="width:6%">5</td>
+							<td colspan="1" style="width:6%">6</td>
+							<td colspan="1" style="width:6%">7</td>
+							<td colspan="1" style="width:6%">8</td>
+							<td colspan="1" style="width:6%">9</td>
+							<th colspan="1" style="width:6%">R</td>
+							<th colspan="1" style="width:6%">H</td>
+							<th colspan="1" style="width:6%">E</td>
+							<th colspan="1" style="width:6%">B</td>
+							<th colspan="1" style="width:6%">-</td>
+						</tr>
+						<tr>
+							<th scope="row" colspan="1" style="width:16%;padding-left:0px;padding-right:0px"><? echo $away_play_name;?></th>
+							<td colspan="1"><? echo $away_score_row['inning1']?></td>
+							<td colspan="1"><? echo $away_score_row['inning2']?></td>
+							<td colspan="1"><? echo $away_score_row['inning3']?></td>
+							<td colspan="1"><? echo $away_score_row['inning4']?></td>
+							<td colspan="1"><? echo $away_score_row['inning5']?></td>
+							<td colspan="1"><? echo $away_score_row['inning6']?></td>
+							<td colspan="1"><? echo $away_score_row['inning7']?></td>
+							<td colspan="1"><? echo $away_score_row['inning8']?></td>
+							<td colspan="1"><? echo $away_score_row['inning9']?></td>
+							<th colspan="1"><? echo $away_play_row['score'];?></td>
+							<th colspan="1"><? echo $away_play_row['hit'] + $away_play_row['hr'];?></td>
+							<th colspan="1"><? echo $away_play_row['error'];?></td>
+							<th colspan="1"><? echo $away_play_row['b4'] + $away_play_row['hbp'];?></td>
+							<th colspan="1"><? echo $away_team_result;?></td>
+						</tr>
+						<tr>
+							<th scope="row" colspan="1" style="width:16%;padding-left:0px;padding-right:0px"><? echo $home_play_name;?></th>
+							<td colspan="1"><? echo $home_score_row['inning1']?></td>
+							<td colspan="1"><? echo $home_score_row['inning2']?></td>
+							<td colspan="1"><? echo $home_score_row['inning3']?></td>
+							<td colspan="1"><? echo $home_score_row['inning4']?></td>
+							<td colspan="1"><? echo $home_score_row['inning5']?></td>
+							<td colspan="1"><? echo $home_score_row['inning6']?></td>
+							<td colspan="1"><? echo $home_score_row['inning7']?></td>
+							<td colspan="1"><? echo $home_score_row['inning8']?></td>
+							<td colspan="1"><? echo $home_score_row['inning9']?></td>
+							<th colspan="1"><? echo $home_play_row['score'];?></td>
+							<th colspan="1"><? echo $home_play_row['hit'] + $home_play_row['hr'];?></td>
+							<th colspan="1"><? echo $home_play_row['error'];?></td>
+							<th colspan="1"><? echo $home_play_row['b4'] + $home_play_row['hbp'];?></td>
+							<th colspan="1"><? echo $home_team_result;?></td>
+						</tr>
+					</tbody>
+				</table>
+				<table class="table table-bordered">
+					<thead>
+						<tr>
+							<th scope="col" colspan="3">경기 요약</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<th colspan="1" class="play_summary_home" style="border:0px"><? echo $hp_home_row['name'];?></th>
+							<td colspan="1" class="play_summary_name" style="border:0px"></td>
+							<th colspan="1" class="play_summary_away" style="border:0px"><? echo $hp_away_row['name'];?></th>
+						</tr>
+						<tr>
+							<th colspan="1" class="play_summary_home" style="border:0px">
+								<div class="row">
+									<div class="<?=$home_text_hit?>" style="<?=$home_text_color?>"><? echo $home_play_row['hit'];?></div>
+									<? if($home_play_row['hit'] != 0){ ?>
+									<div class="<?=$home_bar_hit?>" style="<?=$home_back_color?>">　</div>
+									<? } ?>
+								</div>
+							</th>
+							<td colspan="1" class="play_summary_name" style="border:0px">안타</td>
+							<th colspan="1" class="play_summary_away" style="border:0px">
+								<div class="row">
+									<? if($away_play_row['hit'] != 0){ ?>
+									<div class="<?=$away_bar_hit?>" style="<?=$away_back_color?>">　</div>
+									<? } ?>
+									<div class="<?=$away_text_hit?>" style="<?=$away_text_color?>"><? echo $away_play_row['hit'];?></div>
+								</div>
+							</th>
+						</tr>
+						<tr>
+							<th colspan="1" class="play_summary_home" style="border:0px">
+								<div class="row">
+									<div class="<?=$home_text_hr?>" style="<?=$home_text_color?>"><? echo $home_play_row['hr'];?></div>
+									<? if($home_play_row['hr'] != 0){ ?>
+									<div class="<?=$home_bar_hr?>" style="<?=$home_back_color?>">　</div>
+									<? } ?>
+								</div>
+							</th>
+							<td colspan="1" class="play_summary_name" style="border:0px">홈런</td>
+							<th colspan="1" class="play_summary_away" style="border:0px">
+								<div class="row">
+									<? if($away_play_row['hr'] != 0){ ?>
+									<div class="<?=$away_bar_hr?>" style="<?=$away_back_color?>">　</div>
+									<? } ?>
+									<div class="<?=$away_text_hr?>" style="<?=$away_text_color?>"><? echo $away_play_row['hr'];?></div>
+								</div>
+							</th>
+						</tr>
+						<tr>
+							<th colspan="1" class="play_summary_home" style="border:0px">
+								<div class="row">
+									<div class="<?=$home_text_sb?>" style="<?=$home_text_color?>"><? echo $home_play_row['sb'];?></div>
+									<? if($home_play_row['sb'] != 0){ ?>
+									<div class="<?=$home_bar_sb?>" style="<?=$home_back_color?>">　</div>
+									<? } ?>
+								</div>
+							</th>
+							<td colspan="1" class="play_summary_name" style="border:0px">도루</td>
+							<th colspan="1" class="play_summary_away" style="border:0px">
+								<div class="row">
+									<? if($away_play_row['sb'] != 0){ ?>
+									<div class="<?=$away_bar_sb?>" style="<?=$away_back_color?>">　</div>
+									<? } ?>
+									<div class="<?=$away_text_sb?>" style="<?=$away_text_color?>"><? echo $away_play_row['sb'];?></div>
+								</div>
+							</th>
+						</tr>
+						<tr>
+							<th colspan="1" class="play_summary_home" style="border:0px">
+								<div class="row">
+									<div class="<?=$home_text_so?>" style="<?=$home_text_color?>"><? echo $home_play_row['so'];?></div>
+									<? if($home_play_row['so'] != 0){ ?>
+									<div class="<?=$home_bar_so?>" style="<?=$home_back_color?>">　</div>
+									<? } ?>
+								</div>
+							</th>
+							<td colspan="1" class="play_summary_name" style="border:0px">삼진</td>
+							<th colspan="1" class="play_summary_away" style="border:0px">
+								<div class="row">
+									<? if($away_play_row['so'] != 0){ ?>
+									<div class="<?=$away_bar_so?>" style="<?=$away_back_color?>">　</div>
+									<? } ?>
+									<div class="<?=$away_text_so?>" style="<?=$away_text_color?>"><? echo $away_play_row['so'];?></div>
+								</div>
+							</th>
+						</tr>
+						<tr>
+							<th colspan="1" class="play_summary_home" style="border:0px">
+								<div class="row">
+									<div class="<?=$home_text_error?>" style="<?=$home_text_color?>"><? echo $home_play_row['error'];?></div>
+									<? if($home_play_row['error'] != 0){ ?>
+									<div class="<?=$home_bar_error?>" style="<?=$home_back_color?>">　</div>
+									<? } ?>
+								</div>
+							</th>
+							<td colspan="1" class="play_summary_name" style="border:0px">실책</td>
+							<th colspan="1" class="play_summary_away" style="border:0px">
+								<div class="row">
+									<? if($away_play_row['error'] != 0){ ?>
+									<div class="<?=$away_bar_error?>" style="<?=$away_back_color?>">　</div>
+									<? } ?>
+									<div class="<?=$away_text_error?>" style="<?=$away_text_color?>"><? echo $away_play_row['error'];?></div>
+								</div>
+							</th>
+						</tr>
+					</tbody>
+				</table>
+				<b><? echo $hp_home_row['name'];?> 타자 기록</b>
+				<table class="table table-striped table-bordered" style="font-size:80%;">
+					<thead>
+						<tr>
+							<th colspan="2" style="padding:0px;">선수</th>
+							<td colspan="1" style="padding:0px;">1</td>
+							<td colspan="1" style="padding:0px;">2</td>
+							<td colspan="1" style="padding:0px;">3</td>
+							<td colspan="1" style="padding:0px;">4</td>
+							<td colspan="1" style="padding:0px;">5</td>
+							<td colspan="1" style="padding:0px;">6</td>
+							<td colspan="1" style="padding:0px;">7</td>
+							<td colspan="1" style="padding:0px;">8</td>
+							<td colspan="1" style="padding:0px;">9</td>
+							<th colspan="1" style="padding:0px;">타수</th>
+							<th colspan="1" style="padding:0px;">안타</th>
+							<th colspan="1" style="padding:0px;">타점</th>
+							<th colspan="1" style="padding:0px;">득점</th>
+						</tr>
+					</thead>
+					<tbody>
+						<? $home_hit_query = "SELECT user.name as name, team_members.back_num as back_num, play_entry.position as position,play_entry.no as entry_no 
+						 FROM user JOIN player JOIN team_members JOIN play_entry 
+						 WHERE user.no = player.user AND player.no = team_members.player AND team_members.no = play_entry.team_member AND team_members.team = '$hp_home_no' AND play_entry.play = '$play_no' AND play_entry.turn != 0 ORDER BY play_entry.turn ASC , play_entry.created_at ASC";
+						$home_hit_result = mysqli_query($conn, $home_hit_query);
+						while($home_hit_row = mysqli_fetch_array($home_hit_result)){
+						if($home_hit_row['position'] == 2){
+							$position = "C";
+						}else if($home_hit_row['position'] == 3){
+							$position = "1B";
+						}else if($home_hit_row['position'] == 4){
+							$position = "2B";
+						}else if($home_hit_row['position'] == 5){
+							$position = "3B";
+						}else if($home_hit_row['position'] == 6){
+							$position = "SS";
+						}else if($home_hit_row['position'] == 7){
+							$position = "LF";
+						}else if($home_hit_row['position'] == 8){
+							$position = "CF";
+						}else if($home_hit_row['position'] == 9){
+							$position = "RF";
+						}else if($home_hit_row['position'] == 10){
+							$position = "DH";
+						}
+						$entry_no = $home_hit_row['entry_no'];
+						$entry_change_result = mysqli_query($conn, "SELECT * FROM play_entry_change WHERE play_entry='$entry_no' AND in_out='1'");
+						$entry_change_row = mysqli_fetch_array($entry_change_result);
+						if($entry_change_row){
+							$position = "교";
+						}
+						?>
+						<tr>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $position;?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $home_hit_row['name']?>(<? echo $home_hit_row['back_num']?>)</th>
+							<?
+							$player_inning_result = mysqli_query($conn, "SELECT * FROM play_hit WHERE entry = '$entry_no'");
+							$j = 0;
+							$player_inning = "";
+							while($player_inning_row = mysqli_fetch_array($player_inning_result)){
+								$situation_hit = $player_inning_row['situation_hit'];
+								include("record_kr.php");
+								if($j != $player_inning_row['inning']){
+									for($i=$j+1; $i<=$player_inning_row['inning']; $i++){
+										if($i == $player_inning_row['inning']){
+											$player_inning = $player_inning."<td colspan='1' style='padding:0px;vertical-align:middle'>".$situation_hit_kr."</td>";
+										}else{
+											$player_inning = $player_inning."<td colspan='1' style='padding:0px;vertical-align:middle'>　</td>";
+										}
+									}
+									$j = $player_inning_row['inning'];
+								}else{
+									$player_inning = substr($player_inning,0,-5);
+									$player_inning = $player_inning."<br>".$situation_hit_kr."</td>";
+								}
+							}
+							if($j < 9){
+								for($x=1; $x<=9-$j; $x++){
+									$player_inning = $player_inning."<td colspan='1' style='padding:0px;vertical-align:middle'>　</td>";
+								}
+							}
+							echo $player_inning;
+							$home_hit_re_result = mysqli_query($conn, "SELECT * FROM play_result_hit WHERE entry='$entry_no'");
+							$home_hit_re_row = mysqli_fetch_array($home_hit_re_result);?>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $home_hit_re_row['at_bat']?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $home_hit_re_row['hit1'] + $home_hit_re_row['hit2'] + $home_hit_re_row['hit3'] + $home_hit_re_row['hr'];?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $home_hit_re_row['rbi']?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $home_hit_re_row['rs']?></th>
+						</tr>
+					<? } ?>
+					</tbody>
+				</table>
+				<b><? echo $hp_away_row['name'];?> 타자 기록</b>
+				<table class="table table-striped table-bordered" style="font-size:80%;">
+					<thead>
+						<tr>
+							<th colspan="2" style="padding:0px;">선수</th>
+							<td colspan="1" style="padding:0px;">1</td>
+							<td colspan="1" style="padding:0px;">2</td>
+							<td colspan="1" style="padding:0px;">3</td>
+							<td colspan="1" style="padding:0px;">4</td>
+							<td colspan="1" style="padding:0px;">5</td>
+							<td colspan="1" style="padding:0px;">6</td>
+							<td colspan="1" style="padding:0px;">7</td>
+							<td colspan="1" style="padding:0px;">8</td>
+							<td colspan="1" style="padding:0px;">9</td>
+							<th colspan="1" style="padding:0px;">타수</th>
+							<th colspan="1" style="padding:0px;">안타</th>
+							<th colspan="1" style="padding:0px;">타점</th>
+							<th colspan="1" style="padding:0px;">득점</th>
+						</tr>
+					</thead>
+					<tbody>
+						<? $away_hit_query = "SELECT user.name as name, team_members.back_num as back_num, play_entry.position as position,play_entry.no as entry_no 
+						 FROM user JOIN player JOIN team_members JOIN play_entry 
+						 WHERE user.no = player.user AND player.no = team_members.player AND team_members.no = play_entry.team_member AND team_members.team = '$hp_away_no' AND play_entry.play = '$play_no' AND play_entry.turn != 0 ORDER BY play_entry.turn ASC , play_entry.created_at ASC";
+						$away_hit_result = mysqli_query($conn, $away_hit_query);
+						while($away_hit_row = mysqli_fetch_array($away_hit_result)){
+						if($away_hit_row['position'] == 2){
+							$position = "C";
+						}else if($away_hit_row['position'] == 3){
+							$position = "1B";
+						}else if($away_hit_row['position'] == 4){
+							$position = "2B";
+						}else if($away_hit_row['position'] == 5){
+							$position = "3B";
+						}else if($away_hit_row['position'] == 6){
+							$position = "SS";
+						}else if($away_hit_row['position'] == 7){
+							$position = "LF";
+						}else if($away_hit_row['position'] == 8){
+							$position = "CF";
+						}else if($away_hit_row['position'] == 9){
+							$position = "RF";
+						}else if($away_hit_row['position'] == 10){
+							$position = "DH";
+						}
+						$entry_no = $away_hit_row['entry_no'];
+						$entry_change_result = mysqli_query($conn, "SELECT * FROM play_entry_change WHERE play_entry='$entry_no' AND in_out='1'");
+						$entry_change_row = mysqli_fetch_array($entry_change_result);
+						if($entry_change_row){
+							$position = "교";
+						}
+						?>
+						<tr>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $position;?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $away_hit_row['name']?>(<? echo $away_hit_row['back_num']?>)</th>
+							<?
+							$player_inning_result = mysqli_query($conn, "SELECT * FROM play_hit WHERE entry = '$entry_no'");
+							$j = 0;
+							$player_inning = "";
+							while($player_inning_row = mysqli_fetch_array($player_inning_result)){
+								$situation_hit = $player_inning_row['situation_hit'];
+								include("record_kr.php");
+								if($j != $player_inning_row['inning']){
+									for($i=$j+1; $i<=$player_inning_row['inning']; $i++){
+										if($i == $player_inning_row['inning']){
+											$player_inning = $player_inning."<td colspan='1' style='padding:0px;vertical-align:middle'>".$situation_hit_kr."</td>";
+										}else{
+											$player_inning = $player_inning."<td colspan='1' style='padding:0px;vertical-align:middle'>　</td>";
+										}
+									}
+									$j = $player_inning_row['inning'];
+								}else{
+									$player_inning = substr($player_inning,0,-5);
+									$player_inning = $player_inning."/<br>".$situation_hit_kr."</td>";
+								}
+							}
+							if($j < 9){
+								for($x=1; $x<=9-$j; $x++){
+									$player_inning = $player_inning."<td colspan='1' style='padding:0px;vertical-align:middle'>　</td>";
+								}
+							}
+							echo $player_inning;
+							$away_hit_re_result = mysqli_query($conn, "SELECT * FROM play_result_hit WHERE entry='$entry_no'");
+							$away_hit_re_row = mysqli_fetch_array($away_hit_re_result);?>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $away_hit_re_row['at_bat']?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $away_hit_re_row['hit1'] + $away_hit_re_row['hit2'] + $away_hit_re_row['hit3'] + $away_hit_re_row['hr'];?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $away_hit_re_row['rbi']?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $away_hit_re_row['rs']?></th>
+						</tr>
+					<? } ?>
+					</tbody>
+				</table>
+				<b><? echo $hp_home_row['name'];?> 투수 기록</b>
+				<table class="table table-striped table-bordered" style="font-size:80%;">
+					<thead>
+						<tr>
+							<th colspan="1" style="padding:0px;width:14%">선수</th>
+							<th colspan="1" style="padding:0px;width:6%">결과</th>
+							<td colspan="1" style="padding:0px;width:10%">이닝</td>
+							<td colspan="1" style="padding:0px;width:10%">투구수</td>
+							<td colspan="1" style="padding:0px;width:10%">피안타</td>
+							<td colspan="1" style="padding:0px;width:10%">4사</td>
+							<td colspan="1" style="padding:0px;width:10%">피홈런</td>
+							<td colspan="1" style="padding:0px;width:10%">탈삼진</td>
+							<th colspan="1" style="padding:0px;width:10%">자책</th>
+							<th colspan="1" style="padding:0px;width:10%">실점</th>
+						</tr>
+					</thead>
+					<tbody>
+					<? $home_pic_query = "SELECT user.name as name, team_members.back_num as back_num, play_entry.no as entry_no 
+						 FROM user JOIN player JOIN team_members JOIN play_entry 
+						 WHERE user.no = player.user AND player.no = team_members.player AND team_members.no = play_entry.team_member AND team_members.team = '$hp_home_no' AND play_entry.play = '$play_no' AND play_entry.position = 1 ORDER BY play_entry.turn ASC , play_entry.created_at ASC";
+						$home_pic_result = mysqli_query($conn, $home_pic_query);
+						while($home_pic_row = mysqli_fetch_array($home_pic_result)){
+						$entry_no = $home_pic_row['entry_no'];
+						$home_pic_re_result = mysqli_query($conn, "SELECT * FROM play_result_pic WHERE entry='$entry_no'");
+						$home_pic_re_row = mysqli_fetch_array($home_pic_re_result);
+						$pic_result_no = $home_pic_re_row['no'];
+						$pic_re_result = mysqli_query($conn, "SELECT * FROM play_result_picr WHERE play_result_pic='$pic_result_no'");
+						$pic_re_row = mysqli_fetch_array($pic_re_result);
+						if($pic_re_row['pic_result'] == 1){
+							$pic_re = "승";
+						}else if($pic_re_row['pic_result'] == 2){
+							$pic_re = "패";
+						}else if($pic_re_row['pic_result'] == 3){
+							$pic_re = "세";
+						}else if($pic_re_row['pic_result'] == 4){
+							$pic_re = "홀";
+						}
+						
+						$h_inning = ($home_pic_re_row['inning'] - ($home_pic_re_row['inning'] % 3)) / 3;
+						if($home_pic_re_row['inning'] % 3 == 0){
+							$f_inning = "";
+						}else if($home_pic_re_row['inning'] % 3 == 1){
+							$f_inning = "⅓";
+						}else if($home_pic_re_row['inning'] % 3 == 2){
+							$f_inning = "⅔";
+						}
+						?>
+						<tr>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $home_pic_row['name']?>(<? echo $home_pic_row['back_num']?>)</th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $pic_re;?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $h_inning."".$f_inning;?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $home_pic_re_row['pitcher_count'];?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $home_pic_re_row['hit'];?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $home_pic_re_row['b4'];?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $home_pic_re_row['hr'];?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $home_pic_re_row['so'];?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $home_pic_re_row['er'];?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $home_pic_re_row['er'] + $home_pic_re_row['uer'];?></th>
+						</tr>
+					<? } ?>
+					</tbody>
+				</table>
+				<b><? echo $hp_away_row['name'];?> 투수 기록</b>
+				<table class="table table-striped table-bordered" style="font-size:80%;">
+					<thead>
+						<tr>
+							<th colspan="1" style="padding:0px;width:14%">선수</th>
+							<th colspan="1" style="padding:0px;width:6%">결과</th>
+							<td colspan="1" style="padding:0px;width:10%">이닝</td>
+							<td colspan="1" style="padding:0px;width:10%">투구수</td>
+							<td colspan="1" style="padding:0px;width:10%">피안타</td>
+							<td colspan="1" style="padding:0px;width:10%">4사</td>
+							<td colspan="1" style="padding:0px;width:10%">피홈런</td>
+							<td colspan="1" style="padding:0px;width:10%">탈삼진</td>
+							<th colspan="1" style="padding:0px;width:10%">자책</th>
+							<th colspan="1" style="padding:0px;width:10%">실점</th>
+						</tr>
+					</thead>
+					<tbody>
+					<? $away_pic_query = "SELECT user.name as name, team_members.back_num as back_num, play_entry.no as entry_no 
+						 FROM user JOIN player JOIN team_members JOIN play_entry 
+						 WHERE user.no = player.user AND player.no = team_members.player AND team_members.no = play_entry.team_member AND team_members.team = '$hp_away_no' AND play_entry.play = '$play_no' AND play_entry.position = 1 ORDER BY play_entry.turn ASC , play_entry.created_at ASC";
+						$away_pic_result = mysqli_query($conn, $away_pic_query);
+						while($away_pic_row = mysqli_fetch_array($away_pic_result)){
+						$entry_no = $away_pic_row['entry_no'];
+						$away_pic_re_result = mysqli_query($conn, "SELECT * FROM play_result_pic WHERE entry='$entry_no'");
+						$away_pic_re_row = mysqli_fetch_array($away_pic_re_result);
+						$pic_result_no = $away_pic_re_row['no'];
+						$pic_re_result = mysqli_query($conn, "SELECT * FROM play_result_picr WHERE play_result_pic='$pic_result_no'");
+						$pic_re_row = mysqli_fetch_array($pic_re_result);
+						if($pic_re_row['pic_result'] == 1){
+							$pic_re = "승";
+						}else if($pic_re_row['pic_result'] == 2){
+							$pic_re = "패";
+						}else if($pic_re_row['pic_result'] == 3){
+							$pic_re = "세";
+						}else if($pic_re_row['pic_result'] == 4){
+							$pic_re = "홀";
+						}
+						
+						$h_inning = ($away_pic_re_row['inning'] - ($away_pic_re_row['inning'] % 3)) / 3;
+						if($away_pic_re_row['inning'] % 3 == 0){
+							$f_inning = "";
+						}else if($away_pic_re_row['inning'] % 3 == 1){
+							$f_inning = "⅓";
+						}else if($away_pic_re_row['inning'] % 3 == 2){
+							$f_inning = "⅔";
+						}
+						?>
+						<tr>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $away_pic_row['name']?>(<? echo $away_pic_row['back_num']?>)</th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $pic_re;?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $h_inning."".$f_inning;?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $away_pic_re_row['pitcher_count'];?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $away_pic_re_row['hit'];?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $away_pic_re_row['b4'];?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $away_pic_re_row['hr'];?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $away_pic_re_row['so'];?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $away_pic_re_row['er'];?></th>
+							<th colspan="1" style="padding:0px;vertical-align:middle"><? echo $away_pic_re_row['er'] + $away_pic_re_row['uer'];?></th>
+						</tr>
+					<? } ?>
+					</tbody>
+				</table>
+				<? } ?>
+			<? } ?>
+		</div>
+	<? mysqli_close($conn); ?>
+	</body>
+</html>

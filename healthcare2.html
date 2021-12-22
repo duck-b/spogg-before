@@ -1,0 +1,413 @@
+<? include("header/header.html");?>
+<? include("header/menu.html"); ?>
+<?
+if(!$user_no){
+	echo "<script>alert('로그인이 필요한 기능입니다.');";
+	echo "window.location.replace('login.html');</script>";
+}else{
+    $isMobile = 0;
+
+    $mobileos = ["iPhone","iPod","Android","BlackBerry","Windows CE","Nokia","Webos","Opera Mini","SonyEricsson","Opera Mobi","IEMobile"];
+
+    for($i=0 ; $i<sizeof($mobileos); $i++) {
+        if(strpos($_SERVER['HTTP_USER_AGENT'],$mobileos[$i]) !== false) {
+            if(strpos($_SERVER['HTTP_USER_AGENT'],"iPhone") !== false) {
+                $isIphone = 1;
+            }
+            $isMobile = 1;
+            break;
+        }
+    }
+	include "dbconn.php";
+	$player_result = mysqli_query($conn,"SELECT * FROM user_player WHERE user='$user_no'");
+	$player_row = mysqli_fetch_array($player_result);
+	if($player_row['playercheck'] == 1){
+		$playercheck = "선출";
+	}else if($player_row['playercheck'] == 2){
+		$playercheck = "비선출";
+	}else{
+		$playercheck = "-";
+	}
+	if($player_row['playerclass'] == 1){
+		$playerclass = "사회인 1부";
+	}else if($player_row['playerclass'] == 2){
+		$playerclass = "사회인 2부";
+	}else if($player_row['playerclass'] == 3){
+		$playerclass = "사회인 3부";
+	}else if($player_row['playerclass'] == 4){
+		$playerclass = "사회인 4부";
+	}else{
+		$playerclass = "-";
+	}
+	if($player_row['position'] == 1){
+		$position = "내야수";
+	}else if($player_row['position'] == 2){
+		$position = "외야수";
+	}else if($player_row['position'] == 3){
+		$position = "투수";
+	}else{
+		$position = "-";
+	}
+	if($player_row['hitpitch'] == 1){
+		$hitpitch = "우투우타";
+	}else if($player_row['hitpitch'] == 2){
+		$hitpitch = "우투좌타";
+	}else if($player_row['hitpitch'] == 3){
+		$hitpitch = "좌투우타";
+	}else if($player_row['hitpitch'] == 4){
+		$hitpitch = "좌투좌타";
+	}else{
+		$hitpitch = "-";
+	}
+	if($user_row['birth'] == '0000-00-00' || $user_row['birth'] == null){
+		$birth = "-";
+	}else{
+		$birth = $user_row['birth'];
+	}
+	if($player_row['playertall'] == 0){
+		$playertall = "-";
+	}else{
+		$playertall = $player_row['playertall']."cm";
+	}
+	if($player_row['playerweight'] == 0){
+		$playerweight = "-";
+	}else{
+		$playerweight = $player_row['playerweight']."kg";
+	}
+	if($player_row['address']){
+		$address = $player_row['address'];
+	}else{
+		$address = "-";
+	}
+	mysqli_close($conn);
+}
+?>
+
+<!-- IE8 에서 HTML5 요소와 미디어 쿼리를 위한 HTML5 shim 와 Respond.js -->
+<!-- WARNING: Respond.js 는 당신이 file:// 을 통해 페이지를 볼 때는 동작하지 않습니다. -->
+<!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+<link href="css/dataTables.bootstrap.min.css" rel="stylesheet">
+
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
+<script src="https://cdn.datatables.net/fixedcolumns/3.3.0/js/dataTables.fixedColumns.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+    $('#recode_hitplay1').DataTable({
+    	// 표시 건수기능 숨기기
+        lengthChange: false,
+        // 검색 기능 숨기기
+        searching: false,
+        // 페이징 기능 숨기기
+        paging: false,
+
+    });
+    $('#recode_pitchplay').DataTable({
+        // 표시 건수기능 숨기기
+        lengthChange: false,
+        // 검색 기능 숨기기
+        searching: false,
+        // 페이징 기능 숨기기
+        paging: false,
+    });
+} );
+</script>
+
+<div class="ro_subpage ">
+	<div class="container-fluid ro_subpage_title_img ro_posi_r">
+		<img src="img/subpage_title/2019league_titleimg.jpg">
+		<div class="ro_subpage_nav">
+			<p>헬스케어</p>
+			<ul>
+				<li>Home</li>
+				<li>User</li>
+				<li>헬스케어</li>
+			</ul>
+		</div>
+	</div>
+	
+	<div class="container ro_subpage_content ro_subpage_recode">
+		<div class="ro_subpage_recode_tab">
+			<ul id="myTab" class="nav nav-tabs" role="tablist">
+				<li class=""><a href="healthcare.html">부상케어</a></li>
+				<li class="active"><a href="healthcare2.html">건강케어</a></li>
+				<!--<li role="presentation" class=""><a href="javascript:;">연습·용병기록</a></li>-->
+			</ul>
+			<div id="myTabContent" class="tab-content ">
+				<div role="tabpanel" class="tab-pane fade ro_color_b" id="injure" aria-labelledby="injure-tab">
+					
+				</div>
+				<div role="tabpanel" class="tab-pane fade active in ro_color_b" id="health" aria-labelledby="health-tab">
+					<div class="to_titlebar">
+						선수정보
+					</div>
+					<hr>
+					<div class="to_page_content2 to_mb_30 table-responsive">
+						<table class="table recode_player_table">
+							<tr>
+								<th><img src="<?=$user_img?>"></th>
+								<td>
+									<div class="recode_player"><span><?=$player_row['back_num']?></span><?=$user_row['name']?></div>
+									<div class="recode_player_info_table table-responsive">
+										<table class="table">
+											<tr>
+												<th>주활동지역</th><td><?=$address?></td>
+												<th>주활동리그</th><td><?=$playerclass?></td>
+												<th>주포지션</th><td><?=$position?></td>
+											</tr>
+											<tr>
+												<th>생년월일</th><td><?=$birth?></td>
+												<th>신장/체중</th><td><?=$playertall?> / <?=$playerweight?></td>
+											</tr>
+											<tr>
+												<th>선출여부</th><td><?=$playercheck?></td>
+												<th>투/타</th><td><?=$hitpitch?></td>
+											</tr>
+										</table>
+									</div>
+								</td>
+							</tr>
+						</table>
+					</div><!-- 선수 정보 끝 -->
+					
+					<div class="row to_mb_30">
+						<div class="col-md-6 col-xs-12" style="margin-bottom:30px">
+							<div class="to_titlebar">
+								발병가능성
+							</div>
+							<hr>
+							<div class="to_border">
+								<canvas id="myChart7" width="100%" height="100%"></canvas>
+							</div>
+						</div>
+						<div class="col-md-6 col-xs-12" style="margin-bottom:30px;">
+							<div class="to_titlebar">
+								추천 병원
+							</div>
+							<hr>
+							<div class="row">
+								<div class="col-md-6 to_border">
+									<img src="img/hospital.jpg" height="100%">
+								</div>
+								<div class="col-md-6 to_border">
+									<img src="img/hospital1.jpg" height="100%">
+								</div>
+								<div class="col-md-6 to_border">
+									<img src="img/hospital2.jpg" height="100%">
+								</div>
+								<div class="col-md-6 to_border">
+									<img src="img/hospital3.jpg" height="100%">
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="to_titlebar">
+						당뇨병 운동 방법 및 주의사항
+					</div>
+					<hr>
+					<div class="row to_mb_30">
+						<div class="col-md-4 col-12">
+							<h4 style="color:#333">당뇨병과 운동</h4>
+							당뇨병 환자의 사망요인 중 가장 큰 비중을 차지하는 것이 심혈관질환이다. 규칙적인 운동이 심혈관질환의 위험성을 낮추는 효과가 있다는 것은 잘 알려진 사실로 당뇨병 환자에게 운동의 중요성은 점점 커지고 있다.<br><br>
+
+                            운동은 심혈관질환의 위험성을 낮출 뿐만 아니라 인슐린 감수성을 개선해 혈당 조절에 도움을 주고, 당뇨병 환자들에게 잘 생기는 고지혈증에도 도움이 된다. 이런 운동의 긍정적인 효과는 체중 감소가 없어도 나타나는 것으로 알려졌고, 유산소 운동뿐만 아니라 근력 운동도 혈당 개선 효과가 있다.<br><br>
+
+                            제2형 당뇨병 환자가 규칙적으로 운동하면, 혈당이 약 20~25㎎/㎗ 정도 낮아지는 것으로 알려져 경구용 혈당 강하제 중 알파 글루코시다아제 억제제와 비슷한 효과를 보인다. 그러나 아쉽게도 당뇨병 환자 중에서 1년 넘게 꾸준히 운동하는 사람의 비율은 20~30% 정도에 불과한 것으로 알려져 있다. 당뇨병 환자에게 심혈관질환의 위험성을 낮추고, 혈당을 직접적으로 낮추는 효과가 있는 운동을 지속하도록 격려하고 지지하는 것이 중요하다.
+						</div>
+						<div class="col-md-4 col-12">
+							<h4 style="color:#333">권장 운동 방법</h4>
+                            미국 당뇨병 학회는 숨이 가쁘지 않을 정도의 속도로 걷거나 자전거 타기 등의 유산소 운동을 일주일에 150분 이상 하거나, 숨이 찰 정도의 속도로 달리기 같은 격렬한 운동을 일주일에 90분 이상 할 것을 권장하고 있다. 일주일에 최소 3일 이상 운동하되, 2일 연속으로 운동을 쉬는 것은 피해야 한다.<br><br>
+
+                            평소에 운동을 안 했던 사람은 일주일에 3회, 10분의 준비 운동 후에 20분 정도의 유산소 운동을 하는 것으로 시작해서 점차 운동 강도와 운동량을 늘리는 것이 좋다.<br><br>
+
+                            당뇨병 환자는 경구용 혈당 강하제나 인슐린 주사에 의해 저혈당이 발생할 위험성이 높아서 운동 중이나 운동 전후에 혈당을 측정해서 운동을 해도 괜찮은 상태인지 확인하도록 한다. 운동 전 혈당이 250㎎/㎗가 넘으면 운동을 연기해야 한다. 운동 중에 어지럽거나 힘들다면 혈당을 측정해보아야 한다.
+						</div>
+                        <div class="col-md-4 col-12">
+							<h4 style="color:#333">주의사항</h4>
+                            운동을 하지 않던 35세 이상의 당뇨병 환자가 격렬한 운동을 계획하고 있다면, 운동을 시작하기 전에 충분한 검사를 받아서 괜찮은지 확인하는 것이 좋다.<br><br>
+
+                            당뇨병 합병증이 있다면, 운동할 때 더욱 조심해야 한다. 당뇨병성 망막질환이 있다면, 격렬한 운동이나 혈압이 올라가는 운동을 하면 안구 내 출혈이 생길 수 있어 주의가 필요하다.<br><br>
+
+                            당뇨병성 신경병증이 있다면 발 관리에 주의를 기울여야 한다. 운동화는 발이 편한 제품으로 선택하고, 오랜 시간 서 있거나 발에 무리가 될 수 있는 장거리 달리기나 스키 같은 운동 종목은 피해야 한다.<br><br>
+
+                            운동을 많이 하는 부위에 인슐린 주사를 놓으면, 흡수가 빨라져 저혈당이 발생할 수 있으므로 인슐린 주사는 운동 전 60~90분 전에 주사하고, 팔이나 허벅지 같이 운동을 많이 하는 부위는 피해야 한다.
+						</div>
+                        <b style="color:#515151"><br>[네이버 지식백과] 당뇨병 운동 가이드 (운동가이드, 김우준, 국민체육진흥공단 체육과학연구원)</b>
+                        <!--https://terms.naver.com/entry.nhn?docId=2109514&cid=48661&categoryId=48661&expCategoryId=48661-->
+					</div>
+					<div class="to_titlebar">
+						추천 서비스
+					</div>
+					<hr>
+					<div class="swiper-container search_div_1">
+				        <div class="swiper-wrapper search_div_2">
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                            <div class="swiper-slide rounded shadow text-center">
+                                <img src="img/no_video.png" alt="...">
+                            </div>
+                        </div>
+                        <!-- Add Pagination -->
+                        <div class="swiper-pagination"></div>
+                        <!-- Add Arrows -->
+                        <div class="swiper-button-next"></div>
+                        <div class="swiper-button-prev"></div>
+                    </div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script src="js/swiper.min.js"></script>
+<!-- Initialize Swiper -->
+<script>
+    var swiper = new Swiper('.swiper-container', {
+		slidesPerView: 4,
+		spaceBetween: 30,
+		pagination: {
+			el: '.swiper-pagination',
+			clickable: true,
+		},
+		navigation: {
+			nextEl: '.swiper-button-next',
+			prevEl: '.swiper-button-prev',
+		},
+    });
+</script>
+<script>
+function delete_event(no){
+	if (confirm("정말 삭제하시겠습니까?") == true){
+		location.href="LeagueRecordDeleteProc.php?no="+no;
+	}else{ 
+		return;
+	}
+}
+Chart.pluginService.register({
+	beforeDraw: function (chart) {
+		if (chart.config.options.elements.center) {
+			//Get ctx from string
+			var ctx = chart.chart.ctx;
+
+			//Get options from the center object in options
+			var centerConfig = chart.config.options.elements.center;
+			var fontStyle = centerConfig.fontStyle || 'Arial';
+			var txt = centerConfig.text;
+			var color = centerConfig.color || '#000';
+			var sidePadding = centerConfig.sidePadding || 20;
+			var sidePaddingCalculated = (sidePadding/100) * (chart.innerRadius * 2)
+			//Start with a base font of 30px
+			ctx.font = "30px " + fontStyle;
+
+			//Get the width of the string and also the width of the element minus 10 to give it 5px side padding
+			var stringWidth = ctx.measureText(txt).width;
+			var elementWidth = (chart.innerRadius * 2) - sidePaddingCalculated;
+
+			// Find out how much the font can grow in width.
+			var widthRatio = elementWidth / stringWidth;
+			var newFontSize = Math.floor(30 * widthRatio);
+			var elementHeight = (chart.innerRadius * 2);
+
+			// Pick a new font size so it will not be larger than the height of label.
+			var fontSizeToUse = Math.min(newFontSize, elementHeight);
+
+			//Set font settings to draw it correctly.
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			var centerX = ((chart.chartArea.left + chart.chartArea.right) / 2);
+			var centerY = ((chart.chartArea.top + chart.chartArea.bottom) / 2);
+			ctx.font = fontSizeToUse+"px " + fontStyle;
+			ctx.fillStyle = color;
+
+			//Draw text in center
+			ctx.fillText(txt, centerX, centerY);
+		}
+	}
+});
+var ctx2 = document.getElementById('myChart7');
+var myRadarChart = new Chart(ctx2, {
+    type: 'radar',
+    data: {
+		labels: ['당뇨', '고혈압', '고지혈증', '비만', '골다공증'],
+		datasets: [{
+			label: '내 건강',
+			data: [90, 30, 70, 34, 65],
+			backgroundColor : 'rgba(0, 0, 255, 0.3)',
+			borderColor: 'rgba(0, 0, 255, 0.7)',
+			pointBackgroundColor: 'rgba(0, 0, 255, 0.7)',
+			pointBorderColor: '#fff'
+		},{
+			label: '연령대 평균',
+			data: [55, 60, 78, 66, 40],
+			backgroundColor: 'rgba(179, 181, 198, 0.2)',
+            borderColor: 'rgba(179, 181, 198, 0.7)',
+            pointBackgroundColor: 'rgba(179, 181, 198, 0.7)',
+            pointBorderColor: '#fff'
+		}]
+	},
+    options : {
+		scale: {
+			ticks: {
+				suggestedMin: 0,
+				suggestedMax: 100
+			}
+		},
+		title: {
+            display: false,
+            text: '그래프1',
+			fontFamily: 'Do Hyeon',
+			position: 'top',
+			fontSize: 20
+        },
+		elements: {
+			line: {
+				tension:0,
+				borderWidth:3
+			}
+		},
+		tooltips: {
+			enabled: false
+		}
+	}
+});
+</script>
+<? include("footer/footer.html"); ?>
+</body>
+</html>

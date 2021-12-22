@@ -1,0 +1,776 @@
+<? include("header/header.html");?>
+<? include("header/menu.html"); ?>
+<?
+$isMobile = 0;
+
+$mobileos = ["iPhone","iPod","Android","BlackBerry","Windows CE","Nokia","Webos","Opera Mini","SonyEricsson","Opera Mobi","IEMobile"];
+
+for($i=0 ; $i<sizeof($mobileos); $i++) {
+	if(strpos($_SERVER['HTTP_USER_AGENT'],$mobileos[$i]) !== false) {
+		$isMobile = 1;
+		break;
+	}
+}
+include "dbconn.php";
+$hit_record_query = "SELECT search_table2.*,
+	ROUND(SUM(league_record_hit.hit)/SUM(league_record_hit.at_bat),3) AS team_avg,
+	COUNT(*) AS count_team 
+FROM (SELECT search_table.*,
+			ROUND(SUM(league_record_hit.hit)/SUM(league_record_hit.at_bat),3) AS league_avg,
+			COUNT(CASE WHEN at_bat != 0 THEN 1 END) AS count_league,
+			COUNT(CASE WHEN league_record_hit.hit/league_record_hit.at_bat = 0 THEN 1 END) AS league_avg0, 
+			COUNT(CASE WHEN league_record_hit.hit/league_record_hit.at_bat >= 0 AND league_record_hit.hit/league_record_hit.at_bat <= 0.2 THEN 1 END) AS league_avg02,
+			COUNT(CASE WHEN league_record_hit.hit/league_record_hit.at_bat > 0.2 AND league_record_hit.hit/league_record_hit.at_bat <= 0.4 THEN 1 END) AS league_avg04,
+			COUNT(CASE WHEN league_record_hit.hit/league_record_hit.at_bat > 0.4 AND league_record_hit.hit/league_record_hit.at_bat <= 0.6 THEN 1 END) AS league_avg06,
+			COUNT(CASE WHEN league_record_hit.hit/league_record_hit.at_bat > 0.6 AND league_record_hit.hit/league_record_hit.at_bat <= 0.8 THEN 1 END) AS league_avg08,
+			COUNT(CASE WHEN league_record_hit.hit/league_record_hit.at_bat > 0.8 AND league_record_hit.hit/league_record_hit.at_bat <= 1 THEN 1 END) AS league_avg10
+	FROM (SELECT league_info.no AS no,
+			league_record_hit.no AS record_no,
+			league.name AS league_name, 
+			league_info.years AS league_years,
+			league_record_hit.team_name as team_name,
+			ROUND(league_record_hit.hit/league_record_hit.at_bat,3) as avg 
+		FROM league_record_hit JOIN league_info JOIN league 
+		WHERE player_name = '".$_GET['search']."' AND league_record_hit.league_info = league_info.no AND league_info.league = league.no AND league_info.years = '2019') as search_table JOIN league_record_hit 
+	WHERE league_record_hit.league_info = search_table.no GROUP BY search_table.no, search_table.team_name) AS search_table2 JOIN league_record_hit
+WHERE league_record_hit.team_name = search_table2.team_name AND league_record_hit.league_info = search_table2.no GROUP BY search_table2.team_name ORDER BY avg DESC";
+$hit_record_result = mysqli_query($conn,$hit_record_query);
+$hit_table_basic = "";
+$avg_chart = "";
+$veiw_avg_chart = "";
+$i = 0;
+while($hit_record_row = mysqli_fetch_array($hit_record_result)){
+	$i++;
+	$hit_no = $hit_record_row['record_no'];
+	// avg
+	if($hit_record_row['avg'] == null){
+		$avg = "-";
+	}else{
+		$avg = number_format($hit_record_row['avg'],3);
+	}
+	/*
+	if(mb_strlen($hit_record_row['league_name'], 'UTF-8') <= 11){
+		$league_name = $hit_record_row['league_name'];
+	}else{
+		$league_name = mb_substr($hit_record_row['league_name'], 0, 10, 'UTF-8')."‥";
+	}*/
+	$league_name = $hit_record_row['league_name'];
+	$hit_table_basic .= "<tr>
+		<td title='".$hit_record_row['league_name']."'>".$league_name."</td><td>".$hit_record_row['team_name']."</td><td>".$avg."</td><td id='1_save_data_$hit_no'><a class='btn btn-primary btn-sm' href='javascript:;' role='button' onclick='save_data($hit_no,1);' style='background-color:rgb(83, 131, 232);width:100%'>저장하기</a></td>
+	</tr>";
+	$bar_max = (max($hit_record_row['league_avg0'],$hit_record_row['league_avg02'],$hit_record_row['league_avg04'],$hit_record_row['league_avg06'],$hit_record_row['league_avg08'],$hit_record_row['league_avg10']) + 20);
+	$bar_max01 = $bar_max /10;
+	$bar_floor = floor($bar_max01);
+	$bar_floor2 = $bar_max01 - $bar_floor;
+	$bar_max = $bar_max - $bar_floor2*10;
+	$avg_chart .= "var ctx = document.getElementById('chart_avg".$i."');
+		var mixedChart = new Chart(ctx, {
+			type: 'line',
+			data: {
+				datasets: [{
+					data: [{x:".($avg-0.01).",y:".($bar_max - 12)."}, {x:".($avg+0.01).",y:".($bar_max - 12)."}],
+					backgroundColor : 'rgba(83, 131, 232, 0.9)',
+					pointRadius: 0,
+					
+				}, {
+					data: [{x:".($hit_record_row['league_avg']-0.01).",y:".($bar_max - 10)."}, {x:".($hit_record_row['league_avg']+0.01).",y:".($bar_max - 10)."}],
+					backgroundColor : 'rgba(232, 83, 131, 0.7)',
+					pointRadius: 0,
+					
+				}, {
+					data: [{x:".($hit_record_row['team_avg']-0.01).",y:".($bar_max - 8)."}, {x:".($hit_record_row['team_avg']+0.01).",y:".($bar_max - 8)."}],
+					backgroundColor : 'rgba(131, 232, 83, 0.8)',
+					pointRadius: 0,
+				}, {
+					data: [{x:0,y:".$hit_record_row['league_avg0']."},{x:0.2,y:".$hit_record_row['league_avg02']."},{x:0.4,y:".$hit_record_row['league_avg04']."},{x:0.6,y:".$hit_record_row['league_avg06']."},{x:0.8,y:".$hit_record_row['league_avg08']."},{x:1,y:".$hit_record_row['league_avg10']."}],
+					backgroundColor : 'rgba(81, 81, 81, 0.25)',
+					type: 'line',
+					pointRadius: 0,
+					fill: true
+				}]
+			},
+			options: {
+				title: {
+					display: true,
+					text: '".$hit_record_row['league_name']."',
+					fontFamily: 'Do Hyeon',
+					position: 'top',
+					fontSize: 20
+				},
+				scales: {
+				   yAxes: [{
+						scaleLabel: {
+							display: false,
+							labelString: 'count_player'
+						},
+						ticks: {
+							min: 0,
+							max: $bar_max
+						}
+				   }],
+				   xAxes: [{
+						scaleLabel: {
+							display: false,
+							labelString: '타율'
+						},
+						type: 'linear',
+						ticks: {
+							min: 0,
+							max: 1
+						}
+				   }]
+				},
+				tooltips: {
+					mode: 'index',
+					intersect: false,
+					enabled: false
+				},
+				legend: {
+						display: false
+				}
+			}
+		});
+		";
+		$veiw_avg_chart .="<div class='col-xs-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='chart_avg".$i."' height='300'></canvas>
+							</div>
+						</div>
+		";
+}
+
+$pit_record_query = "SELECT search_table2.*,
+	CASE WHEN search_table2.erorrs = 'er' THEN ROUND((SUM(league_record_pit.er) * 7)/(SUM(league_record_pit.inning)/3),2) ELSE ROUND((SUM(league_record_pit.rs) * 7)/(SUM(league_record_pit.inning)/3),2) END AS team_era, 
+	COUNT(*) AS count_team 
+FROM (SELECT search_table.*,
+			CASE WHEN search_table.erorrs = 'er' THEN ROUND((SUM(league_record_pit.er) * 7)/(SUM(league_record_pit.inning)/3),2) ELSE ROUND((SUM(league_record_pit.rs) * 7)/(SUM(league_record_pit.inning)/3),2) END AS league_era, 
+			COUNT(CASE WHEN inning != 0 THEN 1 END) AS count_league,
+			COUNT(CASE WHEN search_table.erorrs = 'er' THEN (CASE WHEN (league_record_pit.er * 7)/(league_record_pit.inning/3) > 0 AND (league_record_pit.er * 7)/(league_record_pit.inning/3) < 5 THEN 1 END) ELSE (CASE WHEN (league_record_pit.rs * 7)/(league_record_pit.inning/3) > 0 AND (league_record_pit.rs * 7)/(league_record_pit.inning/3) < 5 THEN 1 END) END) AS league_era0, 
+			COUNT(CASE WHEN search_table.erorrs = 'er' THEN (CASE WHEN (league_record_pit.er * 7)/(league_record_pit.inning/3) >= 5 AND (league_record_pit.er * 7)/(league_record_pit.inning/3) < 10 THEN 1 END) ELSE (CASE WHEN (league_record_pit.rs * 7)/(league_record_pit.inning/3) >= 5 AND (league_record_pit.rs * 7)/(league_record_pit.inning/3) < 10 THEN 1 END) END) AS league_era5,
+			COUNT(CASE WHEN search_table.erorrs = 'er' THEN (CASE WHEN (league_record_pit.er * 7)/(league_record_pit.inning/3) >= 10 AND (league_record_pit.er * 7)/(league_record_pit.inning/3) < 15 THEN 1 END) ELSE (CASE WHEN (league_record_pit.rs * 7)/(league_record_pit.inning/3) >= 10 AND (league_record_pit.rs * 7)/(league_record_pit.inning/3) < 15 THEN 1 END) END) AS league_era10,
+			COUNT(CASE WHEN search_table.erorrs = 'er' THEN (CASE WHEN (league_record_pit.er * 7)/(league_record_pit.inning/3) >= 15 AND (league_record_pit.er * 7)/(league_record_pit.inning/3) < 20 THEN 1 END) ELSE (CASE WHEN (league_record_pit.rs * 7)/(league_record_pit.inning/3) >= 15 AND (league_record_pit.rs * 7)/(league_record_pit.inning/3) < 20 THEN 1 END) END) AS league_era15,
+			COUNT(CASE WHEN search_table.erorrs = 'er' THEN (CASE WHEN (league_record_pit.er * 7)/(league_record_pit.inning/3) >= 20 AND (league_record_pit.er * 7)/(league_record_pit.inning/3) < 25 THEN 1 END) ELSE (CASE WHEN (league_record_pit.rs * 7)/(league_record_pit.inning/3) >= 20 AND (league_record_pit.rs * 7)/(league_record_pit.inning/3) < 25 THEN 1 END) END) AS league_era20,
+			COUNT(CASE WHEN search_table.erorrs = 'er' THEN (CASE WHEN (league_record_pit.er * 7)/(league_record_pit.inning/3) >= 25 THEN 1 END) ELSE (CASE WHEN (league_record_pit.rs * 7)/(league_record_pit.inning/3) >= 25 THEN 1 END) END) AS league_era25
+	FROM (SELECT league_info.no AS no,
+			league_record_pit.no AS record_no, 
+			league.name AS league_name, 
+			league_info.years AS league_years,
+			league_record_pit.team_name as team_name,
+			CASE WHEN er != '9999' THEN 'er' ELSE 'rs' END AS erorrs, 
+			CASE WHEN er != '9999' THEN ROUND((league_record_pit.er * 7)/(league_record_pit.inning/3),2) ELSE ROUND((league_record_pit.rs * 7)/(league_record_pit.inning/3),2) END AS era 
+		FROM league_record_pit JOIN league_info JOIN league 
+		WHERE player_name = '".$_GET['search']."' AND league_record_pit.league_info = league_info.no AND league_info.league = league.no AND league_info.years = '2019') as search_table JOIN league_record_pit 
+	WHERE league_record_pit.league_info = search_table.no GROUP BY search_table.no, search_table.team_name) AS search_table2 JOIN league_record_pit
+WHERE league_record_pit.team_name = search_table2.team_name AND league_record_pit.league_info = search_table2.no GROUP BY search_table2.team_name ORDER BY era is null ASC, era ASC";
+$pit_record_result = mysqli_query($conn,$pit_record_query);
+$pit_table_basic = "";
+$era_chart = "";
+$veiw_era_chart = "";
+$i = 0;
+while($pit_record_row = mysqli_fetch_array($pit_record_result)){
+	$i++;
+	$pit_no = $pit_record_row['record_no'];
+	if($pit_record_row['era'] == null){
+		$era = "-";
+	}else{
+		$era = number_format($pit_record_row['era'],2);
+	}
+	/*
+	if(mb_strlen($pit_record_row['league_name'], 'UTF-8') <= 11){
+		$league_name = $pit_record_row['league_name'];
+	}else{
+		$league_name = mb_substr($pit_record_row['league_name'], 0, 10, 'UTF-8')."‥";
+	}
+	*/
+	$league_name = $pit_record_row['league_name'];
+	$pit_table_basic = $pit_table_basic."<tr>
+		<td title='".$pit_record_row['league_name']."'>".$league_name."</td><td>".$pit_record_row['team_name']."</td><td>".$era."</td><td id='2_save_data_$pit_no'><a class='btn btn-primary btn-sm' href='javascript:;' role='button' onclick='save_data($pit_no,2);' style='background-color:rgb(83, 131, 232);width:100%'>저장하기</a></td>
+	</tr>";
+	$bar_max = (max($pit_record_row['league_era0'],$pit_record_row['league_era5'],$pit_record_row['league_era10'],$pit_record_row['league_era15'],$pit_record_row['league_era20'],$pit_record_row['league_era25']) + 10);
+	$bar_max01 = $bar_max /10;
+	$bar_floor = floor($bar_max01);
+	$bar_floor2 = $bar_max01 - $bar_floor;
+	$bar_max = $bar_max - $bar_floor2*10;
+	$era_chart .= "var ctx = document.getElementById('chart_era".$i."');
+		var mixedChart = new Chart(ctx, {
+			type: 'line',
+			data: {
+				datasets: [{
+					data: [{x:".($era-0.25).",y:".($bar_max - 3)."}, {x:".($era+0.25).",y:".($bar_max - 3)."}],
+					backgroundColor : 'rgba(83, 131, 232, 0.9)',
+					pointRadius: 0,
+					
+				}, {
+					data: [{x:".($pit_record_row['league_era']-0.25).",y:".($bar_max - 2)."}, {x:".($pit_record_row['league_era']+0.25).",y:".($bar_max - 2)."}],
+					backgroundColor : 'rgba(232, 83, 131, 0.7)',
+					pointRadius: 0,
+					
+				}, {
+					data: [{x:".($pit_record_row['team_era']-0.25).",y:".($bar_max - 1)."}, {x:".($pit_record_row['team_era']+0.25).",y:".($bar_max - 1)."}],
+					backgroundColor : 'rgba(131, 232, 83, 0.8)',
+					pointRadius: 0,
+				}, {
+					data: [{x:0,y:".$pit_record_row['league_era0']."},{x:5,y:".$pit_record_row['league_era5']."},{x:10,y:".$pit_record_row['league_era10']."},{x:15,y:".$pit_record_row['league_era15']."},{x:20,y:".$pit_record_row['league_era20']."},{x:25,y:".$pit_record_row['league_era20']."}],
+					backgroundColor : 'rgba(81, 81, 81, 0.25)',
+					type: 'line',
+					pointRadius: 0,
+					fill: true
+				}]
+			},
+			options: {
+				title: {
+					display: true,
+					text: '".$pit_record_row['league_name']."',
+					fontFamily: 'Do Hyeon',
+					position: 'top',
+					fontSize: 20
+				},
+				scales: {
+				   yAxes: [{
+						scaleLabel: {
+							display: false,
+							labelString: 'count_player'
+						},
+						ticks: {
+							min: 0,
+							max: $bar_max
+						}
+				   }],
+				   xAxes: [{
+						scaleLabel: {
+							display: false,
+							labelString: '타율'
+						},
+						type: 'linear',
+						ticks: {
+							min: 0,
+							max: 25
+						}
+				   }]
+				},
+				tooltips: {
+					mode: 'index',
+					intersect: false,
+					enabled: false
+				},
+				legend: {
+						display: false
+				}
+			}
+		});
+		";
+		$veiw_era_chart .="<div class='col-xs-6'>
+							<div class='to_border rounded shadow'>
+								<canvas id='chart_era".$i."' height='300'></canvas>
+							</div>
+						</div>
+						";
+}
+mysqli_close($conn);
+?>
+<link href="css/dataTables.bootstrap.min.css" rel="stylesheet">
+
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
+<script src="https://cdn.datatables.net/fixedcolumns/3.3.0/js/dataTables.fixedColumns.min.js"></script>
+<script type="text/javascript">
+/*$(document).ready(function() {
+    $('#recode_hitplay1').DataTable({
+    	// 표시 건수기능 숨기기
+        lengthChange: false,
+        // 검색 기능 숨기기
+        searching: false,
+        // 페이징 기능 숨기기
+        paging: false,
+    });
+    $('#recode_pitchplay').DataTable({
+        // 표시 건수기능 숨기기
+        lengthChange: false,
+        // 검색 기능 숨기기
+        searching: false,
+        // 페이징 기능 숨기기
+        paging: false,
+    });
+} );*/
+</script>
+<div class="ro_subpage">
+	<div class="container search_contents">
+		<?/*if($isMobile==1){?>
+		<div class="search_search_from">
+			<form class="main_search_from" action="search.html" method="get">
+				<div class="row justify-content-md-center col-xs-12">
+					<div class="col-xs-8 col-sm-8 col-md-7">
+						<input type="text" class="form-control shadow" name="search" placeholder="이름으로 기록검색">
+					</div>
+					<div class="col-xs-4 col-sm-4 col-md-2">
+						<button type="submit" class="btn btn-default shadow">검색</button>
+					</div>
+				</div>
+			</form>
+		</div>
+		<br><br><br>
+		<? } */?>
+		<? include "dbconn.php";
+		$search_player_count_query  = "SELECT COUNT(*) as count 
+		FROM user JOIN user_player WHERE user.name = '".$_GET['search']."' AND user.deleted_at IS NULL AND user.no = user_player.user AND user.status = '1' AND user.admin_status != '1' ORDER BY user.created_at";
+		$search_player_count_result = mysqli_query($conn,$search_player_count_query);
+		$search_player_count_row = mysqli_fetch_array($search_player_count_result);
+		if($search_player_count_row['count'] > 0){
+			$search_player_query = "SELECT user_player.*, 
+				user.name as user_name, 
+				user.img as user_img 
+			FROM user JOIN user_player WHERE user.name = '".$_GET['search']."' AND user.deleted_at IS NULL AND user.no = user_player.user AND user.status = '1' AND user.admin_status != '1' ORDER BY user.created_at";
+			$search_player_result = mysqli_query($conn,$search_player_query);
+			mysqli_close($conn);?>
+		<div class="container_player_search">
+			<div class="to_titlebar">
+				'<?=$_GET['search']?>' 검색결과
+			</div>
+			<hr>
+			<!-- Swiper -->
+			<div id="loding_option" class="loding_spinner"><i class='fas fa-spinner fa-pulse'></i></div>
+			<div class="swiper-container search_div_1">
+				<div class="swiper-wrapper search_div_2">
+				<?while($search_player_row = mysqli_fetch_array($search_player_result)){
+					if($search_player_row['user_img']){
+						$search_player_img = $search_player_row['user_img'];
+					}else{
+						$search_player_img = "img/button/none_img.jpg";
+					}
+					if($search_player_row['playercheck'] == 1){
+						$playercheck = "선출";
+					}else if($search_player_row['playercheck'] == 2){
+						$playercheck = "비선출";
+					}else{
+						$playercheck = "-";
+					}
+					if($search_player_row['position'] == 1){
+						$position = "내야수";
+					}else if($search_player_row['position'] == 2){
+						$position = "외야수";
+					}else if($search_player_row['position'] == 3){
+						$position = "투수";
+					}else{
+						$position = "-";
+					}
+				?>	
+					<div class="swiper-slide rounded shadow text-center">
+						<div class="search_player_list">
+							<a href="report_search_offi.html?no=<?=$search_player_row['no']?>">
+								<img src="<?=$search_player_img?>">
+								No. <?=$search_player_row['back_num']?><br>
+								<?=$position?> (<?=$playercheck?>)
+							</a>
+						</div>
+					</div>
+				<?} ?>
+				</div>
+				<?if($search_player_count_row['count'] > 4){?>
+				<!-- Add Pagination -->
+				<div class="swiper-pagination"></div>
+				<!-- Add Arrows -->
+				<div class="swiper-button-next"></div>
+				<div class="swiper-button-prev"></div>
+				<? }
+				if($isMobile == 1){?>
+				<!-- Add Pagination -->
+				<div class="swiper-pagination"></div>
+				<? } ?>
+			</div>
+		</div>
+		<? } ?>
+		<div class="container ro_subpage_content ro_subpage_recode search_padding">
+			<div class="ro_color_b">
+				<div class="col-xs-12 col-md-6">
+					<div class="search_hr_margin_bottom">
+						<div class="col-xs-12 col-md-6 text-left">
+							<div class="to_titlebar">
+								공식 리그 타자
+							</div>
+						</div>
+						<div class="col-xs-12 col-md-3"></div>
+						<div class="col-xs-12 col-md-3 text-right search_select_years">
+							<form>
+								<select class="rounded shadow" id="select_year_hit" onchange="change_year('1')">
+									<?for($i=2019; $i>=2001; $i--){?>
+									<option value="<?=$i?>"><?=$i?>년</option>
+									<? } ?>
+								</select>
+							</form>
+						</div>
+					</div>
+					<hr>
+					<div id="hit_record_table">
+						<?if($hit_table_basic){ ?>
+						<div class="table-box-wrap">
+							<div class="to_page_content2 table-responsive-sm table-responsive to_mb_30 rounded shadow">
+								<table class="table table_h_b search_table" id="recode_hitplay1">
+									<thead>
+										<tr>
+											<th>리그명</th><th>팀명</th><th>AVG</th><th>저장</th>
+										</tr>
+									</thead>
+									<tbody>
+										<?=$hit_table_basic;?>					
+									</tbody>					
+								</table>
+							</div>
+						</div>
+						<?}else{?>
+						<h3 class='text-center'>검색결과가 없습니다</h3>
+						<? }?>
+					</div>
+				</div>
+				<div class="col-xs-12 col-md-6">
+					<div class="search_hr_margin_bottom">
+						<div class="col-xs-12 col-md-6 text-right">
+							<div class="to_titlebar">
+								공식 리그 투수
+							</div>
+						</div>
+						<div class="col-xs-12 col-md-3"></div>
+						<div class="col-xs-12 col-md-3 text-right search_select_years">
+							<form>
+								<select class="rounded shadow" id="select_year_pit" onchange="change_year('2')">
+									<?for($i=2019; $i>=2001; $i--){?>
+									<option value="<?=$i?>"><?=$i?>년</option>
+									<? } ?>
+								</select>
+							</form>
+						</div>
+					</div>
+					<hr>
+					<div id="pit_record_table">
+						<?if($pit_table_basic){ ?>
+						<div class="table-box-wrap">
+							<div class="to_page_content2 table-responsive-sm table-responsive to_mb_30 rounded shadow">
+								<table class="table table_h_b search_table" id="recode_pitchplay">
+									<thead>
+										<tr>
+											<th>리그명</th><th>팀명</th><th>ERA</th><th>저장</th>
+										</tr>
+									</thead>
+									<tbody>
+										<?=$pit_table_basic;?>
+									</tbody>				
+								</table>
+							</div>
+						</div>
+						<?}else{?>
+						<h3 class='text-center'>검색결과가 없습니다</h3>
+						<? }?>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="container ro_subpage_content ro_subpage_recode search_padding">
+			<div class="col-xs-12 col-md-6">
+				<div id="hit_record_chart">
+					<?if($hit_table_basic){ ?>
+					<div class="search_hr_padding_bottom">
+						<div class="col-xs-12 col-md-6 text-left">
+							<div class="to_titlebar">
+								타율 분포
+							</div>
+						</div>
+						<div class="col-xs-12 col-md-6 search_chart">
+							<table>
+								<tr>
+									<td><b style="color:#515151;">-</b></td><td>전체</td>
+									<td><b style="color:#e85383;">-</b></td><td>리그</td>
+									<td><b style="color:#83e853;">-</b></td><td>팀</td>
+									<td><b style="color:#5383e8;">-</b></td><td>선수</td>
+								</tr>
+							</table>
+						</div>
+					</div>
+					<hr>
+					<?=$veiw_avg_chart;?>
+					<? } ?>
+				</div>
+			</div>
+			<div class="col-xs-12 col-md-6">
+				<div id="pit_record_chart">
+					<?if($pit_table_basic){ ?>		
+					<div class="search_hr_padding_bottom">
+						<div class="col-xs-12 col-md-6 text-left">
+							<div class="to_titlebar">
+								평균자책점 분포
+							</div>
+						</div>
+						<div class="col-xs-12 col-md-6 search_chart">
+							<table>
+								<tr>
+									<td><b style="color:#515151;">-</b></td><td>전체</td>
+									<td><b style="color:#e85383;">-</b></td><td>리그</td>
+									<td><b style="color:#83e853;">-</b></td><td>팀</td>
+									<td><b style="color:#5383e8;">-</b></td><td>선수</td>
+								</tr>
+							</table>
+						</div>
+					</div>
+					<hr>
+					<?=$veiw_era_chart;?>
+					<? } ?>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<script>
+function save_data(num,pos) {
+	var player_no = "<?=$player_no?>";
+	document.getElementById(pos+"_save_data_"+num).innerHTML = "<a class='btn btn-secondary btn-sm' href='javascript:;' role='button' style='width:100%'><i class='fas fa-spinner fa-pulse'></i></a>";
+	if(player_no != ""){
+		$.ajax({
+			type: 'POST',
+			url: 'save_data.php',
+			data: {
+				no : num,
+				position : pos,
+				player : player_no
+			},
+			dataTpye: 'text',
+			success: function(data){
+				document.getElementById(pos+"_save_data_"+num).innerHTML = "<a class='btn btn-secondary btn-sm' href='javascript:;' role='button' style='width:100%'>저장하기</a>";
+				alert(data);
+			},
+			error: function() {
+				alert('Error');
+			}
+		});
+	}else{
+		alert('로그인이 필요합니다.');
+		location.href = "login.html";
+	}
+}
+function change_year(pos){
+	//document.getElementById("hit_record_table").innerHTML = "<div class='text-center' style='margin-top:30px'><i class='fas fa-spinner fa-pulse'></i></div>";
+	if(pos == 1){
+		var selectyears = document.getElementById("select_year_hit");
+		var selectedValue = selectyears.options[selectyears.selectedIndex].value;
+		var searchTtext = "<?=$_GET['search']?>";
+		$.ajax({
+			type: 'POST',
+			url: 'search_data.php',
+			data: {
+				position : pos,
+				years : selectedValue,
+				search_text : searchTtext
+			},
+			dataTpye: 'text',
+			success: function(data){
+				if(data != 0){
+					var record = data.split("+");
+					document.getElementById("hit_record_table").innerHTML = record[0];
+					document.getElementById("hit_record_chart").innerHTML = record[1];
+					var chart_record = record[2].split("|");
+					for(var i=0; i<chart_record.length-1; i++) {
+						var chart_data = chart_record[i].split(",");
+						var ctx = document.getElementById('change_chart_avg'+chart_data[0]);
+						var mixedChart = new Chart(ctx, {
+							type: 'line',
+							data: {
+								datasets: [{
+									data: [{x:parseFloat(chart_data[1])-0.01,y:parseFloat(chart_data[2])-12}, {x:parseFloat(chart_data[1])+0.01,y:parseFloat(chart_data[2])-12}],
+									backgroundColor : 'rgba(83, 131, 232, 0.9)',
+									pointRadius: 0,
+									
+								}, {
+									data: [{x:parseFloat(chart_data[3])-0.01,y:parseFloat(chart_data[2])-10}, {x:parseFloat(chart_data[3])+0.01,y:parseFloat(chart_data[2])-10}],
+									backgroundColor : 'rgba(232, 83, 131, 0.7)',
+									pointRadius: 0,
+									
+								}, {
+									data: [{x:parseFloat(chart_data[4])-0.01,y:parseFloat(chart_data[2])-8}, {x:parseFloat(chart_data[4])+0.01,y:parseFloat(chart_data[2])-8}],
+									backgroundColor : 'rgba(131, 232, 83, 0.8)',
+									pointRadius: 0,
+								}, {
+									data: [{x:0,y:parseFloat(chart_data[5])},{x:0.2,y:parseFloat(chart_data[6])},{x:0.4,y:parseFloat(chart_data[7])},{x:0.6,y:parseFloat(chart_data[8])},{x:0.8,y:parseFloat(chart_data[9])},{x:1,y:parseFloat(chart_data[10])}],
+									backgroundColor : 'rgba(81, 81, 81, 0.25)',
+									type: 'line',
+									pointRadius: 0,
+									fill: true
+								}]
+							},
+							options: {
+								title: {
+									display: true,
+									text: chart_data[11],
+									fontFamily: 'Do Hyeon',
+									position: 'top',
+									fontSize: 20
+								},
+								scales: {
+								   yAxes: [{
+										scaleLabel: {
+											display: false,
+											labelString: 'count_player'
+										},
+										ticks: {
+											min: 0,
+											max: parseFloat(chart_data[2])
+										}
+								   }],
+								   xAxes: [{
+										scaleLabel: {
+											display: false,
+											labelString: '타율'
+										},
+										type: 'linear',
+										ticks: {
+											min: 0,
+											max: 1
+										}
+								   }]
+								},
+								tooltips: {
+									mode: 'index',
+									intersect: false,
+									enabled: false
+								},
+								legend: {
+										display: false
+								}
+							}
+						});
+					}
+				}else{
+					document.getElementById("hit_record_table").innerHTML = "<h3 class='text-center'>검색결과가 없습니다</h3>";
+					document.getElementById("hit_record_chart").innerHTML = "";
+				}
+			},
+			error: function() {
+				alert('Error');
+			}
+		});
+	}else if(pos == 2){
+		var selectyears = document.getElementById("select_year_pit");
+		var selectedValue = selectyears.options[selectyears.selectedIndex].value;
+		var searchTtext = "<?=$_GET['search']?>";
+		$.ajax({
+			type: 'POST',
+			url: 'search_data.php',
+			data: {
+				position : pos,
+				years : selectedValue,
+				search_text : searchTtext
+			},
+			dataTpye: 'text',
+			success: function(data){
+				if(data != 0){
+					var record = data.split("+");
+					document.getElementById("pit_record_table").innerHTML = record[0];
+					document.getElementById("pit_record_chart").innerHTML = record[1];
+					var chart_record = record[2].split("|");
+					for(var i=0; i<chart_record.length-1; i++) {
+						var chart_data = chart_record[i].split(",");
+						var ctx = document.getElementById('change_chart_era'+chart_data[0]);
+						var mixedChart = new Chart(ctx, {
+							type: 'line',
+							data: {
+								datasets: [{
+									data: [{x:parseFloat(chart_data[1])-0.25,y:parseFloat(chart_data[2])-3}, {x:parseFloat(chart_data[1])+0.25,y:parseFloat(chart_data[2])-3}],
+									backgroundColor : 'rgba(83, 131, 232, 0.9)',
+									pointRadius: 0,
+									
+								}, {
+									data: [{x:parseFloat(chart_data[3])-0.25,y:parseFloat(chart_data[2])-2}, {x:parseFloat(chart_data[3])+0.25,y:parseFloat(chart_data[2])-2}],
+									backgroundColor : 'rgba(232, 83, 131, 0.7)',
+									pointRadius: 0,
+									
+								}, {
+									data: [{x:parseFloat(chart_data[4])-0.25,y:parseFloat(chart_data[2])-1}, {x:parseFloat(chart_data[4])+0.25,y:parseFloat(chart_data[2])-1}],
+									backgroundColor : 'rgba(131, 232, 83, 0.8)',
+									pointRadius: 0,
+								}, {
+									data: [{x:0,y:parseFloat(chart_data[5])},{x:5,y:parseFloat(chart_data[6])},{x:10,y:parseFloat(chart_data[7])},{x:15,y:parseFloat(chart_data[8])},{x:20,y:parseFloat(chart_data[9])},{x:25,y:parseFloat(chart_data[10])}],
+									backgroundColor : 'rgba(81, 81, 81, 0.25)',
+									type: 'line',
+									pointRadius: 0,
+									fill: true
+								}]
+							},
+							options: {
+								title: {
+									display: true,
+									text: chart_data[11],
+									fontFamily: 'Do Hyeon',
+									position: 'top',
+									fontSize: 20
+								},
+								scales: {
+								   yAxes: [{
+										scaleLabel: {
+											display: false,
+											labelString: 'count_player'
+										},
+										ticks: {
+											min: 0,
+											max: parseFloat(chart_data[2])
+										}
+								   }],
+								   xAxes: [{
+										scaleLabel: {
+											display: false,
+											labelString: '방어율'
+										},
+										type: 'linear',
+										ticks: {
+											min: 0,
+											max: 25
+										}
+								   }]
+								},
+								tooltips: {
+									mode: 'index',
+									intersect: false,
+									enabled: false
+								},
+								legend: {
+										display: false
+								}
+							}
+						});
+					}
+				}else{
+					document.getElementById("pit_record_table").innerHTML = "<h3 class='text-center'>검색결과가 없습니다</h3>";
+					document.getElementById("pit_record_chart").innerHTML = "";
+				}
+			},
+			error: function() {
+				alert('Error');
+			}
+		});
+	}
+	
+}
+</script>
+<script type='text/javascript'>
+<?echo $avg_chart;?>
+<?echo $era_chart;?>
+</script>
+<script src="js/swiper.min.js"></script>
+<!-- Initialize Swiper -->
+<script>
+    var swiper = new Swiper('.swiper-container', {
+	<?if($isMobile == 0){?>
+		slidesPerView: 4,
+	<?}else{?>
+		slidesPerView: 2,
+	<?}?>
+		spaceBetween: 30,
+		pagination: {
+			el: '.swiper-pagination',
+			clickable: true,
+		},
+		navigation: {
+			nextEl: '.swiper-button-next',
+			prevEl: '.swiper-button-prev',
+		},
+    });
+	document.getElementById("loding_option").style.display="none";
+</script>
+<? include("footer/footer.html"); ?>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE HTML>
+<html>
+<?
+if($nav == 'index'){
+	$class_index = 'active';
+}elseif($nav == 'search'){
+	$class_background = 'navbar-background-blue';
+}elseif($nav == 'join'){
+	$class_join = 'active';
+	if($join == 'league'){
+		$class_background = 'navbar-background-blue';
+	}
+}elseif($nav == 'game'){
+	$class_game = 'active';
+	$class_background = 'navbar-background-blue';
+}elseif($nav == 'user'){
+	$class_user = 'active';
+	$class_background = 'navbar-background-blue';
+}elseif($nav == 'board'){
+	$class_board = 'active';
+	$class_background = 'navbar-background-blue';
+}
+include "dbconn.php";
+$my_result = mysqli_query($conn,"SELECT * FROM user where no='$user_no'");
+$my_row = mysqli_fetch_array($my_result);
+$activ_result = mysqli_query($conn,"SELECT * FROM user_activity where user='$user_no' AND count >= 1");
+$activ_row = mysqli_fetch_array($activ_result);
+if($activ_row){
+	$new_comment = "&nbsp;&nbsp;&nbsp;<span class='badge badge-primary badge-pill'>New</span>";
+}else{
+	$new_comment = "";
+}
+mysqli_close($conn);
+?>
+	<body>
+		<header role="banner">
+			<nav class="navbar navbar-expand-md navbar-dark bg-light <?echo $class_background;?>">
+				<div class="container">
+					<a class="navbar-brand" href="index.html">TRYOUT <a style="font-style:oblique;color:#ffffff;">α</a><a style="font-style:oblique;color:#ffffff;font-size:80%">lpha Test</a><!--<a style="font-style:oblique;color:#ffffff;font-size:80%">βeta Test</a>--></a>
+					<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExample05" aria-controls="navbarsExample05" aria-expanded="false" aria-label="Toggle navigation">
+						<span class="navbar-toggler-icon"></span>
+					</button>
+					<div class="collapse navbar-collapse navbar-light" id="navbarsExample05">
+						<ul class="navbar-nav ml-auto pl-lg-5 pl-0">
+							<li class="nav-item">
+								<a class="nav-link <? echo $class_index;?>" href="index.html">홈</a>
+							</li>
+							<!--
+							<li class="nav-item dropdown">
+								<a class="nav-link dropdown-toggle" href="destination.html" id="dropdown04" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Destination</a>
+								<div class="dropdown-menu" aria-labelledby="dropdown04">
+									<a class="dropdown-item" href="destination.html">Places</a>
+									<a class="dropdown-item" href="destination.html">Hotels</a>
+									<a class="dropdown-item" href="destination.html">Restaurants</a>
+								</div>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link" href="blog.html">Blog</a>
+							</li>
+							<li class="nav-item">
+								<a class="nav-link" href="about.html">About</a>
+							</li>
+							-->
+							<li class="nav-item dropdown">
+								<a class="nav-link dropdown-toggle <? echo $class_join; ?>" href="javascript:;" id="dropdown_join" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">검색</a>
+								<div class="dropdown-menu" aria-labelledby="dropdown_join">
+									<a class="dropdown-item" href="join.html?join=user">선수 검색</a>
+									<a class="dropdown-item" href="join.html?join=team">팀 검색</a>
+									<a class="dropdown-item" href="join.html?join=league">리그 검색</a>
+								</div>
+							</li>
+							<li class="nav-item dropdown">
+								<a class="nav-link dropdown-toggle <? echo $class_game; ?>" href="javascript:;" id="dropdown_game" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">경기</a>
+								<div class="dropdown-menu" aria-labelledby="dropdown_game">
+									<a class="dropdown-item" href="game.html?game=hgame">일반경기</a>
+									<a class="dropdown-item" href="game.html?game=agame">일반경기(원정)</a>
+									<a class="dropdown-item" href="game.html?game=merc">용병경기</a>
+									<a class="dropdown-item" href="game.html?game=stadium">구장양도</a>
+								</div>
+							</li>
+							<li class="nav-item dropdown">
+								<a class="nav-link dropdown-toggle <? echo $class_board; ?>" href="javascript:;" id="dropdown_board" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">게시판</a>
+								<div class="dropdown-menu" aria-labelledby="dropdown_board">
+									<a class="dropdown-item" href="board.html?board=free">자유 게시판</a>
+									<a class="dropdown-item" href="board.html?board=fa">FA 시장</a>
+								</div>
+							</li>
+							<? if($user_no) {?>
+							<li class="nav-item dropdown">
+								<a class="nav-link dropdown-toggle <? echo $class_user; ?>" href="javascript:;" id="dropdown_user" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><? echo $my_row['name'];?></a>
+								<div class="dropdown-menu" aria-labelledby="dropdown_user">
+									<a class="dropdown-item" href="user.html?user=info&no=<? echo $user_no;?>">선수정보</a>
+									<a class="dropdown-item" href="user.html?user=team">소속 팀 / 팀 등록</a>
+									<a class="dropdown-item" href="user.html?user=act">활동내역<? echo $new_comment?></a>
+									<? if ($my_row['states'] == 3){?>
+									<a class="dropdown-item" href="admin.html">관리자</a>
+									<!--<a class="dropdown-item" href="record/record.html">기록지</a>-->
+									<? } ?>
+									<a class="dropdown-item" href="LogoutProc.php">로그아웃</a>
+								</div>
+							</li>
+								<? if($adminpage){?>
+							<li class="nav-item dropdown">
+								<a class="nav-link dropdown-toggle <? echo $class_admin; ?>" href="javascript:;" id="dropdown_admin" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">관리자</a>
+								<div class="dropdown-menu" aria-labelledby="dropdown_admin">
+									<a class="dropdown-item" href="admin.html?admin=user">회원 관리</a>
+									<a class="dropdown-item" href="javascript:;">팀 관리</a>
+									<a class="dropdown-item" href="admin.html?admin=league">리그 관리</a>
+									<a class="dropdown-item" href="admin.html?admin=play">경기 기록</a>
+									<a class="dropdown-item" href="admin.html?admin=question">문의 내역</a>
+								</div>
+							</li>
+								<? } ?>
+							<? }else{ ?>
+							<li>
+								<a class="nav-link btn btn-primary active" href="user.html?user=login" role="button">로그인</a>
+							</li>
+							<? } ?>
+						</ul>
+					</div>
+				</div>
+			</nav>
+		</header>
+	</body>
+	<? $nav = "";
+	$class_background = "";?>
+</html>

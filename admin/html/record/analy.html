@@ -1,0 +1,158 @@
+<!DOCTYPE HTML>
+<?
+ $analy_no = $_GET["analy_no"];
+ $page = "analy.html?analy_no=".$analy_no;
+ if($analy_no == 1){
+	$analy_name = "나의 기록은? - 타자";
+ }else if($analy_no == 2){
+	$analy_name = "나의 기록은? - 투수";
+ }else if($analy_no == 3){
+	$analy_name = "프로 선수가 사회인 선수라면? - 타자";
+ }else if($analy_no == 4){
+	$analy_name = "프로 선수가 사회인 선수라면? - 투수";
+ }else if($analy_no == 5){
+	$analy_name = "나는 몇 번 타자일까?";
+ }else if($analy_no == 6){
+	$analy_name = "나는 몇 번 타자일까?";
+ }else if($analy_no == 7){
+	$analy_name = "나는 몇 번 타자일까?";
+ }else if($analy_no == 8){
+	$analy_name = "내가 타자라면? - 투수";
+ }else if($analy_no == 9){
+	$analy_name = "내가 투수라면? - 타자";
+ }
+?>
+<html>
+	<? include("inc/_head.html");?>
+	<body class="is-preload">
+		<!-- Wrapper -->
+			<div id="wrapper">
+				<? include("inc/_header.html");?>
+				<!-- Main -->
+					<div id="main">
+						<div class="inner">
+							<header>
+								<h1><?=$analy_name?></h1>
+								<?if(!$user_no){?>
+								<b><a href="#login" style="color:#007bff" onclick="login_open()">로그인</a>하시면 <u style="color:red">기록 저장이 가능</u>하고 다른 분석 시 <u style="color:red">재입력이 필요 없습니다</u> / 아직 회원이 아니시면 <a href="#signup" style="color:#007bff" onclick="signup_open()">회원가입</a> 후 사용해 주세요</b><br>
+								<? } ?>
+								<b>※ 로그인 전 입력된 기록은 저장되지 않습니다!</b>
+							</header>
+							<? 	if($analy_no == 1){
+									include("analy/record_hitter.html");
+								}else if($analy_no == 2){
+									include("analy/record_pitcher.html");
+								}else if($analy_no == 3){
+									include("analy/pro_hitter.html");
+								}else{
+									//준비중
+									if($_SESSION['admin']){
+										if($analy_no == 5){
+											include("analy/social_hitter.html");	
+										}else if($analy_no == 6){
+											include("analy/social_pitcher.html");
+										}else if($analy_no == 7){
+											include("analy/turn.html");
+										}else if($analy_no == 8){
+											include("analy/change_pitcher.html");
+										}else if($analy_no == 9){
+											include("analy/change_hitter.html");
+										}else if($analy_no == 4){
+											include("analy/pro_pitcher.html");
+										}
+									}else{
+										echo "<script>alert('준비중 입니다.');";
+										echo "window.location.replace('index.html');</script>";
+									}
+								}
+							?>
+							<!--<span class="image main"><img src="images/pic13.jpg" alt="" /></span>-->
+							<? if($analy == 1){?>
+							<script src="//developers.kakao.com/sdk/js/kakao.min.js"></script>
+							<script type="text/javascript" async>
+								var facebook_url = "http://www.facebook.com/sharer.php?u=" + escape('http://tryout.kr/record/analy.html?analy_no=<?=$analy_no?>&data_no=<?=$data_no?>') + "&t=" + encodeURIComponent('재미로 보는 사회인 야구 분석 트라이아웃 :: <?=$analy_name?>');
+								var twitter_url = "http://twitter.com/share?text=" + encodeURIComponent('재미로 보는 사회인 야구 분석 트라이아웃 :: <?=$analy_name?>') + "&url=" + escape('http://tryout.kr/record/analy.html?analy_no=<?=$analy_no?>&data_no=<?=$data_no?>');	
+								var kakaostory_url = "https://story.kakao.com/share?url=" + escape('http://tryout.kr/record/analy.html?analy_no=<?=$analy_no?>&data_no=<?=$data_no?>');
+								var naver_url = "http://share.naver.com/web/shareView.nhn?url=" + encodeURI(encodeURIComponent('http://tryout.kr/record/analy.html?analy_no=<?=$analy_no?>&data_no=<?=$_GET['data_no']?>')) + "&title=" + encodeURIComponent('재미로 보는 사회인 야구 분석 트라이아웃 :: <?=$analy_name?>');
+								var band_url = "http://www.band.us/plugin/share?body=" + encodeURIComponent('재미로 보는 사회인 야구 분석 트라이아웃 :: <?=$analy_name?>') + "&route=" + escape('http://tryout.kr/record/analy.html?analy_no=<?=$analy_no?>&data_no=<?=$data_no?>');
+							</script>
+							<div style="text-align:center"><a href="index.html">더 많은 분석</a> / <a href="analy.html?analy_no=<?=$analy_no?>&re=1">다시 입력</a></div>
+							<div style="width: 100%; text-align: center;margin-top:15px">
+								<a href="javascript:;" onclick="window.open(facebook_url, 'facebook', 'scrollbars=no, width=600, height=600'); return false;" style="border:0px;margin:10px">
+									<img src="images/facebook_logo.png" title="페이스북으로 공유하기" class="sharebtn_custom" style="width: 32px;">
+								</a>
+								<a href="javascript:;" onclick="window.open(twitter_url, 'twitter', 'scrollbars=no, width=600, height=600'); return false;" style="border:0px;margin:10px">
+									<img src="images/트위터로고.jpg" title="트위터로 공유하기" class="sharebtn_custom" style="width: 32px;">
+								</a>
+								<a id="kakao-link-btn" href="javascript:;" style="border:0px;margin:10px"  style="border:0px;margin:10px">
+									<img src="//developers.kakao.com/assets/img/about/logos/kakaolink/kakaolink_btn_medium.png" title="카카오톡로 공유하기" class="sharebtn_custom" style="width: 32px;">
+								</a>
+								<a href="javascript:;" onclick="window.open(kakaostory_url, 'kakaostory', 'scrollbars=no, width=600, height=600'); return false;" style="border:0px;margin:10px">
+									<img src="images/카카오스토리로고.jpg" title="카카오스토리로 공유하기" class="sharebtn_custom" style="width: 32px;">
+								</a>
+								<a href="javascript:;" onclick="window.open(naver_url, 'naver', 'scrollbars=no, width=600, height=600'); return false;"  style="border:0px;margin:10px">
+									<img src="images/네이버로고.jpg" title="네이버로 공유하기" class="sharebtn_custom" style="width: 32px;">
+								</a>
+								<a href="javascript:;" onclick="window.open(band_url, 'band', 'scrollbars=no, width=600, height=600'); return false;"  style="border:0px;margin:10px">
+									<img src="images/밴드로고.png" title="밴드로 공유하기" class="sharebtn_custom" style="width: 32px;">
+								</a>
+							</div>
+							<? } else if($analy == 2){ ?>
+							<div style="margin-top:30px">
+								<h2 style="color:red;text-align:center">분석이 불가능한 기록입니다.</h2>
+							</div>
+							<div style="text-align:center"><a href="index.html">다른 분석 보기</a> / <a href="analy.html?analy_no=<?=$analy_no?>&re=1">다시 입력</a></div>
+							<? } ?>
+						</div>
+					</div>
+				<? include("inc/_footer.html");?>
+			</div>
+			<script>
+			function open_new_data(){
+				document.getElementById("new_data").style.display = "inline-block";
+			}
+			</script>
+			<script type='text/javascript'>
+			  //<![CDATA[
+				// // 사용할 앱의 JavaScript 키를 설정해 주세요.
+				Kakao.init('63270601f8765441000ba3622b1cde83');
+				// // 카카오링크 버튼을 생성합니다. 처음 한번만 호출하면 됩니다.
+				Kakao.Link.createDefaultButton({
+				  container: '#kakao-link-btn',
+				  objectType: 'feed',
+				  content: {
+					title: '재미로 보는 사회인 야구 분석 트라이아웃 :: <?=$analy_name?>',
+					description: '#사회인야구 #야구분석 #트라이아웃',
+					imageUrl: document.images[0].src,
+					link: {
+					  mobileWebUrl: document.location.href,
+					  webUrl: document.location.href
+					}
+				  },
+				  social: {
+					likeCount: 286,
+					commentCount: 45,
+					sharedCount: 845
+				  },
+				  buttons: [
+					{
+					  title: '웹으로 보기',
+					  link: {
+						mobileWebUrl: document.location.href,
+						webUrl: document.location.href
+					  }
+					},
+					{
+					  title: '앱으로 보기',
+					  link: {
+						mobileWebUrl: document.location.href,
+						webUrl: document.location.href
+					  }
+					}
+				  ]
+				});
+			  //]]>
+			</script>
+		<? include("inc/_script.html");?>
+	</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE HTML>
+
+<html>
+	<body>
+	<?	$pos[1] = "선발투수";
+		$pos[2] = "포수";
+		$pos[3] = "1루수";
+		$pos[4] = "2루수";
+		$pos[5] = "3루수";
+		$pos[6] = "유격수";
+		$pos[7] = "좌익수";
+		$pos[8] = "중익수";
+		$pos[9] = "우익수";
+		$pos[10] = "구원/지명";
+		$pos[11] = "선발투수";
+		$pos[12] = "포수";
+		$pos[13] = "1루수";
+		$pos[14] = "2루수";
+		$pos[15] = "3루수";
+		$pos[16] = "유격수";
+		$pos[17] = "좌익수";
+		$pos[18] = "중익수";
+		$pos[19] = "우익수";
+		$pos[20] = "구원/지명";
+	?>
+	<? if($kind == 'merc' && $user_no == $writer_no && $states_row['states'] == 1){
+	include "dbconn.php";
+	for($i = 1; $i <= 20; $i++){
+		$merc_result[$i] = mysqli_query($conn,"SELECT * FROM game_merc WHERE game ='$game_no' AND position = '$i' AND states = '1'");
+		$merc_row[$i] = mysqli_fetch_array($merc_result[$i]);
+		if($merc_row[$i]){
+			$user_num = $merc_row[$i]['user'];
+			$user_result[$i] = mysqli_query($conn,"SELECT * FROM user WHERE no ='$user_num'");
+			$user_row[$i] = mysqli_fetch_array($user_result[$i]);
+		}else{
+			$count_result[$i] = mysqli_query($conn,"SELECT COUNT(*) as count FROM game_merc WHERE game ='$game_no' AND position = '$i'");
+			$count_row[$i] = mysqli_fetch_array($count_result[$i]);
+			$count_comment[$i] = "(".$count_row[$i]['count'].")";
+		}
+	}
+	?>
+	<hr>
+	<div class="row">
+		<div class="row col-md-6" style="padding-left:30px;vertical-align:middle">
+			<div class="col-md-12" style="text-align:center">Home</div>
+			<? for($i = 1; $i <= 10; $i++){?>
+			<div class="col-md-6" style="vertical-align:middle">
+				<label><? echo $pos[$i];?></label>
+			</div>
+				<? if(!$merc_row[$i]){?>
+					<? if($count_row[$i]['count'] != 0){?>
+				<div class="col-md-6" style="text-align:center;vertical-align:middle;">
+					<a class="btn btn-primary btn-sm" href="javascript:;" role="button" onclick="edit_merc_event('<? echo $game_no;?>','<? echo $i?>')"><? echo $count_row[$i]['count'];?>&nbsp;&nbsp;명</a>
+				</div>
+					<? } else {?>
+				<div class="col-md-6" style="text-align:center;vertical-align:middle;">
+					<a class="btn btn-secondary btn-sm disabled" href="javascript:;" role="button">0&nbsp;&nbsp;명</a>
+				</div>
+					<? } ?>
+				<? } else { ?>
+				<div class="col-md-6" style="text-align:center;vertical-align:middle;">
+					<a class="btn btn-primary btn-sm" href="javascript:;" role="button" onclick="edit_merc_event('<? echo $game_no;?>','<? echo $i?>')"><? echo $user_row[$i]['name']?></a>
+				</div>
+				<? } ?>
+				<br><br>
+			<? } ?>		
+		</div>
+		<div class="row col-md-6" style="padding-left:30px;vertical-align:middle">
+			<div class="col-md-12" style="text-align:center">Away</div>
+			<? for($i = 11; $i <= 20; $i++){?>
+			<div class="col-md-6" style="vertical-align:middle">
+				<label><? echo $pos[$i];?></label>
+			</div>
+				<? if(!$merc_row[$i]){?>
+					<? if($count_row[$i]['count'] != 0){?>
+				<div class="col-md-6" style="text-align:center;vertical-align:middle;">
+					<a class="btn btn-primary btn-sm" href="javascript:;" role="button" onclick="edit_merc_event('<? echo $game_no;?>','<? echo $i?>')"><? echo $count_row[$i]['count'];?>&nbsp;&nbsp;명</a>
+				</div>
+					<? } else {?>
+				<div class="col-md-6" style="text-align:center;vertical-align:middle;">
+					<a class="btn btn-secondary btn-sm disabled" href="javascript:;" role="button">0&nbsp;&nbsp;명</a>
+				</div>
+					<? } ?>
+				<? } else { ?>
+				<div class="col-md-6" style="text-align:center;vertical-align:middle;">
+					<a class="btn btn-primary btn-sm" href="javascript:;" role="button" onclick="edit_merc_event('<? echo $game_no;?>','<? echo $i?>')"><? echo $user_row[$i]['name']?></a>
+				</div>
+				<? } ?>
+				<br><br>
+			<? } ?>										
+		</div>
+	</div>
+	<? } else if($kind == 'merc' && $user_no != $writer_no && $states_row['states'] == 1){
+	include "dbconn.php";
+	for($i = 1; $i <= 20; $i++){
+		$merc_result[$i] = mysqli_query($conn,"SELECT * FROM game_merc WHERE game ='$game_no' AND position = '$i' AND states = '1'");
+		$merc_row[$i] = mysqli_fetch_array($merc_result[$i]);
+		if($merc_row[$i]){
+			$user_num = $merc_row[$i]['user'];
+			$user_result[$i] = mysqli_query($conn,"SELECT * FROM user WHERE no ='$user_num'");
+			$user_row[$i] = mysqli_fetch_array($user_result[$i]);
+		}else{
+			$apply_result[$i] = mysqli_query($conn,"SELECT * FROM game_merc WHERE game ='$game_no' AND position = '$i' AND states = '2' AND user = '$user_no'");
+			if($apply_result[$i]){
+				$apply_row[$i] = mysqli_fetch_array($apply_result[$i]);
+			}
+			$count_result[$i] = mysqli_query($conn,"SELECT COUNT(*) as count FROM game_merc WHERE game ='$game_no' AND position = '$i'");
+			$count_row[$i] = mysqli_fetch_array($count_result[$i]);
+			$count_comment[$i] = "(".$count_row[$i]['count'].")";
+		}
+	}
+	?>
+	<hr>
+	<div class="row">
+		<div class="row col-md-6" style="padding-left:30px;vertical-align:middle">
+			<div class="col-md-12" style="text-align:center">Home</div>
+			<? for($i = 1; $i <= 10; $i++){?>
+			<div class="col-md-6" style="vertical-align:middle">
+				<label><? echo $pos[$i];?>&nbsp;<? echo $count_comment[$i];?></label>
+			</div>
+				<? if(!$merc_row[$i]){?>
+					<? if(!$apply_row[$i]){?>
+				<div class="col-md-6" style="text-align:center;vertical-align:middle;">
+					<a class="btn btn-primary btn-sm" href="javascript:;" role="button" onclick="insert_merc_event('<? echo $game_no;?>','<? echo $i?>')">신&nbsp;&nbsp;청</a>
+				</div>
+					<? } else { ?>
+				<div class="col-md-6" style="text-align:center;vertical-align:middle;">
+					<a class="btn btn-success btn-sm" href="javascript:;" role="button" onclick="delete_merc_event('<? echo $apply_row[$i]['no'];?>')">대&nbsp;&nbsp;기</a>
+				</div>	
+					<? } ?>
+				<? } else { ?>
+				<div class="col-md-6" style="text-align:center;vertical-align:middle;">
+					<a class="btn btn-primary btn-sm" href="javascript:;" role="button" onclick="new_page(<? echo $user_row[$i]['no'];?>)"><? echo $user_row[$i]['name']?></a>
+				</div>
+				<? } ?>
+				<br><br>
+			<? } ?>		
+		</div>
+		<div class="row col-md-6" style="padding-left:30px;vertical-align:middle">
+			<div class="col-md-12" style="text-align:center">Away</div>
+			<? for($i = 11; $i <= 20; $i++){?>
+			<div class="col-md-6" style="vertical-align:middle">
+				<label><? echo $pos[$i];?>&nbsp;<? echo $count_comment[$i];?></label>
+			</div>
+				<? if(!$merc_row[$i]){?>
+					<? if(!$apply_row[$i]){?>
+				<div class="col-md-6" style="text-align:center;vertical-align:middle;">
+					<a class="btn btn-primary btn-sm" href="javascript:;" role="button" onclick="insert_merc_event('<? echo $game_no;?>','<? echo $i?>')">신&nbsp;&nbsp;청</a>
+				</div>
+					<? } else { ?>
+				<div class="col-md-6" style="text-align:center;vertical-align:middle;">
+					<a class="btn btn-success btn-sm" href="javascript:;" role="button" onclick="delete_merc_event('<? echo $apply_row[$i]['no'];?>')">대&nbsp;&nbsp;기</a>
+				</div>
+					<? } ?>
+				<? } else { ?>
+				<div class="col-md-6" style="text-align:center;vertical-align:middle;">
+					<a class="btn btn-primary btn-sm" href="javascript:;" role="button" onclick="new_page(<? echo $user_row[$i]['no'];?>)"><? echo $user_row[$i]['name']?></a>
+				</div>
+				<? } ?>
+				<br><br>
+			<? } ?>										
+		</div>
+	</div>						
+	<? } else if($kind == 'merc' && $states_row['states'] == 2){
+	include "dbconn.php";
+	for($i = 1; $i <= 20; $i++){
+		$merc_result[$i] = mysqli_query($conn,"SELECT * FROM game_merc WHERE game ='$game_no' AND position = '$i' AND states = '1'");
+		$merc_row[$i] = mysqli_fetch_array($merc_result[$i]);
+		if($merc_row[$i]){
+			$user_num = $merc_row[$i]['user'];
+			$user_result[$i] = mysqli_query($conn,"SELECT * FROM user WHERE no ='$user_num'");
+			$user_row[$i] = mysqli_fetch_array($user_result[$i]);
+		}
+	}
+	?>
+	<hr>
+	<div class="row">
+		<div class="row col-md-6" style="padding-left:30px;vertical-align:middle">
+			<div class="col-md-12" style="text-align:center">Home</div>
+			<? for($i = 1; $i <= 10; $i++){?>
+			<div class="col-md-6" style="vertical-align:middle">
+				<label><? echo $pos[$i];?></label>
+			</div>
+				<? if(!$merc_row[$i]){?>
+				<div class="col-md-6" style="text-align:center;vertical-align:middle;">
+					<a class="btn btn-secondary btn-sm disabled" href="javascript:;" role="button">마감</a>
+				</div>
+				<? } else { ?>
+				<div class="col-md-6" style="text-align:center;vertical-align:middle;">
+					<a class="btn btn-primary btn-sm" href="javascript:;" role="button" onclick="new_page(<? echo $user_row[$i]['no'];?>)"><? echo $user_row[$i]['name']?></a>
+				</div>
+				<? } ?>
+				<br><br>
+			<? } ?>		
+		</div>
+		<div class="row col-md-6" style="padding-left:30px;vertical-align:middle">
+			<div class="col-md-12" style="text-align:center">Away</div>
+			<? for($i = 11; $i <= 20; $i++){?>
+			<div class="col-md-6" style="vertical-align:middle">
+				<label><? echo $pos[$i];?></label>
+			</div>
+				<? if(!$merc_row[$i]){?>
+				<div class="col-md-6" style="text-align:center;vertical-align:middle;">
+					<a class="btn btn-secondary btn-sm disabled" href="javascript:;" role="button">마감</a>
+				</div>
+				<? } else { ?>
+				<div class="col-md-6" style="text-align:center;vertical-align:middle;">
+					<a class="btn btn-primary btn-sm" href="javascript:;" role="button" onclick="new_page(<? echo $user_row[$i]['no'];?>)"><? echo $user_row[$i]['name']?></a>
+				</div>
+				<? } ?>
+				<br><br>
+			<? } ?>										
+		</div>
+	</div>										
+	<? } ?>
+	</body>
+</html>

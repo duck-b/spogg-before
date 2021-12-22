@@ -1,0 +1,347 @@
+<!DOCTYPE HTML>
+<html>
+<?
+ 	$nav = "index";
+	include("inc/_head.html");
+?>
+<body>
+	<? include("inc/_header.html");?>
+
+	<section class="site-hero overlay" style="background-image: url(images/big_image_1.jpg);">
+		<div class="container">
+			<div class="row align-items-center site-hero-inner justify-content-center">
+				<div class="col-md-8 text-center">
+					<div class="mb-5 element-animate">
+						<h1>TRYOUT</h1>
+						<!--<p>사회인 야구 기록 열람 / 관리 서비스</p>-->
+					</div>
+					<form action="search.html" class="form-inline element-animate" id="search-form" method="get">
+						<input type="text" name="search" class="form-control form-control-block search-input" id="autocomplete" placeholder="선수 / 팀 검색" onFocus="geolocate()" required>
+						<button type="submit" class="btn btn-primary">검색</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</section>
+	<!-- END section -->
+
+	<section class="feature-destination">
+		<div class="container">
+			<div class="row">
+				<div class="col-md-4 element-animate ">
+					<a href="record/index.html" class="img-bg last" style="background-image: url('images/main_record.jpg')">
+						<div class="text">
+							<span class="icon"><i class="fas fa-chart-line"></i></span>
+							<h2>TRYOUT RECORD</h2>
+							<p>바로가기</p>
+						</div>
+					</a>
+				</div>
+				<div class="col-md-4 element-animate ">
+					<a href="join.html?join=league" class="img-bg" style="background-image: url('images/main_league.jpg')">
+						<div class="text">
+							<span class="icon"><i class="fas fa-search"></i></span>
+							<h2>리그 검색</h2>
+							<p>바로가기</p>
+						</div>
+					</a>
+				</div>
+				<div class="col-md-4 element-animate ">
+					<a href="user.html?user=team" class="img-bg" style="background-image: url('images/main_team.jpg')">
+						<div class="text">
+							<span class="icon"><i class="fas fa-users"></i></span>
+							<h2>소속 팀 / 팀 등록</h2>
+							<p>바로가기</p>
+						</div>
+					</a>
+				</div>
+			</div>
+		</div>
+	</section>
+	<!-- END section -->
+	
+	<section class="site-section" style="padding-top:20px;padding-bottom:20px;">
+		<div class="container" style="padding-top:40px;border-top:1px solid #dee2e6;">
+			<div class="row">
+				<div class="col-md-4 pr-5">
+					<h2 class="mb-3"><a style="color:#007bff">트라이아웃<a>의<br> 더 많은 서비스</h2>
+					<p class="mb-5"><a style="color:#007bff">트라이아웃<a>은 다양한 야구 경기를 즐길 수 있는 서비스를 제공하며 전문적인 기록 시스템을 통해 실력을 높이는데 도움을 줄 것입니다.</p>
+					<div class="mb-3">
+						<a href="javascript:;" class="btn btn-primary custom-prev mr-2 mb-2"><span class="ion-android-arrow-back"></span></a> 
+						<a href="javascript:;" class="btn btn-primary custom-next mr-2 mb-2"><span class="ion-android-arrow-forward"></span></a>
+					</div>
+				</div>
+				<div class="col-md-8">
+					<div class="row">
+						<div class="col-md-12 slider-wrap">
+							<div class="owl-carousel owl-theme no-nav js-carousel-1">
+								<a href="game.html?game=hgame" class="img-bg" style="background-image: url('images/main_hgame.jpg')">
+									<div class="text">
+										<!--<span class="icon"><i class="fas fa-baseball-ball"></i></span>-->
+										<h2>일반 경기 (홈)</h2>
+										<!--<p>바로가기</p>-->
+									</div>
+								</a>
+								<a href="game.html?game=agame" class="img-bg" style="background-image: url('images/main_agame.jpg')">
+									<div class="text">
+										<!--<span class="icon"><i class="fas fa-baseball-ball"></i></span>-->
+										<h2>일반 경기 (원정)</h2>
+										<!--<p>바로가기</p>-->
+									</div>
+								</a>
+								<a href="game.html?game=merc" class="img-bg" style="background-image: url('images/main_merc.jpg')">
+									<div class="text">
+										<!--<span class="icon"><i class="fas fa-baseball-ball"></i></span>-->
+										<h2>용병 경기</h2>
+										<!--<p>바로가기</p>-->
+									</div>
+								</a>
+								<a href="game.html?game=stadium" class="img-bg" style="background-image: url('images/main_stadium.jpg')">
+									<div class="text">
+										<!--<span class="icon"><i class="fas fa-hand-holding"></i></span>-->
+										<h2>구장 양도</h2>
+										<!--<p>바로가기</p>-->
+									</div>
+								</a>
+								<a href="board.html?board=free" class="img-bg" style="background-image: url('images/main_free.jpg')">
+									<div class="text">
+										<!--<span class="icon"><i class="fas fa-comments"></i></span>-->
+										<h2>자유 게시판</h2>
+										<!--<p>바로가기</p>-->
+									</div>
+								</a>								
+								<a href="board.html?board=fa" class="img-bg" style="background-image: url('images/main_fa.jpg')">
+									<div class="text">
+										<!--<span class="icon"><i class="fas fa-user"></i></span>-->
+										<h2>FA 시장</h2>
+										<!--<p>바로가기</p>-->
+									</div>
+								</a>
+								<a href="join.html?join=user" class="img-bg" style="background-image: url('images/main_player_search.jpg')">
+									<div class="text">
+										<!--<span class="icon"><i class="fas fa-user"></i></span>-->
+										<h2>선수 검색</h2>
+										<!--<p>바로가기</p>-->
+									</div>
+								</a>
+								<a href="join.html?join=team" class="img-bg" style="background-image: url('images/main_team_search.jpg')">
+									<div class="text">
+										<!--<span class="icon"><i class="fas fa-users"></i></span>-->
+										<h2>팀 검색</h2>
+										<!--<p>바로가기</p>-->
+									</div>
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+	<!-- END section -->
+	
+	<!--<section class="site-section" style="padding-top:0px;">
+		<div class="container" style="padding-top:20px;border-top:1px solid #dee2e6;">
+			<div class="row justify-content-center mb-5">
+				<div class="col-md-7 text-center">
+					<h2>더 많은 서비스</h2>
+					<p></p>
+				</div>
+			</div>
+			<div class="row top-destination">
+				<div class="col-lg-2 col-md-4 col-sm-6 col-12">
+					<a href="join.html?join=user" class="place">
+						<img src="images/img_1.jpg" alt="Image placeholder">
+						<h2 style="text-align:center">선수 찾기</h2>
+					</a>
+				</div>
+				<div class="col-lg-2 col-md-4 col-sm-6 col-12">
+					<a href="join.html?join=team" class="place">
+						<img src="images/img_2.jpg" alt="Image placeholder">
+						<h2 style="text-align:center">팀 찾기</h2>
+					</a>
+				</div>
+				<div class="col-lg-2 col-md-4 col-sm-6 col-12">
+					<a href="join.html?join=league" class="place">
+						<img src="images/img_3.jpg" alt="Image placeholder">
+						<h2 style="text-align:center">리그 찾기</h2>
+					</a>
+				</div>
+				<div class="col-lg-2 col-md-4 col-sm-6 col-12">
+					<a href="team.html?team=regist" class="place">
+						<img src="images/img_4.jpg" alt="Image placeholder">
+						<h2 style="text-align:center">팀 창단</h2>
+					</a>
+				</div>
+				<div class="col-lg-2 col-md-4 col-sm-6 col-12">
+					<a href="#" class="place">
+						<img src="images/img_5.jpg" alt="Image placeholder">
+						<h2 style="text-align:center">경기 개설</h2>
+					</a>
+				</div>
+				<div class="col-lg-2 col-md-4 col-sm-6 col-12">
+					<a href="board.html?board=free" class="place">
+						<img src="images/img_6.jpg" alt="Image placeholder">
+						<h2 style="text-align:center">자유 게시판</h2>
+					</a>
+				</div>
+			</div>
+		</div>
+	</section>-->
+	<!-- END section -->
+	
+	<section class="site-section" style="padding-top:0px;">
+		<div class="container" style="padding-top:40px;border-top:1px solid #dee2e6;" id="question">
+			<div class="row justify-content-center mb-5">
+				<div class="col-md-7 text-center">
+					<h2>문의 하기</h2>
+				</div>
+			</div>
+			<form name="question_form" action="QuestionInsertProc.php" method="post" style="padding:20px 10px 20px 10px;border:1px solid #dee2e6;">
+				<div class="row">
+					<div class="col-md-6">
+						<label for="title">문의 제목</label>
+						<input type="text" name="title" id="title" class="form-control " placeholder="문의하실 내용의 제목을 입력해주세요" required><br>
+						<label for="contents">문의 내용</label>
+						<textarea class="form-control" style="resize: none;" name="contents" rows="5" id="contents" aria-label="With textarea"></textarea>
+					</div>
+					<? if(!$user_no){?>
+					<div class="col-md-6" style="border-left:1px solid #dee2e6;">
+						<label for="email">E-mail</label>
+						<input type="email" name="email" id="email" class="form-control " placeholder="test@example.com" pattern="[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a-zA-Z]{2,3}$" required><br>
+						<label for="phone">전화번호</label>
+						<input type="tel" name="phone" id="phone" class="form-control " placeholder="ex)010-1234-5678" pattern="(010)-\d{3,4}-\d{4}" required><br>
+						<div class="row">
+							<div class="col-md-6">
+								<a class="btn btn-primary" style="width:100%" href="user.html?user=login" role="button">로그인</a>
+							</div>
+							<div class="col-md-6 form-group">
+								<input type="submit" value="문의하기" style="width:100%" class="btn btn-primary" onclick="insert()">
+							</div>
+							<div class="col-md-12">
+								<p style="color:red;font-size:100%">※ 로그인 후 문의 하시면 빠른 답변이 가능합니다.</p>
+							</div>
+						</div>
+					</div>
+					<? } else {?>
+					<div class="col-md-6" style="border-left:1px solid #dee2e6;">
+						<label for="email_u">E-mail</label>
+						<input type="email" id="email_u" class="form-control " placeholder="활동내역에서 답변확인이 가능합니다." disabled><br>
+						<label for="phone_u">전화번호</label>
+						<input type="tel" id="phone_u" class="form-control " placeholder="활동내역에서 답변확인이 가능합니다." disabled><br>
+						<input type="submit" value="문의하기" style="width:100%" class="btn btn-primary" onclick="insert()">
+					</div>
+					<? } ?>
+				</div>
+			</form>
+		</div>
+	</section>
+
+	<!--<section class="section-cover" data-stellar-background-ratio="0.5" style="background-image: url(images/big_image_2.jpg);">
+		<div class="container">
+			<div class="row justify-content-center align-items-center intro">
+				<div class="col-md-7 text-center element-animate">
+					<h2>Get 10% off On Your Next Travel</h2>
+					<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Architecto quidem tempore expedita facere facilis, dolores!</p>
+					<p><a href="#" class="btn btn-black">Get Started</a></p>
+				</div>
+			</div>
+		</div>
+	</section>-->
+	<!-- END section -->
+
+
+	<? include("inc/_footer.html");?>
+    
+	<? include("inc/_script.html");?>
+
+    <!--구글 지도<script>
+      // This example displays an address form, using the autocomplete feature
+      // of the Google Places API to help users fill in the information.
+
+      // This example requires the Places library. Include the libraries=places
+      // parameter when you first load the API. For example:
+      // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
+
+      var placeSearch, autocomplete;
+      var componentForm = {
+        street_number: 'short_name',
+        route: 'long_name',
+        locality: 'long_name',
+        administrative_area_level_1: 'short_name',
+        country: 'long_name',
+        postal_code: 'short_name'
+      };
+
+      function initAutocomplete() {
+        // Create the autocomplete object, restricting the search to geographical
+        // location types.
+        autocomplete = new google.maps.places.Autocomplete(
+            /** @type {!HTMLInputElement} */(document.getElementById('autocomplete')),
+            {types: ['geocode']});
+
+        // When the user selects an address from the dropdown, populate the address
+        // fields in the form.
+        autocomplete.addListener('place_changed', fillInAddress);
+      }
+
+      function fillInAddress() {
+        // Get the place details from the autocomplete object.
+        var place = autocomplete.getPlace();
+
+        for (var component in componentForm) {
+          document.getElementById(component).value = '';
+          document.getElementById(component).disabled = false;
+        }
+
+        // Get each component of the address from the place details
+        // and fill the corresponding field on the form.
+        for (var i = 0; i < place.address_components.length; i++) {
+          var addressType = place.address_components[i].types[0];
+          if (componentForm[addressType]) {
+            var val = place.address_components[i][componentForm[addressType]];
+            document.getElementById(addressType).value = val;
+          }
+        }
+      }
+
+      // Bias the autocomplete object to the user's geographical location,
+      // as supplied by the browser's 'navigator.geolocation' object.
+      function geolocate() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            var geolocation = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+            var circle = new google.maps.Circle({
+              center: geolocation,
+              radius: position.coords.accuracy
+            });
+            autocomplete.setBounds(circle.getBounds());
+          });
+        }
+      }
+    </script>-->
+	<!-- key=AIzaSyBVWaKrjvy3MaE7SQ74_uJiULgl1JY0H2s&libraries=places&callback=initAutocomplete -->
+    <!--<script src="https://maps.googleapis.com/maps/api/js?key="
+        async defer></script>-->
+	<script>
+		var doubleSubmitFlag = false;
+		function doubleSubmitCheck(){
+			if(doubleSubmitFlag){
+				return doubleSubmitFlag;
+			}else{
+				doubleSubmitFlag = true;
+				return false;
+			}
+		}
+		function insert(){
+			var str = document.getElementById("contents").value;
+			str = str.replace(/(?:\r\n|\r|\n)/g, '<br>');
+			document.getElementById("contents").value = str;
+			if(doubleSubmitCheck()) return;
+		}
+	</script>
+</body>
+</html>

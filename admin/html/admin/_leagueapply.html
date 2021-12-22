@@ -1,0 +1,75 @@
+<!DOCTYPE HTML>
+<?
+	include "dbconn.php";
+	$league_result = mysqli_query($conn,"SELECT * FROM league WHERE no = '$no'");
+	$league_row = mysqli_fetch_array($league_result);
+	$league_team_result = mysqli_query($conn,"SELECT * FROM league_team WHERE league = '$no'");
+?>
+<html>
+	<body>
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-10">
+						<h3 style="vertical-align: middle;"><? echo $league_row['name']?> (신청 관리)</h3>
+					</div>
+					<div class="col-md-2">
+						<a class="btn btn-primary" href="admin.html?admin=league&no=<? echo $no?>" role="button">리그 관리</a>
+					</div>
+				</div><br>
+				<table class="table">
+					<thead>
+						<tr>
+							<th scope="col-2" style="weight:1">#</th>
+							<th scope="col-2" style="weight:1">Team</th>
+							<th scope="col-2" style="weight:1">User</th>
+							<th scope="col-2" style="weight:1">Manage</th>
+							<th scope="col-2" style="weight:1">Apply Date</th>
+						</tr>
+					</thead>
+					<tbody>
+						<? while($league_team_row = mysqli_fetch_array($league_team_result)){
+							$apply_user_no = $league_team_row['user'];
+							$apply_user_result = mysqli_query($conn,"SELECT * FROM user where no='$apply_user_no'");
+							$apply_user_row = mysqli_fetch_array($apply_user_result);
+							$apply_team_no = $league_team_row['team'];
+							$apply_team_result = mysqli_query($conn,"SELECT * FROM team where no='$apply_team_no'");
+							$apply_team_row = mysqli_fetch_array($apply_team_result);
+							if($league_team_row['states'] == 1){
+								$bt_c1 = 'secondary disabled';
+								$bt_c2 = 'success';
+								$bt_c3 = 'danger';
+							}else if($league_team_row['states'] == 2){
+								$bt_c1 = 'primary';
+								$bt_c2 = 'secondary disabled';
+								$bt_c3 = 'danger';
+							}else if($league_team_row['states'] == 3){
+								$bt_c1 = 'primary';
+								$bt_c2 = 'success';
+								$bt_c3 = 'secondary disabled';
+							}
+							?>
+						<tr>
+							<th scope="row" style="vertical-align: middle;"><? echo $league_team_row['no'] ;?></th>
+							<td style="vertical-align: middle;"><a href="team.html?team=info&no=<? echo $apply_team_no;?>"><? echo $apply_team_row['name'];?></a></td>
+							<td style="vertical-align: middle;"><a href="user.html?user=info&no=<? echo $apply_user_no;?>"><? echo $apply_user_row['name'];?>(<? echo $apply_user_row['id'];?>)</a></td>
+							<td style="vertical-align: middle;">
+								<?if($league_team_row['states'] == 1){
+									echo $league_team_row['updated_at']."에 <a style='color:blue'>수락</a>됨";
+								}else if($league_team_row['states'] == 2){?>
+								<a class="btn btn-primary" href="LeagueTeamUpdateProc.php?no=<? echo $league_team_row['no'];?>&com=acc" role="button">수락</a>
+								<a class="btn btn-danger" href="LeagueTeamUpdateProc.php?no=<? echo $league_team_row['no'];?>&com=ref" role="button">거절</a>
+								<?}else if($league_team_row['states'] == 3){
+									echo $league_team_row['updated_at']."에 <a style='color:red'>거절</a>됨";
+								}?>
+							</td>
+							<td style="vertical-align: middle;"><? echo $league_team_row['created_at'];?>에 신청됨</td>
+						</tr>
+						<? } ?>
+					</tbody>
+				</table>
+				<? 	mysqli_close($conn); ?>
+			</div>
+		</section>
+	</body>
+</html>

@@ -1,0 +1,403 @@
+<!DOCTYPE HTML>
+<html>
+<?
+	include "dbconn.php";
+	$query_home_play = "SELECT * FROM play WHERE (home_team='$no' OR away_team='$no') AND DATE(play_datetime) > DATE(NOW()) ORDER BY play_datetime ASC LIMIT 1";
+	$hp_result = mysqli_query($conn, $query_home_play);
+	$hp_row = mysqli_fetch_array($hp_result);
+	$hp_league_no = $hp_row['league'];
+	$hp_league_result = mysqli_query($conn,"SELECT * FROM league where no='$hp_league_no'");
+	$hp_league_row = mysqli_fetch_array($hp_league_result);
+	$hp_home_no = $hp_row['home_team'];
+	$hp_home_result = mysqli_query($conn,"SELECT * FROM team where no='$hp_home_no'");
+	$hp_home_row = mysqli_fetch_array($hp_home_result);
+	$hp_away_no = $hp_row['away_team'];
+	$hp_away_result = mysqli_query($conn,"SELECT * FROM team where no='$hp_away_no'");
+	$hp_away_row = mysqli_fetch_array($hp_away_result);
+	if($hp_home_no == $no){
+		$link_home = $hp_home_row['name'];
+	}else{
+		$link_home = "<a href='team.html?team=info&no=".$hp_home_no."'>".$hp_home_row['name']."</a>";
+	}
+	if($hp_away_no == $no){
+		$link_away = $hp_away_row['name'];
+	}else{
+		$link_away = "<a href='team.html?team=info&no=".$hp_away_no."'>".$hp_away_row['name']."</a>";
+	}
+	$query_home_end = "SELECT play.* FROM play JOIN play_end WHERE (play.home_team='$no' OR play.away_team='$no') AND play.no = play_end.play ORDER BY play_end.created_at DESC LIMIT 1";
+	$he_result = mysqli_query($conn, $query_home_end);
+	$he_row = mysqli_fetch_array($he_result);
+	$he_league_no = $he_row['league'];
+	$he_play_no = $he_row['no'];
+	$he_league_result = mysqli_query($conn,"SELECT * FROM league where no='$he_league_no'");
+	$he_league_row = mysqli_fetch_array($he_league_result);
+	$he_home_no = $he_row['home_team'];
+	$he_home_result = mysqli_query($conn,"SELECT * FROM team JOIN play_result WHERE team.no='$he_home_no' AND play_result.team = '$he_home_no' AND play_result.play = '$he_play_no'");
+	$he_home_row = mysqli_fetch_array($he_home_result);
+	$he_away_no = $he_row['away_team'];
+	$he_away_result = mysqli_query($conn,"SELECT * FROM team JOIN play_result WHERE team.no='$he_away_no' AND play_result.team = '$he_away_no' AND play_result.play = '$he_play_no'");
+	$he_away_row = mysqli_fetch_array($he_away_result);
+	if($he_home_no == $no){
+		$link_home_e = $he_home_row['name'];
+	}else{
+		$link_home_e = "<a href='team.html?team=info&no=".$he_home_no."'>".$he_home_row['name']."</a>";
+	}
+	if($he_home_row['playresult'] == 1){
+		$he_home_re = "<br>승 (".$he_home_row['score'].")";
+		$play_re = "<b>".$he_home_row['name']."</b> 승리";
+	}else if($he_home_row['playresult'] == 2){
+		$he_home_re = "<br>패 (".$he_home_row['score'].")";
+	}else if($he_home_row['playresult'] == 3){
+		$he_home_re = "<br>무 (".$he_home_row['score'].")";
+		$play_re = " 무승부";
+	}else if($he_home_row['playresult'] == 4){
+		$he_home_re = "";
+		$play_re = "";
+	}
+	if($he_away_no == $no){
+		$link_away_e = $he_away_row['name'];
+	}else{
+		$link_away_e = "<a href='team.html?team=info&no=".$he_away_no."'>".$he_away_row['name']."</a>";
+	}
+	if($he_away_row['playresult'] == 1){
+		$he_away_re = "<br>승 (".$he_away_row['score'].")";
+		$play_re = "<b>".$he_away_row['name']."</b> 승리";
+	}else if($he_away_row['playresult'] == 2){
+		$he_away_re = "<br>패 (".$he_away_row['score'].")";
+	}else if($he_away_row['playresult'] == 3){
+		$he_away_re = "<br>무 (".$he_away_row['score'].")";
+		$play_re = " 무승부";
+	}else if($he_away_row['playresult'] == 4){
+		$he_away_re = "";
+	}
+	$query_home_free = "SELECT * FROM board_team WHERE team='$no' AND deleted_at is null AND notice = '0' ORDER BY created_at DESC LIMIT 3";
+	$hf_result = mysqli_query($conn, $query_home_free);
+	$hf_row = mysqli_fetch_array($hf_result);
+	
+	$query_home_ba5 = "SELECT user.name as name, team_members.back_num as back_num, ROUND((player_hit.hit1 + player_hit.hit2 + player_hit.hit3 + player_hit.hr)/player_hit.at_bat, 3) as player_ba FROM user JOIN player JOIN team_members JOIN player_hit WHERE user.no = player.user AND player.no = team_members.player AND player_hit.team_member = team_members.no AND team_members.team = '$no' ORDER BY player_ba DESC LIMIT 5";
+	$ba5_result = mysqli_query($conn, $query_home_ba5);
+	$i = 1;
+	$j = 0;
+	$ba_contens = "";
+	while($ba5_row = mysqli_fetch_array($ba5_result)){
+		if($j != $ba5_row['player_ba'] && $ba5_row['player_ba'] != 0){
+			if($i == 1){
+				$ba_contens = $ba_contens."<div class='col-md-12' style='padding:0px;'><hr><p style='font-size:80%' id='top5'>".$i."위:".$ba5_row['back_num'].".".$ba5_row['name']."(".$ba5_row['player_ba'].")</p></div>";
+			}else{
+				$ba_contens = $ba_contens."<div class='col-md-12' style='padding:0px;'><p style='font-size:80%' id='top5'>".$i."위:".$ba5_row['back_num'].".".$ba5_row['name']."(".$ba5_row['player_ba'].")</p></div>";
+			}
+			$i++;
+			$j = $ba5_row['player_ba'];
+		}else if($j == $ba5_row['player_ba'] && $ba5_row['player_ba'] != 0){
+			$ba_contens = $ba_contens."<div class='col-md-12' style='padding:0px;'><p style='font-size:80%' id='top5'>".($i - 1)."위:".$ba5_row['back_num'].".".$ba5_row['name']."(".$ba5_row['player_ba'].")</p></div>";
+		}
+	}
+	$query_home_hr5 = "SELECT user.name as name, team_members.back_num as back_num, player_hit.hr as player_hr FROM user JOIN player JOIN team_members JOIN player_hit WHERE user.no = player.user AND player.no = team_members.player AND player_hit.team_member = team_members.no AND team_members.team = '$no' ORDER BY player_hr DESC LIMIT 5";
+	$hr5_result = mysqli_query($conn, $query_home_hr5);
+	$i = 1;
+	$j = 0;
+	$hr_contens = "";
+	while($hr5_row = mysqli_fetch_array($hr5_result)){
+		if($j != $hr5_row['player_hr'] && $hr5_row['player_hr'] != 0){
+			if($i == 1){
+				$hr_contens = $hr_contens."<div class='col-md-12' style='padding:0px;'><hr><p style='font-size:80%' id='top5'>".$i."위:".$hr5_row['back_num'].".".$hr5_row['name']."(".$hr5_row['player_hr']."개)</p></div>";
+			}else{
+				$hr_contens = $hr_contens."<div class='col-md-12' style='padding:0px;'><p style='font-size:80%' id='top5'>".$i."위:".$hr5_row['back_num'].".".$hr5_row['name']."(".$hr5_row['player_hr']."개)</p></div>";
+			}
+			$i++;
+			$j = $hr5_row['player_hr'];
+		}else if($j == $hr5_row['player_hr'] && $hr5_row['player_hr'] != 0){
+			$hr_contens = $hr_contens."<div class='col-md-12' style='padding:0px;'><p style='font-size:80%' id='top5'>".($i - 1)."위:".$hr5_row['back_num'].".".$hr5_row['name']."(".$hr5_row['player_hr']."개)</p></div>";
+		}
+	}
+	$query_home_rbi5 = "SELECT user.name as name, team_members.back_num as back_num, player_hit.rbi as player_rbi FROM user JOIN player JOIN team_members JOIN player_hit WHERE user.no = player.user AND player.no = team_members.player AND player_hit.team_member = team_members.no AND team_members.team = '$no' ORDER BY player_rbi DESC LIMIT 5";
+	$rbi5_result = mysqli_query($conn, $query_home_rbi5);
+	$i = 1;
+	$j = 0;
+	$rbi5_contens = "";
+	while($rbi5_row = mysqli_fetch_array($rbi5_result)){
+		if($j != $rbi5_row['player_rbi'] && $rbi5_row['player_rbi'] != 0){
+			if($i == 1){
+				$rbi5_contens = $rbi5_contens."<div class='col-md-12' style='padding:0px;'><hr><p style='font-size:80%' id='top5'>".$i."위:".$rbi5_row['back_num'].".".$rbi5_row['name']."(".$rbi5_row['player_rbi']."점)</p></div>";
+			}else{
+				$rbi5_contens = $rbi5_contens."<div class='col-md-12' style='padding:0px;'><p style='font-size:80%' id='top5'>".$i."위:".$rbi5_row['back_num'].".".$rbi5_row['name']."(".$rbi5_row['player_rbi']."점)</p></div>";
+			}
+			$i++;
+			$j = $rbi5_row['player_rbi'];
+		}else if($j == $rbi5_row['player_rbi'] && $rbi5_row['player_rbi'] != 0){
+			$rbi5_contens = $rbi5_contens."<div class='col-md-12' style='padding:0px;'><p style='font-size:80%' id='top5'>".($i - 1)."위:".$rbi5_row['back_num'].".".$rbi5_row['name']."(".$rbi5_row['player_rbi']."점)</p></div>";
+		}
+	}
+	$query_home_win5 = "SELECT user.name as name, team_members.back_num as back_num, player_pic.play_win as player_win FROM user JOIN player JOIN team_members JOIN player_pic WHERE user.no = player.user AND player.no = team_members.player AND player_pic.team_member = team_members.no AND team_members.team = '$no' ORDER BY player_win DESC LIMIT 5";
+	$win5_result = mysqli_query($conn, $query_home_win5);
+	$i = 1;
+	$j = 0;
+	$win5_contens = "";
+	while($win5_row = mysqli_fetch_array($win5_result)){
+		if($j != $win5_row['player_win'] && $win5_row['player_win'] != 0){
+			if($i == 1){
+				$win5_contens = $win5_contens."<div class='col-md-12' style='padding:0px;'><hr><p style='font-size:80%' id='top5'>".$i."위:".$win5_row['back_num'].".".$win5_row['name']."(".$win5_row['player_win']."승)</p></div>";
+			}else{
+				$win5_contens = $win5_contens."<div class='col-md-12' style='padding:0px;'><p style='font-size:80%' id='top5'>".$i."위:".$win5_row['back_num'].".".$win5_row['name']."(".$win5_row['player_win']."승)</p></div>";
+			}
+			$i++;
+			$j = $win5_row['player_win'];
+		}else if($j == $win5_row['player_win'] && $win5_row['player_win'] != 0){
+			$win5_contens = $win5_contens."<div class='col-md-12' style='padding:0px;'><p style='font-size:80%' id='top5'>".($i - 1)."위:".$win5_row['back_num'].".".$win5_row['name']."(".$win5_row['player_win']."승)</p></div>";
+		}
+	}
+	$query_home_era5 = "SELECT user.name as name, team_members.back_num as back_num, ROUND((player_pic.er * 7)/(player_pic.inning/3),2) as player_era FROM user JOIN player JOIN team_members JOIN player_pic WHERE user.no = player.user AND player.no = team_members.player AND player_pic.team_member = team_members.no AND team_members.team = '$no' ORDER BY player_era ASC LIMIT 5";
+	$era5_result = mysqli_query($conn, $query_home_era5);
+	$i = 1;
+	$j = 0;
+	$era5_contens = "";
+	while($era5_row = mysqli_fetch_array($era5_result)){
+		if($j != $era5_row['player_era'] && $era5_row['player_era'] != 0){
+			if($i == 1){
+				$era5_contens = $era5_contens."<div class='col-md-12' style='padding:0px;'><hr><p style='font-size:80%' id='top5'>".$i."위:".$era5_row['back_num'].".".$era5_row['name']."(".$era5_row['player_era'].")</p></div>";
+			}else{
+				$era5_contens = $era5_contens."<div class='col-md-12' style='padding:0px;'><p style='font-size:80%' id='top5'>".$i."위:".$era5_row['back_num'].".".$era5_row['name']."(".$era5_row['player_era'].")</p></div>";
+			}
+			$i++;
+			$j = $so5_row['player_era'];
+		}else if($j == $era5_row['player_era'] && $era5_row['player_era'] != 0){
+			$era5_contens = $era5_contens."<div class='col-md-12' style='padding:0px;'><p style='font-size:80%' id='top5'>".($i - 1)."위:".$era5_row['back_num'].".".$era5_row['name']."(".$era5_row['player_era'].")</p></div>";
+		}
+	}
+	$query_home_so5 = "SELECT user.name as name, team_members.back_num as back_num, player_pic.so as player_so FROM user JOIN player JOIN team_members JOIN player_pic WHERE user.no = player.user AND player.no = team_members.player AND player_pic.team_member = team_members.no AND team_members.team = '$no' ORDER BY player_so DESC LIMIT 5";
+	$so5_result = mysqli_query($conn, $query_home_so5);
+	$i = 1;
+	$j = 0;
+	$so5_contens = "";
+	while($so5_row = mysqli_fetch_array($so5_result)){
+		if($j != $so5_row['player_so'] && $so5_row['player_so'] != 0){
+			if($i == 1){
+				$so5_contens = $so5_contens."<div class='col-md-12' style='padding:0px;'><hr><p style='font-size:80%' id='top5'>".$i."위:".$so5_row['back_num'].".".$so5_row['name']."(".$so5_row['player_so']."개)</p></div>";
+			}else{
+				$so5_contens = $so5_contens."<div class='col-md-12' style='padding:0px;'><p style='font-size:80%' id='top5'>".$i."위:".$so5_row['back_num'].".".$so5_row['name']."(".$so5_row['player_so']."개)</p></div>";
+			}
+			$i++;
+			$j = $so5_row['player_so'];
+		}else if($j == $so5_row['player_so'] && $so5_row['player_so'] != 0){
+			$so5_contens = $so5_contens."<div class='col-md-12' style='padding:0px;'><p style='font-size:80%' id='top5'>".($i - 1)."위:".$so5_row['back_num'].".".$so5_row['name']."(".$so5_row['player_so']."개)</p></div>";
+		}
+	}
+	$query_home_league = "SELECT league.no as league_no, league.name as name FROM league JOIN league_team WHERE league_team.team = '$no' AND league.no = league_team.league ORDER BY league_team.created_at DESC";
+	$home_league_result = mysqli_query($conn, $query_home_league);
+	while($home_league_row = mysqli_fetch_array($home_league_result)){
+		$league_no = $home_league_row['league_no'];
+		
+	}
+?>
+	<body>
+	<script>
+	function record_top5(){
+		select_value = document.select_top5_form.select_top5.value;
+		if(select_value == 1){
+			document.getElementById('list_top5').innerHTML = "<? echo $ba_contens;?>";
+		}else if(select_value == 2){
+			document.getElementById('list_top5').innerHTML = "<? echo $hr_contens;?>";
+		}else if(select_value == 3){
+			document.getElementById('list_top5').innerHTML = "<? echo $rbi5_contens;?>";
+		}else if(select_value == 4){
+			document.getElementById('list_top5').innerHTML = "<? echo $win5_contens;?>";
+		}else if(select_value == 5){
+			document.getElementById('list_top5').innerHTML = "<? echo $era5_contens;?>";
+		}else if(select_value == 6){
+			document.getElementById('list_top5').innerHTML = "<? echo $so5_contens;?>";
+		}
+	}
+	function league_record(){
+		select_value_2 = document.select_league_form.select_league.value;
+		$.ajax({
+			type: 'POST',
+			url: 'select_team_league.php',
+			data: {
+				league: select_value_2,
+				team : <? echo $no?>,
+			},
+			dataTpye: 'text',
+			success: function(data){
+				//alert(data)
+				document.getElementById('team_record').innerHTML = data;
+			},
+			error: function(data) {
+			
+			}
+		});
+	
+	}
+	</script>
+		<div class="row">
+			<div class="col-md-9">
+				<div style="text-align:center; border:1px solid #dee2e6;">
+					<? if($hp_row){?>
+					<b>경기 일정</b>
+					<br>
+					<div class="row">			
+						<div class="col-md-1"></div>
+						<div class="col-md-10" style="text-align:center; border:1px solid #dee2e6;">
+							<div class="row">
+								<div class="col-md-12">
+									<p><? echo $hp_league_row['name'];?><br><a style="font-size:70%">(<? echo $hp_row['name'];?>)</a></p>
+									<p><? echo date( 'Y-m-d H:i', strtotime($hp_row['play_datetime']));?></p>
+								</div>
+								<div class="col-md-5">
+									<?if($hp_home_row['img']){?>
+									<img src="<? echo $hp_home_row['img'];?>" style="width:50%;" class="img-thumbnail" alt="<? echo $hp_home_row['name']?>"><br><? echo $link_home;?><br>(Home)
+									<? } else {?>
+									<img class="img-thumbnail" style="width:50%" src="images/none_team_img.png" alt="<? echo $hp_home_row['name']?>"><br><? echo $link_home;?><br>(Home)
+									<? } ?>
+								</div>
+								<h3 class="col-md-2" style="vertical-align:middle">vs</h3>
+								<div class="col-md-5">
+									<?if($hp_away_row['img']){?>
+									<img src="<? echo $hp_away_row['img'];?>" style="width:50%" class="img-thumbnail" alt="<? echo $hp_away_row['name']?>"><br><? echo $link_away?><br>(Away)
+									<? } else {?>
+									<img class="img-thumbnail" style="width:50%" src="images/none_team_img.png" alt="<? echo $hp_away_row['name']?>"><br><? echo $link_away?><br>(Away)
+									<? } ?>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-1"></div>
+					</div><br>
+					<a class="btn btn-primary"href="team.html?team=page&no=<? echo $no?>&page=schedule&type=0">더 보기</a>
+					<? } else { ?>
+					<br>
+					<b>경기 일정이 없습니다</b>
+					<p>리그 또는 토너먼트를 찾아보세요</p>
+					<br>
+					<a class="btn btn-primary"href="join.html?join=league">리그 검색</a>
+					<? } ?>
+					<br><br>
+				</div><br>
+				
+				<div style="text-align:center; border:1px solid #dee2e6;">
+					<? if($he_row){?>
+					<b>경기 결과</b>
+					<br>
+					<div class="row">			
+						<div class="col-md-1"></div>
+						<div class="col-md-10" style="text-align:center; border:1px solid #dee2e6;">
+							<div class="row">
+								<div class="col-md-12">
+									<p><? echo $he_league_row['name'];?><br><a style="font-size:70%">(<? echo $he_row['name'];?> : <? echo $play_re?>)</a></p>
+									<p><? echo date( 'Y-m-d H:i', strtotime($he_home_row['end_play']));?> 경기 종료</p>
+								</div>
+								<div class="col-md-5">
+									<?if($he_home_row['img']){?>
+									<img src="<? echo $he_home_row['img'];?>" style="width:50%;" class="img-thumbnail" alt="<? echo $he_home_row['name']?>"><br><? echo $link_home_e;?><? echo $he_home_re;?>
+									<? } else {?>
+									<img class="img-thumbnail" style="width:50%" src="images/none_team_img.png" alt="<? echo $he_home_row['name']?>"><br><? echo $link_home_e;?><br><? echo $he_home_re;?>
+									<? } ?>
+								</div>
+								<h3 class="col-md-2" style="vertical-align:middle">vs</h3>
+								<div class="col-md-5">
+									<?if($he_away_row['img']){?>
+									<img src="<? echo $he_away_row['img'];?>" style="width:50%" class="img-thumbnail" alt="<? echo $he_away_row['name']?>"><br><? echo $link_away_e?><? echo $he_away_re;?>
+									<? } else {?>
+									<img class="img-thumbnail" style="width:50%" src="images/none_team_img.png" alt="<? echo $he_away_row['name']?>"><br><? echo $link_away_e?><? echo $he_away_re;?>
+									<? } ?>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-1"></div>
+					</div><br>
+					<a class="btn btn-primary"href="team.html?team=page&no=<? echo $no?>&page=schedule&type=0">더 보기</a>
+					<? } else { ?>
+					<br>
+					<b>경기 결과가 없습니다</b>
+					<p>리그 또는 토너먼트를 찾아보세요</p>
+					<br>
+					<a class="btn btn-primary"href="join.html?join=league">리그 검색</a>
+					<? } ?>
+					<br><br>
+				</div><br>
+				
+				<div style="text-align:center; border:1px solid #dee2e6;">
+					<? if($hf_row){
+						$hf_result = mysqli_query($conn, $query_home_free);
+					?>
+					<b>자유게시판</b>
+					<table class="table" style="text-align:left">
+						<thead>
+							<tr>
+								<th style="width:60%">제목</th>
+								<th style="width:40%">작성자</th>
+							</tr>
+						</thead>
+						<tbody>
+							<? while($board_row = mysqli_fetch_array($hf_result)){ 
+							$writer_no = $board_row['user'];
+							$writer_result = mysqli_query($conn,"SELECT * FROM user where no='$writer_no'");
+							$writer_row = mysqli_fetch_array($writer_result);
+							?>
+							<tr>
+								<td style="vertical-align: middle;"><a href="team.html?team=page&no=<? echo $no;?>&page=free&read=<? echo $board_row['no']; ?>"><? echo $board_row['title'];?></a></td>
+								<td style="vertical-align: middle;"><a href="javascript:;" onclick="new_page('<? echo $writer_row['no'];?>')"><? echo $writer_row['name'];?>(<? echo $writer_row['id'];?>)</a></td></td>
+							</tr>
+							<? } ?>
+						</tbody>
+					</table>
+					<a class="btn btn-primary" href="team.html?team=page&no=<? echo $no;?>&page=free">더 보기</a>
+					<? } else { ?>
+					<br>
+					<b>자유게시판에 글이 없습니다</b>
+					<p>자유롭게 팀원과 소통해 보세요</p>
+					<br>
+					<a class="btn btn-primary" href="team.html?team=page&no=<? echo $no;?>&page=free">글 쓰기</a>
+					<? } ?>
+					<br><br>
+				</div>
+				
+			</div>
+			
+			<div class="col-md-3">
+				<div class="row" style="border:1px solid #dee2e6;padding:5px">
+					<div class="col-md-12" style="text-align:center;">
+					팀 기록
+					</div>
+					<div class="col-md-12 form-group" style="margin-bottom:0px;margin-top:3px">
+						<form id="select_league_form" name="select_league_form">
+							<select class="custom-select" id="select_league" name="select_league" onchange='league_record()'>
+								<option value="" selected>리그 선택</option>
+								<?$query_home_league = "SELECT league.no as league_no, league.name as name FROM league JOIN league_team WHERE league_team.team = '$no' AND league.no = league_team.league ORDER BY league_team.created_at DESC";
+								$home_league_result = mysqli_query($conn, $query_home_league);
+								while($home_league_row = mysqli_fetch_array($home_league_result)){?>
+								<option value="<?echo $home_league_row['league_no'];?>"><? echo $home_league_row['name']?></option>
+								<? } ?>
+							</select>
+						</form>
+					</div>
+					<div class="col-md-12" style="text-align:center;" id="team_record">
+						<br>
+					</div>
+				</div><br>
+				<div class="row" style="border:1px solid #dee2e6;padding:5px">
+					<div class="col-md-12" style="text-align:center;">
+					개인 기록 Top 5
+					</div>
+					<div class="col-md-12 form-group" style="margin-bottom:0px;margin-top:3px">
+						<form id="select_top5_form" name="select_top5_form">
+							<select class="custom-select" id="select_top5" name="select_top5" onchange='record_top5()'>
+								<option value="1" selected>타율</option>
+								<option value="2">홈런</option>
+								<option value="3">타점</option>
+								<option value="4">다승</option>
+								<option value="5">평균자책점</option>
+								<option value="6">삼진</option>
+							</select>
+						</form>
+					</div>
+					<div style="text-align:center;width:100%" id="list_top5">
+						<? echo $ba_contens;?>
+					</div>
+					<div class="col-md-12" style="text-align:center;padding:0px">
+						<hr><a href="javascript:;">전체보기</a>
+					</div>
+				</div>
+			</div>
+			<? mysqli_close($conn); ?>
+		</div>
+	</body>
+</html>

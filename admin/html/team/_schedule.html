@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<?php
+function build_calendar($month, $year) {
+	$daysOfWeek = array('일','월','화','수','목','금','토');
+	$firstDayOfMonth = mktime(0,0,0,$month,1,$year);
+	$numberDays = date('t',$firstDayOfMonth);
+	$dateComponents = getdate($firstDayOfMonth);
+	$monthName = $dateComponents['month'];
+	$dayOfWeek = $dateComponents['wday'];
+	$calendar = "<table class='calendar table table-condensed table-bordered'>";
+	$calendar .= "<tr>";
+	foreach($daysOfWeek as $day) {
+		if($day=='일'){
+			$calendar .= "<th class='header' style='color:red:width:14.2857142%'>$day</th>";
+		}else if($day=='토'){
+			$calendar .= "<th class='header' style='color:blue:width:14.2857142%'>$day</th>";
+		}else{
+			$calendar .= "<th class='header' style='width:14.2857142%'>$day</th>";
+		}
+	}
+	$currentDay = 1;
+	$calendar .= "</tr><tr>";
+	if ($dayOfWeek > 0) {
+		$calendar .= "<td colspan='$dayOfWeek'>&nbsp;</td>";
+	}
+	$month = str_pad($month, 2, "0", STR_PAD_LEFT);
+	while($currentDay <= $numberDays){
+		if($dayOfWeek == 7){
+			$dayOfWeek = 0;
+			$calendar .= "</tr><tr>";
+		}
+		$currentDayRel = str_pad($currentDay, 2, "0", STR_PAD_LEFT);
+		$date = "$year-$month-$currentDayRel";
+		include "dbconn.php";
+		$no = $_GET['no'];
+		$kind = $_GET['type'];
+		if($kind == 0){
+			$play_count_result = mysqli_query($conn,"SELECT COUNT(*) as count FROM play where play_datetime LIKE '%$date%' AND (home_team='$no' OR away_team='$no')");
+		}else{
+			$play_count_result = mysqli_query($conn,"SELECT COUNT(*) as count FROM play where play_datetime LIKE '%$date%' AND (home_team='$no' OR away_team='$no') AND kind = '$kind'");
+		}
+		$play_count_row = mysqli_fetch_array($play_count_result);
+		if($play_count_row['count'] == 1){
+			if($kind == 0){
+				$play_result = mysqli_query($conn,"SELECT * FROM play where play_datetime LIKE '%$date%' AND (home_team='$no' OR away_team='$no')");
+			}else{
+				$play_result = mysqli_query($conn,"SELECT * FROM play where play_datetime LIKE '%$date%' AND (home_team='$no' OR away_team='$no') AND kind = '$kind'");
+			}
+			$play_row = mysqli_fetch_array($play_result);
+			if(mb_strlen($play_row['name'], 'UTF-8') <= 12){
+				$play_name = $play_row['name'];
+			}else{
+				$play_name = mb_substr($play_row['name'], 0, 11, 'UTF-8')."...";
+			}
+			$play = "<a href='team.html?team=page&no=$no&page=playlist&playdate=".$date."&type=".$kind."' style='font-size:70%'>".$play_name."</a>";
+		}else if($play_count_row['count'] > 1){
+			if($kind == 0){
+				$play_result = mysqli_query($conn,"SELECT * FROM play where play_datetime LIKE '%$date%' AND (home_team='$no' OR away_team='$no') ORDER BY play_datetime ASC LIMIT 1");
+			}else{
+				$play_result = mysqli_query($conn,"SELECT * FROM play where play_datetime LIKE '%$date%' AND (home_team='$no' OR away_team='$no') AND kind = '$kind' ORDER BY play_datetime ASC LIMIT 1");
+			}
+			$play_row = mysqli_fetch_array($play_result);
+			$play_count = $play_count_row['count'] - 1;
+			if(mb_strlen($play_row['name'], 'UTF-8') <= 8){
+				$play_name = $play_row['name'];
+			}else{
+				$play_name = mb_substr($play_row['name'], 0, 7, 'UTF-8')."...";
+			}
+			$play = "<a href='team.html?team=page&no=$no&page=playlist&playdate=".$date."&type=".$kind."' style='font-size:70%'>".$play_name." 외 ".$play_count."경기</a>";
+		}else{
+			$play = "<br><br>";
+		}
+		mysqli_close($conn);
+		// Is this today?
+		if(date('Y-m-d') == $date) {
+			$calendar .= "<td class='day success' rel='$date'><b style='color:green'>$currentDay</b><br>".$play."</td>";
+		} else {
+			if($dayOfWeek == 0){
+				$calendar .= "<td class='day' rel='$date'><a style='color:red'>$currentDay</a><br>".$play."</td>";
+			}else if($dayOfWeek == 6){
+				$calendar .= "<td class='day' rel='$date'><a style='color:blue'>$currentDay</a><br>".$play."</td>";
+			}else{
+				$calendar .= "<td class='day' rel='$date'>$currentDay<br>".$play."</td>";
+			}
+		}
+		$currentDay++;
+		$dayOfWeek++;
+	}
+	if($dayOfWeek != 7){
+		$remainingDays = 7 - $dayOfWeek;
+		$calendar .= "<td colspan='$remainingDays'>&nbsp;</td>";
+	}
+	$calendar .= "</tr>";
+	$calendar .= "</table>";
+	return $calendar;
+}
+if($_GET['year'] != null && $_GET['month'] != null){
+	$select_y = $_GET['year'];
+	$select_m = $_GET['month'];
+}else{
+	$select_y = date('Y');
+	$select_m = date('m');
+}
+$main_date = $select_y."년 ".number_format($select_m)."월";
+$calendar = build_calendar($select_m, $select_y);
+$calendar = '<div style="width:100%;">' . $calendar . '</div>';
+$calendar .= '<style type="text/css">.calendar table tbody tr td { text-align: left; } .calendar table tbody tr th { text-align: center; }</style>';
+if($_GET['type'] == 1){
+	$main_active = "btn-primary";
+	$type1_active = "btn-secondary disabled";
+	$type2_active = "btn-primary";
+	$type3_active = "btn-primary";
+}else if($_GET['type'] == 2){
+	$main_active = "btn-primary";
+	$type1_active = "btn-primary";
+	$type2_active = "btn-secondary disabled";
+	$type3_active = "btn-primary";
+}else if($_GET['type'] == 3){
+	$main_active = "btn-primary";
+	$type1_active = "btn-primary";
+	$type2_active = "btn-primary";
+	$type3_active = "btn-secondary disabled";
+}else{
+	$main_active = "btn-secondary disabled";
+	$type1_active = "btn-primary";
+	$type2_active = "btn-primary";
+	$type3_active = "btn-primary";
+}
+if($select_m == 1){
+	$before_date_y = $select_y - 1;
+	$before_date_m = 12;
+	$after_date_y = $select_y;
+	$after_date_m = 2;
+}else if($select_m == 12){
+	$before_date_y = $select_y;
+	$before_date_m = 11;
+	$after_date_y = $select_y + 1;
+	$after_date_m = 1;
+}else{
+	$before_date_y = $select_y;
+	$before_date_m = $select_m - 1;
+	$after_date_y = $select_y;
+	$after_date_m = $select_m + 1;
+}
+?>
+	<body>
+		<div class="row">
+			<div class="col-md-2">
+				<a class="btn <?=$main_active?> btn-sm" href="team.html?team=page&no=<? echo $no?>&page=schedule&type=0">전체경기</a>
+			</div>
+			<div class="col-md-2">
+				<a class="btn <?=$type1_active?> btn-sm" href="team.html?team=page&no=<? echo $no?>&page=schedule&type=1">리그경기</a>
+			</div>
+			<div class="col-md-2">
+				<a class="btn <?=$type2_active?> btn-sm" href="team.html?team=page&no=<? echo $no?>&page=schedule&type=2">토너먼트</a>
+			</div>
+			<div class="col-md-2">
+				<a class="btn <?=$type3_active?> btn-sm" href="team.html?team=page&no=<? echo $no?>&page=schedule&type=3">연습경기</a>
+			</div>
+			<!--
+			<? if($_GET['type'] == 1 || $_GET['type'] == null){?>
+			<div class="col-md-3 form-group" style="padding-right:0px;margin-bottom:0px;margin-top:3px">
+				<select class="custom-select" id="" name="">
+					<option value="" selected>2019 시즌</option>
+				</select>
+			</div>
+			<div class="col-md-3 form-group" style="padding:0px;padding-left:15px;margin-top:3px">
+				<select class="custom-select" id="" name="">
+					<option value="" selected>리그 선택</option>
+				</select>
+			</div>
+			<? } else {?>
+			<div class="col-md-6 form-group" style="padding-right:0px;margin-top:3px">
+				<select class="custom-select" id="" name="">
+					<option value="" selected>2019 시즌</option>
+				</select>
+			</div>
+			<? } ?>
+			-->
+		</div><br>
+		<div class="row" style="text-align:center">
+			<div class="col-md-2">
+				<a href="team.html?team=page&no=<? echo $no?>&page=schedule&type=<? echo $_GET['type']?>&year=<? echo $before_date_y?>&month=<? echo $before_date_m;?>"><i class="fas fa-caret-left" style="font-size:200%"></i></a>
+			</div>
+			<div class="col-md-8">
+				<h3>
+					<? echo $main_date;?>
+					<input type="text" name="date" id="demo-3" style="text-align:center;width:2px;height:0px;border:0px;color:#ffffff;">
+					<a href="javascript:;" onClick="$('#demo-3').monthpicker('show');"><i class="fas fa-calendar-alt"></i></a>
+					<!--<input type="text" name="date" id="select_date" style="display:none">
+					<a href="javascript:;" onClick="$('#select_date').datepicker('show');"><i class="fas fa-calendar-alt"></i></a>-->
+				</h3>
+			</div>
+			<div class="col-md-2">
+				<a href="team.html?team=page&no=<? echo $no?>&page=schedule&type=<? echo $_GET['type']?>&year=<? echo $after_date_y?>&month=<? echo $after_date_m;?>"><i class="fas fa-caret-right" style="font-size:200%"></i></a>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-12">
+				<?php echo $calendar; ?>
+			</div>
+		</div>		
+		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.1.0/backbone-min.js"></script>
+		
+		<script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
+		<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.11.3/themes/smoothness/jquery-ui.css">
+		<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.11.3/jquery-ui.min.js"></script>
+		<script src="http://tryout.kr/js/jquery.mtz.monthpicker.js"></script>
+		<script>
+			/*$(function(){
+				$("#select_date").datehpicker({
+					changeYear:true,
+					changeMonth:true,
+					onSelect:function(dateText, inst) {
+						 window.location = 'team.html?team=page&no=<? echo $no;?>&page=schedule&type=<? echo $_GET['type']?>&' + dateText; 
+					}
+				});
+			});*/
+			var years = "<? echo $_GET['year']?>";
+			if(years == ""){
+				var years = 2019;
+			}
+			$(function(){
+				$('#demo-3').monthpicker({
+					selectedYear: years,
+					startYear: 2017,
+					finalYear: 2023,
+					pattern: 'yyyy-mm',
+					monthNames: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월']
+					
+				}).bind('monthpicker-click-month', function (e, month) {
+					window.location = 'team.html?team=page&no=<? echo $no;?>&page=schedule&type=<? echo $_GET['type']?>&year=' + years + '&month=' + month; 
+				}).bind('monthpicker-change-year', function (e, year) {
+					years = year;
+				});
+			});
+		</script>
+		<!--
+		<script src="//cdnjs.cloudflare.com/ajax/libs/backbone.syphon/0.4.1/backbone.syphon.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/backbone.modelbinder/1.0.4/Backbone.ModelBinder.min.js"></script>
+		-->
+	</body>
+</html>

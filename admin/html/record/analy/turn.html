@@ -1,0 +1,445 @@
+<!DOCTYPE HTML>
+<?
+	if($user_no){
+		$new_data_id = "id='new_data' style='display:none'";
+		$new_data_action = "RecordInsertProc.php";
+		$new_data_submit = "Save & Analysis";
+		// user data list
+		include "dbconn.php";
+		$record_list_result = mysqli_query($conn, "SELECT * FROM data_before_hit WHERE player_no = '$player_no'");
+		$data_list = "";
+		while($record_list_row = mysqli_fetch_array($record_list_result)){
+			$rs = $record_list_row['rs'];
+			$at_play = $record_list_row['at_play'];
+			$rbi = $record_list_row['rbi'];
+			$at_bat = $record_list_row['at_bat'];
+			$sf = $record_list_row['sf'];
+			$sb = $record_list_row['sb'];
+			$hit1 = $record_list_row['hit1'];
+			$hit2 = $record_list_row['hit2'];
+			$b4 = $record_list_row['b4'];
+			$hbp = $record_list_row['hbp'];
+			if($rs != null && $at_play != null && $rbi != null && $at_bat != null && $sf != null && $sb != null && $hit1 != null && $hit2 != null && $b4 != null && $hbp != null){
+				if($at_play < $at_bat || $hit1 < 0 || $b4 < 0 || $at_bat == 0){
+					$data_list = $data_list."<div class='col-3 col-6-xsmall'>
+						<a href='javascript:;' class='button fit disabled'>".$record_list_row['league_name']."</a>
+					</div>";
+				}else{
+					$data_list = $data_list."<div class='col-3 col-6-xsmall'>
+						<a href='analy.html?analy_no=".$analy_no."&data_no=".$record_list_row['no']."' class='button fit'>".$record_list_row['league_name']."</a>
+					</div>";
+				}
+			}else{
+				$data_list = $data_list."<div class='col-3 col-6-xsmall'>
+					<a href='javascript:;' class='button fit disabled'>".$record_list_row['league_name']."</a>
+				</div>";
+			}
+		}
+		$data_list = $data_list."<div class='col-3 col-6-xsmall'>
+			<a href='javascript:;' class='button primary fit' onclick='open_new_data()'>New Data</a>
+		</div>";
+		mysqli_close($conn);
+	}else{
+		if($_POST['analy']){
+			$new_data_id = "id='new_data' style='display:none'";
+		}else{
+			$new_data_id = "";
+		}
+		$new_data_action = "analy.html?analy_no=".$analy_no;
+		$new_data_submit = "Analysis";
+	}
+	if($_GET['data_no'] != null || $_POST['analy'] != null){
+		if($_POST['analy']){
+			$player_no = 0;
+			$league_name = $_POST['league_name'];
+			$team_name = $_POST['team_name'];
+			$at_game = $_POST['at_game'];
+			$at_play = $_POST['at_play'];
+			$at_bat = $_POST['at_bat'];
+			$hit1 = $_POST['hit'] - $_POST['hit2'] - $_POST['hit3'] - $_POST['hr'];
+			$hit2 = $_POST['hit2'];
+			$hit3 = $_POST['hit3'];
+			$hr = $_POST['hr'];
+			$b4 = $_POST['b4'] - $_POST['hbp'];
+			$hbp = $_POST['hbp'];
+			$sb = $_POST['sb'];
+			$sf = $_POST['sf'];
+			$sh = $_POST['sh'];
+			$so = $_POST['so'];
+			$rs = $_POST['rs'];
+			$rbi = $_POST['rbi'];
+			if($at_play < $at_bat || $hit1 < 0 || $b4 < 0 || $at_bat == 0){
+				// 기록 잘못 입력
+				$analy = 3;
+				$new_data_id = "";
+				$error_message = "<b style='color:red'>기록을 잘 못 입력하였습니다</b>";
+			}else{
+				include "dbconn.php";
+				mysqli_query($conn,"INSERT INTO data_before_hit (player_no ,team_name, league_name, at_game, at_play, at_bat, hit1, hit2, hit3, hr, rs, rbi, sb, so, sh, sf, b4, hbp) VALUES ('$player_no', '$team_name', '$league_name', '$at_game', '$at_play', '$at_bat', '$hit1', '$hit2', '$hit3', '$hr', '$rs', '$rbi', '$sb', '$so', '$sh', '$sf', '$b4', '$hbp')");
+				$data_no_result = mysqli_query($conn, "SELECT MAX(no) as maxno FROM data_before_hit WHERE player_no = '0'");
+				$data_no_row = mysqli_fetch_array($data_no_result);
+				$data_no = $data_no_row['maxno'];
+				mysqli_close($conn);
+				$analy = 1;
+			}
+		}else{
+			include "dbconn.php";
+			$data_no = $_GET['data_no'];
+			$page = $page."&data_no=".$data_no;
+			$record_result = mysqli_query($conn, "SELECT * FROM data_before_hit WHERE no = '$data_no'");
+			$record_row = mysqli_fetch_array($record_result);
+			mysqli_close($conn);
+			$league_name = $record_row['league_name'];
+			$team_name = $record_row['team_name'];
+			$at_game = $record_row['at_game'];
+			$at_play = $record_row['at_play'];
+			$at_bat = $record_row['at_bat'];
+			$hit1 = $record_row['hit1'];
+			$hit2 = $record_row['hit2'];
+			$hit3 = $record_row['hit3'];
+			$hr = $record_row['hr'];
+			$b4 = $record_row['b4'];
+			$hbp = $record_row['hbp'];
+			$sb = $record_row['sb'];
+			$sf = $record_row['sf'];
+			$sh = $record_row['sh'];
+			$so = $record_row['so'];
+			$rs = $record_row['rs'];
+			$rbi = $record_row['rbi'];
+			if($rs != null && $at_play != null && $rbi != null && $at_bat != null && $sf != null && $sb != null && $hit1 != null && $hit2 != null && $b4 != null && $hbp != null){
+				if($at_play < $at_bat || $hit1 < 0 || $b4 < 0 || $at_bat == 0){
+					$analy = 2;
+				}else{
+					$analy = 1;
+				}
+			}else{
+				$analy = 2;
+			}
+		}
+	}
+	// analysis
+	if($analy == 1){
+		$toR = $rs / $at_play;
+		$toRBI = $rbi / ($at_bat + $sf);
+		$toSB = $sb / ($hit1 + $hit2 + $b4 + $hbp);
+		if($toRBI < 0.3299826){
+			if($toR >= 0.2846833){
+				if($toRBI < 0.2695989){
+					$turn_1_percent = "<td style='width:35%;vertical-align:middle'>84.48%</td>";
+					$turn_2_percent = "<td style='width:35%;vertical-align:middle'>0.00%</td>";
+					$turn_3_percent = "<td style='width:35%;vertical-align:middle'>15.52%</td>";
+					$turn_1_text = "<td style='width:35%;color:#007bff;vertical-align:middle'>적합</td>";
+					$turn_2_text = "<td style='width:35%;color:red;vertical-align:middle'>비적합</td>";
+					$turn_3_text = "<td style='width:35%;color:red;vertical-align:middle'>비적합</td>";
+				}else{
+					if($toRBI >= 0.3020705){
+						$turn_1_percent = "<td style='width:35%;vertical-align:middle'>66.66%</td>";
+						$turn_2_percent = "<td style='width:35%;vertical-align:middle'>16.66%</td>";
+						$turn_3_percent = "<td style='width:35%;vertical-align:middle'>16.66%</td>";
+						$turn_1_text = "<td style='width:35%;color:green;vertical-align:middle'>가능</td>";
+						$turn_2_text = "<td style='width:35%;color:red;vertical-align:middle'>비적합</td>";
+						$turn_3_text = "<td style='width:35%;color:red;vertical-align:middle'>비적합</td>";
+					}else{
+						$turn_1_percent = "<td style='width:35%;vertical-align:middle'>12.50%</td>";
+						$turn_2_percent = "<td style='width:35%;vertical-align:middle'>37.50%</td>";
+						$turn_3_percent = "<td style='width:35%;vertical-align:middle'>50.00%</td>";
+						$turn_1_text = "<td style='width:35%;color:red;vertical-align:middle'>비적합</td>";
+						$turn_2_text = "<td style='width:35%;color:green;vertical-align:middle'>노력</td>";
+						$turn_3_text = "<td style='width:35%;color:green;vertical-align:middle'>가능</td>";
+					}
+				}
+			}else{
+				$turn_1_percent = "<td style='width:35%;vertical-align:middle'>8.10%</td>";
+				$turn_2_percent = "<td style='width:35%;vertical-align:middle'>24.32%</td>";
+				$turn_3_percent = "<td style='width:35%;vertical-align:middle'>67.58%</td>";
+				$turn_1_text = "<td style='width:35%;color:red;vertical-align:middle'>비적합</td>";
+				$turn_2_text = "<td style='width:35%;color:red;vertical-align:middle'>비적합</td>";
+				$turn_3_text = "<td style='width:35%;color:green;vertical-align:middle'>가능</td>";
+			}
+		}else{
+			if($toRBI >= 0.451494){
+				$turn_1_percent = "<td style='width:35%;vertical-align:middle'>3.80%</td>";
+				$turn_2_percent = "<td style='width:35%;vertical-align:middle'>92.40%</td>";
+				$turn_3_percent = "<td style='width:35%;vertical-align:middle'>3.80%</td>";
+				$turn_1_text = "<td style='width:35%;color:red;vertical-align:middle'>비적합</td>";
+				$turn_2_text = "<td style='width:35%;color:#007bff;vertical-align:middle'>적합</td>";
+				$turn_3_text = "<td style='width:35%;color:red;vertical-align:middle'>비적합</td>";
+			}else{
+				if($toR >= 0.2103145){
+					if($toSB >= 0.5325408){
+					$turn_1_percent = "<td style='width:35%;vertical-align:middle'>50.00%</td>";
+					$turn_2_percent = "<td style='width:35%;vertical-align:middle'>25.00%</td>";
+					$turn_3_percent = "<td style='width:35%;vertical-align:middle'>25.00%</td>";
+					$turn_1_text = "<td style='width:35%;color:green;vertical-align:middle'>가능</td>";
+					$turn_2_text = "<td style='width:35%;color:green;vertical-align:middle'>노력</td>";
+					$turn_3_text = "<td style='width:35%;color:green;vertical-align:middle'>노력</td>";
+					}else{
+						$turn_1_percent = "<td style='width:35%;vertical-align:middle'>5.26%</td>";
+						$turn_2_percent = "<td style='width:35%;vertical-align:middle'>78.95%</td>";
+						$turn_3_percent = "<td style='width:35%;vertical-align:middle'>15.79%</td>";
+						$turn_1_text = "<td style='width:35%;color:red;vertical-align:middle'>비적합</td>";
+						$turn_2_text = "<td style='width:35%;color:#007bff;vertical-align:middle'>적합</td>";
+						$turn_3_text = "<td style='width:35%;color:red;vertical-align:middle'>비적합</td>";
+					}
+				}else{
+					$turn_1_percent = "<td style='width:35%;vertical-align:middle'>0%</td>";
+					$turn_2_percent = "<td style='width:35%;vertical-align:middle'>14.29%</td>";
+					$turn_3_percent = "<td style='width:35%;vertical-align:middle'>85.71%</td>";
+					$turn_1_text = "<td style='width:35%;color:red;vertical-align:middle'>비적합</td>";
+					$turn_2_text = "<td style='width:35%;color:red;vertical-align:middle'>비적합</td>";
+					$turn_3_text = "<td style='width:35%;color:#007bff;vertical-align:middle'>적합</td>";
+				}
+			}
+		}
+		// 기록 요약
+		if($sh == ""){
+			$sh = "-";
+		}
+		if($sf == ""){
+			$sf = "-";
+		}
+		if($hbp == ""){
+			$hbp = "-";
+		}
+		if($at_bat != 0){
+			$avg = number_format(($hit1 + $hit2 + $hit3 + $hr)/$at_bat,3);
+			$slg = number_format(($hit1*1 + $hit2*2 + $hit3*3 + $hr*4)/$at_bat,3);
+			$iso = number_format(($hit2*2 + $hit3*3 + $hr*4)/$at_bat,3);
+		}else{
+			$avg = "-";
+			$slg = "-";
+			$iso = "-";
+		}
+		if($at_bat + $b4 + $hbp + $sf != 0){
+			$obp = number_format(($hit1 + $hit2 + $hit3 + $hr + $b4 + $hbp)/($at_bat + $b4 + $hbp + $sf),3);
+		}else{
+			$obp = "-";
+		}
+		if($slg != "-" && $obp != "-"){
+			$ops = number_format($slg + $obp,3);
+			$gpa = number_format((1.8*$slg + $obp)/4,3);
+		}else{
+			$ops = "-";
+			$gpa = "-";
+		}
+		if($so != 0){
+			$b4so = number_format($b4/$so,2);
+		}else{
+			$b4so = "-";
+		}
+		if($hr != 0){
+			$abhr = number_format($at_bat/$hr,1);
+		}else{
+			$abhr = "-";
+		}
+		$hit_table = "<table class='alt' style='font-size:80%;margin-top:10px'>
+						<tbody>
+							<tr>
+								<td colspan='5' style='padding:0px;text-align:center;vertical-align:middle'>기록 요약 (".$league_name." : ".$team_name.")</td>
+							</tr>
+							<tr>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='경기 수'>G</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='타석'>PA</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='타수'>AB</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='타율'>AVG</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='타점'>RBI</td>
+								
+							</tr>
+							<tr>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$at_game."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$at_play."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$at_bat."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$avg."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$rbi."</td>
+							</tr>
+							<tr>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='득점'>R</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='안타'>H</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='2루타'>2B</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='3루타'>3B</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='홈런'>HR</td>
+							</tr>
+							<tr>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$rs."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($hit1 + $hit2 + $hit3 + $hr)."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$hit2."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$hit3."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$hr."</td>
+							</tr>
+							<tr>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='루타'>TB</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='희생번트'>SAC</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='희생플라이'>SF</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='볼넷(사사구 포함)'>BB</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='사사구'>HBP</td>
+							</tr>
+							<tr>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($hit1*1 + $hit2*2 + $hit3*3 + $hr*4)."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$sh."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$sf."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($b4 + $hbp)."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$hbp."</td>
+							</tr>
+							<tr>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='삼진'>SO</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='도루'>SB</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='장타'>XBH</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='장타율'>SLG</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='출루율'>OBP</td>
+							</tr>
+							<tr>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$so."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$sb."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".($hit2 + $hit3 + $hr)."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$slg."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$obp."</td>
+							</tr>
+							<tr>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='출루율 + 장타율'>OPS</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='볼넷/삼진'>BB/K</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='홈런당 평균타수'>AB/HR</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='순장타율'>ISO</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle;width:10%' title='(1.8*출루율+장타율)/4'>GPA</td>
+							</tr>
+							<tr>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$ops."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$b4so."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$abhr."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle%'>".$iso."</td>
+								<td colspan='1' style='padding:0px;text-align:center;vertical-align:middle'>".$gpa."</td>
+							</tr>
+						</tbody>
+					</table>";
+	}
+	if($_GET['re'] == 1){
+		$new_data_id = "";
+	}
+	if($data_no){
+		$new_data_id = "id='new_data' style='display:none'";
+	}
+?>
+<html>
+	<body>
+		<?if($user_no){?>
+		<hr>
+		<h3>저장된 기록</h3>
+		<div class="row">
+			<?=$data_list?>
+		</div>
+		<? } ?>
+		<div <?=$new_data_id?>>
+			<hr>
+			<h3>새로운 기록 <b style="font-size:60%">(*은 필수 입력)</b></h3>
+			<?=$error_message?>
+			<form method="post" action="<?=$new_data_action?>" method="post">
+				<div class="row gtr-uniform">
+					<div class="col-3 col-6-xsmall">
+						<input type="text" name="league_name" id="league_name" placeholder="리그 이름">
+					</div>
+					<div class="col-3 col-6-xsmall">
+						<input type="text" name="team_name" id="team_name" placeholder="팀 이름">
+					</div>
+					<div class="col-3 col-6-xsmall">
+						<input type="text" name="at_game" id="at_game" placeholder="경기 수" pattern="\d{1,3}">
+					</div>
+					<div class="col-3 col-6-xsmall">
+						<input type="text" name="at_play" id="at_play" placeholder="타석 *" pattern="\d{1,3}" required>
+					</div>
+					<div class="col-3 col-6-xsmall">
+						<input type="text" name="at_bat" id="at_bat" placeholder="타수 *" pattern="\d{1,3}" required>
+					</div>
+					<div class="col-3 col-6-xsmall">
+						<input type="text" name="hit" id="hit" placeholder="안타 * [1H,2H,3H,HR 포함]" pattern="\d{1,3}" required>
+					</div>
+					<div class="col-3 col-6-xsmall">
+						<input type="text" name="hit2" id="hit2" placeholder="2루타 *" pattern="\d{1,3}" required>
+					</div>
+					<div class="col-3 col-6-xsmall">
+						<input type="text" name="hit3" id="hit3" placeholder="3루타 *" pattern="\d{1,3}" required>
+					</div>
+					<div class="col-3 col-6-xsmall">
+						<input type="text" name="hr" id="hr" placeholder="홈런 *" pattern="\d{1,3}" required>
+					</div>
+					<div class="col-3 col-6-xsmall">
+						<input type="text" name="b4" id="b4" placeholder="볼넷 * [사사구 포함]" pattern="\d{1,3}" required>
+					</div>
+					<div class="col-3 col-6-xsmall">
+						<input type="text" name="hbp" id="hbp" placeholder="사사구" pattern="\d{1,3}">
+					</div>
+					<div class="col-3 col-6-xsmall">
+						<input type="text" name="rs" id="rs" placeholder="득점 *" pattern="\d{1,3}" required>
+					</div>
+					<div class="col-3 col-6-xsmall">
+						<input type="text" name="rbi" id="rbi" placeholder="타점 *" pattern="\d{1,3}" required>
+					</div>
+					<div class="col-3 col-6-xsmall">
+						<input type="text" name="sb" id="sb" placeholder="도루 *" pattern="\d{1,3}" required>
+					</div>
+					<div class="col-3 col-6-xsmall">
+						<input type="text" name="so" id="so" placeholder="삼진" pattern="\d{1,3}">
+					</div>
+					<div class="col-3 col-6-xsmall">
+						<input type="text" name="sf" id="sf" placeholder="희생타 *" pattern="\d{1,3}" required>
+					</div>
+					<div class="col-3 col-6-xsmall">
+						<input type="text" name="sh" id="sh" placeholder="희생번트" pattern="\d{1,3}">
+					</div>
+					<input type="hidden" value="T" name="analy">
+					<input type="hidden" value="hit" name="pos">
+					<input type="hidden" value="<?=$analy_no?>" name="analy_no">
+					<div class="col-12" style="text-align:center">
+						<input type="submit" value="<?=$new_data_submit?>" class="primary">
+					</div>
+				</div>
+			</form>
+		</div>
+		<?if($analy == 1){?>
+		<hr>
+		<table class="alt">
+			<tbody style="text-align:center">
+				<tr>
+					<td colspan="4" style="width:100%">분석 결과</td>
+				</tr>
+				<tr>
+					<td style="width:30%">타선</td>
+					<td style="width:35%">적합도</td>
+					<td style="width:35%">결과</td>
+				</tr>
+				<tr>
+					<td style="width:30%">상위 타선</td>
+					<?=$turn_1_percent?>
+					<?=$turn_1_text?>
+				</tr>
+				<tr>
+					<td style="width:30%">중심 타선</td>
+					<?=$turn_2_percent?>
+					<?=$turn_2_text?>
+				</tr>
+				<tr>
+					<td style="width:30%">하위 타선</td>
+					<?=$turn_3_percent?>
+					<?=$turn_3_text?>
+				</tr>
+			</tbody>
+		</table>
+		<div class="row" style="text-align:center">
+			<div class="col-6 col-12-xsmall">
+				<h3>타선 분류</h3>
+				<p>상위 타선 : 1 ~ 2 번</p>
+				<p>중심 타선 : 3 ~ 5 번</p>
+				<p>하위 타선 : 6 ~ 9 번</p>
+			</div>
+			<div class="col-6 col-12-xsmall">
+				<h3>적합 분류</h3>
+				<p>적합 : 적합도 75% 이상</p>
+				<p>가능 : 적합도 50% 이상 75% 미만</p>
+				<p>노력 : 적합도 25% 이상 50% 미만</p>
+				<p>부적합 : 적합도 25% 미만</p>
+			</div>
+		</div>
+		<?=$hit_table?>
+		<hr>
+		<!--<span class="image main"><img src="images/pic13.jpg" alt="" /></span>-->
+		<? } ?>
+	</body>
+</html>

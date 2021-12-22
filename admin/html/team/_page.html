@@ -1,0 +1,151 @@
+<!DOCTYPE HTML>
+<?
+	include "dbconn.php";
+	$team_result = mysqli_query($conn,"SELECT * FROM team where no='$no'");
+	$team_row = mysqli_fetch_array($team_result);
+	$manager_check_result = mysqli_query($conn,"SELECT * FROM team_members where team='$no' AND (class='1' OR class='2') AND player = '$player_no'");
+	$manager_check_row = mysqli_fetch_array($manager_check_result);
+	$boss_result = mysqli_query($conn,"SELECT * FROM team_members where team='$no' AND class='1'");
+	$boss_row = mysqli_fetch_array($boss_result);
+	$boss_player_no = $boss_row['player'];
+	$boss_player_result = mysqli_query($conn,"SELECT * FROM player where no='$boss_player_no'");
+	$boss_player_row = mysqli_fetch_array($boss_player_result);
+	$boss_user_no = $boss_player_row['user'];
+	$boss_user_result = mysqli_query($conn,"SELECT * FROM user where no='$boss_user_no'");
+	$boss_user_row = mysqli_fetch_array($boss_user_result);
+	$members_count = mysqli_query($conn,"SELECT COUNT(*) as count FROM team_members where team='$no' AND states='1'");
+	$mambers_count_row = mysqli_fetch_array($members_count);
+	$team_members_result = mysqli_query($conn,"SELECT * FROM team_members where team='$no' AND  player = '$player_no'");
+	$team_members_row = mysqli_fetch_array($team_members_result);
+	$team_members_no = $team_members_row['no'];
+	$board_activiy_result = mysqli_query($conn, "SELECT * FROM user_activity where board = '$team_members_no' AND board_table = 'team_members'");
+	$board_activiy_row = mysqli_fetch_array($board_activiy_result);
+	if($board_activiy_row){
+		$activity_no = $board_activiy_row['no'];
+		mysqli_query($conn,"UPDATE user_activity SET count = '0' WHERE no = '$activity_no'");
+	}
+	mysqli_close($conn);
+
+	if($team_row['class'] == 1){
+		$class = '사회인 1부';
+		$class_1c = "checked";
+	}elseif($team_row['class'] == 2){
+		$class = '사회인 2부';
+		$class_2c = "checked";
+	}elseif($team_row['class'] == 3){
+		$class = '사회인 3부';
+		$class_3c = "checked";
+	}elseif($team_row['class'] == 4){
+		$class = '사회인 4부';
+		$class_4c = "checked";
+	}
+	if($_GET['page'] == 'home'){
+		$active_home = "active";
+		$url = "team/_home.html";
+	}else if($_GET['page'] == 'teaminfo'){
+		$active_teaminfo = "active";
+		$url = "team/_infoteam.html";
+	}else if($_GET['page'] == 'myinfo' && $member_check_row['states'] == 1){
+		$active_myinfo = "active";
+		$url = "team/_member.html";
+	}else if($_GET['page'] == 'player' && $member_check_row['states'] == 1){
+		$active_player = "active";
+		$url = "team/_player.html";
+	}else if($_GET['page'] == 'schedule' && $member_check_row['states'] == 1){
+		$active_schedule = "active";
+		$url = "team/_schedule.html";
+	}else if($_GET['page'] == 'playlist' && $member_check_row['states'] == 1){
+		$active_schedule = "active";
+		$url = "team/_playlist.html";
+	}else if($_GET['page'] == 'record' && $member_check_row['states'] == 1){
+		$active_record = "active";
+		$url = "team/_record.html";
+	}else if(($_GET['page'] == 'free' || $_GET['page'] == 'write') && $member_check_row['states'] == 1){
+		$active_free = "active";
+		$url = "team/_freeteam.html";
+	}else if($_GET['page'] == 'manage'){
+		$active_manage = "active";
+		$url = "team/_manage.html";
+	}else{
+		$active_home = "active";
+		$url = "team/_home.html";
+	}
+	if(($_GET['page'] == 'free' || $_GET['page'] == 'write' || $_GET['page'] == 'schedule' || $_GET['page'] == 'player' || $_GET['page'] == 'myinfo') && $user_no == null){
+		echo "<script>alert('로그인이 필요한 기능입니다');";
+		echo "window.location.replace('user.html?user=login');</script>";
+	}else if(($_GET['page'] == 'free' || $_GET['page'] == 'write' || $_GET['page'] == 'schedule' || $_GET['page'] == 'player' || $_GET['page'] == 'myinfo') && $member_check_row['states'] != 1){
+		echo "<script>alert('팀원만 볼 수 있습니다.');";
+		echo "window.location.replace('team.html?team=page&no=$no&page=manage');</script>";
+	}
+	
+
+?>
+<html>
+	<body>
+		<section class="site-section">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-1 element-animate "></div>
+					<div class="col-md-10 element-animate ">
+						<div class="row">
+							<? if($_GET['page'] == 'home'){?>
+								<div class="col-md-12 element-animate " style="margin-bottom:5px">
+								<? if($team_row['main_img']){?>
+								<img src="<? echo $team_row['main_img'];?>" style="width:100%;height:230px" class="img-thumbnail" alt="<? echo $team_row['name']?>">
+								<? } else {?>
+								<img class="img-thumbnail" style="width:100%;height:230px" src="images/none_team_img.png" alt="<? echo $team_row['name']?>">
+								<? } ?>
+								</div>
+							<? } ?>
+							<div class="col-md-3 element-animate">
+								<div class="row" style="margin-top:15px">
+									<div class="col-md-12 element-animate ">
+										<? if($team_row['img']){?>
+										<img src="<? echo $team_row['img'];?>" style="width:100%" class="img-thumbnail" alt="<? echo $team_row['name']?>">
+										<? } else {?>
+										<img class="img-thumbnail" style="width:100%" src="images/none_team_img.png" alt="<? echo $team_row['name']?>">
+										<? } ?>
+									</div>
+									<div class="col-md-12 element-animate " style="text-align:center;">
+										<hr>
+										<div class="nav flex-column nav-pills" role="tablist" aria-orientation="vertical">
+											<a class="nav-link <?=$active_home?>" style="text-align:center; border:1px solid #dee2e6;" href="team.html?team=page&no=<? echo $no?>&page=home">Home</a>
+											<a class="nav-link <?=$active_teaminfo?>" style="text-align:center; border:1px solid #dee2e6;" href="team.html?team=page&no=<? echo $no?>&page=teaminfo" onclick="team_read_contents()">팀소개</a>
+											<? if($member_check_row['states'] == 1){?>
+											<a class="nav-link <?=$active_myinfo?>" style="text-align:center; border:1px solid #dee2e6;" href="team.html?team=page&no=<? echo $no?>&page=myinfo">내정보</a>									
+											<a class="nav-link <?=$active_player?>" style="text-align:center; border:1px solid #dee2e6;" href="team.html?team=page&no=<? echo $no?>&page=player">선수단</a>
+											<a class="nav-link <?=$active_schedule?>" style="text-align:center; border:1px solid #dee2e6;" href="team.html?team=page&no=<? echo $no?>&page=schedule&type=0">경기일정 / 경기결과</a>
+											<a class="nav-link <?=$active_record?>" style="text-align:center; border:1px solid #dee2e6;" href="team.html?team=page&no=<? echo $no?>&page=record&kind=t&record=1">기록실</a>
+											<a class="nav-link <?=$active_free?>" style="text-align:center; border:1px solid #dee2e6;" href="team.html?team=page&no=<? echo $no?>&page=free">공지사항 / 자유게시판</a>
+												<? if($manager_check_row){?>
+											<a class="nav-link <?=$active_manage?>" style="text-align:center; border:1px solid #dee2e6;" href="team.html?team=page&no=<? echo $no?>&page=manage">팀원관리</a>
+												<? } else {?>
+											<a class="nav-link <?=$active_manage?>" style="text-align:center; border:1px solid #dee2e6;" href="team.html?team=page&no=<? echo $no?>&page=manage">탈퇴하기</a>
+												<? } ?>
+											<? } else if($member_check_row['states'] == 2){ ?>
+											<a class="nav-link <?=$active_manage?>" style="text-align:center; border:1px solid #dee2e6;" href="team.html?team=page&no=<? echo $no?>&page=manage">신청대기</a>
+											<? } else {?>
+											<a class="nav-link <?=$active_manage?>" style="text-align:center; border:1px solid #dee2e6;" href="team.html?team=page&no=<? echo $no?>&page=manage">신청하기</a>
+											<? } ?>
+											<a class="nav-link disabled" style="text-align:center; border:1px solid #dee2e6;" href="javascript:;">열람하기</a>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-md-9 element-animate" style="margin-top:15px">
+								<div class="row" style="margin-right:5px">
+									<div class="col-md-12 element-animate ">
+										<div class="tab-content">
+											<div class="tab-pane fade active show"><?include($url);?></div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-1 element-animate ">
+				</div>
+			</div>
+		</section>
+	</body>
+</html>
